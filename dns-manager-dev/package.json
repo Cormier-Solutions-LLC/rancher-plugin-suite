@@ -1,0 +1,30 @@
+{
+  "name": "dns-manager-dev",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "preview": "vite",
+    "build:preview": "vite build",
+    "build:extension": "node scripts/build-extension.cjs",
+    "preview:backups": "node scripts/preview-backups.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:snapshots": "node --test ../preview-data/tests/snapshot-server.test.mjs ../preview-data/tests/snapshot-unlock.test.mjs"
+  },
+  "dependencies": {
+    "@zip.js/zip.js": "2.23.0",
+    "lucide": "1.55.0",
+    "vue": "3.5.29"
+  },
+  "devDependencies": {
+    "@rancher/shell": "3.0.13",
+    "@vitejs/plugin-vue": "6.0.10",
+    "ts-loader": "9.5.4",
+    "typescript": "5.9.3",
+    "vite": "8.3.4",
+    "webpack": "5.111.1"
+  }
+}

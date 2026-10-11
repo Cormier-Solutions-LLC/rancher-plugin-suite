@@ -1,0 +1,586 @@
+{
+  "observedDate": "2026-10-11",
+  "routes": [
+    {
+      "name": "open-webui",
+      "namespace": "ai",
+      "kind": "Ingress",
+      "owner": "Helm",
+      "bindings": [
+        {
+          "service": "open-webui",
+          "namespace": "ai",
+          "backendPort": "http",
+          "mode": "HTTPS",
+          "entryPoint": "websecure"
+        }
+      ]
+    },
+    {
+      "name": "mcp-gateway",
+      "namespace": "automation",
+      "kind": "Ingress",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "mcp-gateway",
+          "namespace": "automation",
+          "backendPort": "mcp",
+          "mode": "HTTPS",
+          "entryPoint": "websecure"
+        },
+        {
+          "service": "mcp-gateway",
+          "namespace": "automation",
+          "backendPort": "mcp",
+          "mode": "HTTPS",
+          "entryPoint": "websecure"
+        },
+        {
+          "service": "mcp-gateway",
+          "namespace": "automation",
+          "backendPort": "mcp",
+          "mode": "HTTPS",
+          "entryPoint": "websecure"
+        },
+        {
+          "service": "mcp-gateway",
+          "namespace": "automation",
+          "backendPort": "mcp",
+          "mode": "HTTPS",
+          "entryPoint": "websecure"
+        }
+      ]
+    },
+    {
+      "name": "rancher",
+      "namespace": "cattle-system",
+      "kind": "Ingress",
+      "owner": "Helm",
+      "bindings": [
+        {
+          "service": "rancher",
+          "namespace": "cattle-system",
+          "backendPort": "80",
+          "mode": "HTTPS",
+          "entryPoint": "websecure"
+        }
+      ]
+    },
+    {
+      "name": "harbor-ingress",
+      "namespace": "harbor",
+      "kind": "Ingress",
+      "owner": "Helm",
+      "bindings": [
+        {
+          "service": "harbor-core",
+          "namespace": "harbor",
+          "backendPort": "80",
+          "mode": "HTTPS",
+          "entryPoint": "websecure"
+        },
+        {
+          "service": "harbor-core",
+          "namespace": "harbor",
+          "backendPort": "80",
+          "mode": "HTTPS",
+          "entryPoint": "websecure"
+        },
+        {
+          "service": "harbor-core",
+          "namespace": "harbor",
+          "backendPort": "80",
+          "mode": "HTTPS",
+          "entryPoint": "websecure"
+        },
+        {
+          "service": "harbor-core",
+          "namespace": "harbor",
+          "backendPort": "80",
+          "mode": "HTTPS",
+          "entryPoint": "websecure"
+        },
+        {
+          "service": "harbor-portal",
+          "namespace": "harbor",
+          "backendPort": "80",
+          "mode": "HTTPS",
+          "entryPoint": "websecure"
+        }
+      ]
+    },
+    {
+      "name": "home-assistant",
+      "namespace": "home-assistant",
+      "kind": "Ingress",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "home-assistant",
+          "namespace": "home-assistant",
+          "backendPort": "http",
+          "mode": "HTTPS",
+          "entryPoint": "websecure"
+        }
+      ]
+    },
+    {
+      "name": "plex-manager",
+      "namespace": "plex-manager",
+      "kind": "Ingress",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "plex-manager",
+          "namespace": "plex-manager",
+          "backendPort": "8181",
+          "mode": "HTTPS",
+          "entryPoint": "websecure"
+        }
+      ]
+    },
+    {
+      "name": "speedtester",
+      "namespace": "speedtester",
+      "kind": "Ingress",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "speedtest-tracker",
+          "namespace": "speedtester",
+          "backendPort": "80",
+          "mode": "HTTPS",
+          "entryPoint": "websecure"
+        }
+      ]
+    },
+    {
+      "name": "torrent",
+      "namespace": "torrent",
+      "kind": "Ingress",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "torrent",
+          "namespace": "torrent",
+          "backendPort": "8090",
+          "mode": "HTTPS",
+          "entryPoint": "websecure"
+        }
+      ]
+    },
+    {
+      "name": "omada",
+      "namespace": "omada",
+      "kind": "IngressRoute",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "omada",
+          "namespace": "omada",
+          "backendPort": "443",
+          "mode": "HTTPS",
+          "entryPoint": "websecure"
+        }
+      ]
+    },
+    {
+      "name": "prod-realtime-gateway",
+      "namespace": "prod-realtime",
+      "kind": "IngressRoute",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "prod-realtime-gateway",
+          "namespace": "prod-realtime",
+          "backendPort": "http",
+          "mode": "HTTPS",
+          "entryPoint": "websecure"
+        },
+        {
+          "service": "prod-realtime-gateway",
+          "namespace": "prod-realtime",
+          "backendPort": "http",
+          "mode": "HTTPS",
+          "entryPoint": "websecure"
+        }
+      ]
+    },
+    {
+      "name": "synology-media",
+      "namespace": "synology-media",
+      "kind": "IngressRoute",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "synology-media",
+          "namespace": "synology-media",
+          "backendPort": "443",
+          "mode": "HTTPS",
+          "entryPoint": "websecure"
+        }
+      ]
+    },
+    {
+      "name": "windows-admin-center",
+      "namespace": "windows-admin-center",
+      "kind": "IngressRoute",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "windows-admin-center",
+          "namespace": "windows-admin-center",
+          "backendPort": "443",
+          "mode": "HTTPS",
+          "entryPoint": "websecure"
+        }
+      ]
+    },
+    {
+      "name": "omada-adoption",
+      "namespace": "omada",
+      "kind": "IngressRouteTCP",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "omada",
+          "namespace": "omada",
+          "backendPort": "29814",
+          "mode": "TCP",
+          "entryPoint": "omada-adoption"
+        }
+      ]
+    },
+    {
+      "name": "omada-device-info",
+      "namespace": "omada",
+      "kind": "IngressRouteTCP",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "omada",
+          "namespace": "omada",
+          "backendPort": "29815",
+          "mode": "TCP",
+          "entryPoint": "omada-info"
+        }
+      ]
+    },
+    {
+      "name": "omada-firmware",
+      "namespace": "omada",
+      "kind": "IngressRouteTCP",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "omada",
+          "namespace": "omada",
+          "backendPort": "8043",
+          "mode": "TLS",
+          "entryPoint": "omada-firmware"
+        }
+      ]
+    },
+    {
+      "name": "omada-legacy-adopt",
+      "namespace": "omada",
+      "kind": "IngressRouteTCP",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "omada",
+          "namespace": "omada",
+          "backendPort": "29812",
+          "mode": "TCP",
+          "entryPoint": "omada-legacy2"
+        }
+      ]
+    },
+    {
+      "name": "omada-legacy-manage",
+      "namespace": "omada",
+      "kind": "IngressRouteTCP",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "omada",
+          "namespace": "omada",
+          "backendPort": "29811",
+          "mode": "TCP",
+          "entryPoint": "omada-legacy1"
+        }
+      ]
+    },
+    {
+      "name": "omada-legacy-upgrade",
+      "namespace": "omada",
+      "kind": "IngressRouteTCP",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "omada",
+          "namespace": "omada",
+          "backendPort": "29813",
+          "mode": "TCP",
+          "entryPoint": "omada-legacy3"
+        }
+      ]
+    },
+    {
+      "name": "omada-monitor",
+      "namespace": "omada",
+      "kind": "IngressRouteTCP",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "omada",
+          "namespace": "omada",
+          "backendPort": "29817",
+          "mode": "TCP",
+          "entryPoint": "omada-monitor"
+        }
+      ]
+    },
+    {
+      "name": "omada-portal-http",
+      "namespace": "omada",
+      "kind": "IngressRouteTCP",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "omada",
+          "namespace": "omada",
+          "backendPort": "8088",
+          "mode": "TCP",
+          "entryPoint": "omada-http"
+        }
+      ]
+    },
+    {
+      "name": "omada-portal-https",
+      "namespace": "omada",
+      "kind": "IngressRouteTCP",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "omada",
+          "namespace": "omada",
+          "backendPort": "8843",
+          "mode": "TLS",
+          "entryPoint": "omada-https"
+        }
+      ]
+    },
+    {
+      "name": "omada-terminal",
+      "namespace": "omada",
+      "kind": "IngressRouteTCP",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "omada",
+          "namespace": "omada",
+          "backendPort": "29816",
+          "mode": "TCP",
+          "entryPoint": "omada-terminal"
+        }
+      ]
+    },
+    {
+      "name": "redis-edge",
+      "namespace": "prod-realtime",
+      "kind": "IngressRouteTCP",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "prod-realtime-redis-master",
+          "namespace": "prod-realtime",
+          "backendPort": "6379",
+          "mode": "TLS",
+          "entryPoint": "redis"
+        }
+      ]
+    },
+    {
+      "name": "synology-media-nfs",
+      "namespace": "synology-media",
+      "kind": "IngressRouteTCP",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "synology-media-nfs",
+          "namespace": "synology-media",
+          "backendPort": "2049",
+          "mode": "TCP",
+          "entryPoint": "nfs"
+        }
+      ]
+    },
+    {
+      "name": "synology-media-nfs-lock",
+      "namespace": "synology-media",
+      "kind": "IngressRouteTCP",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "synology-media-nfs",
+          "namespace": "synology-media",
+          "backendPort": "49033",
+          "mode": "TCP",
+          "entryPoint": "nfs-lock"
+        }
+      ]
+    },
+    {
+      "name": "synology-media-nfs-mount",
+      "namespace": "synology-media",
+      "kind": "IngressRouteTCP",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "synology-media-nfs",
+          "namespace": "synology-media",
+          "backendPort": "892",
+          "mode": "TCP",
+          "entryPoint": "nfs-mount"
+        }
+      ]
+    },
+    {
+      "name": "synology-media-nfs-rpc",
+      "namespace": "synology-media",
+      "kind": "IngressRouteTCP",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "synology-media-nfs",
+          "namespace": "synology-media",
+          "backendPort": "111",
+          "mode": "TCP",
+          "entryPoint": "nfs-rpc"
+        }
+      ]
+    },
+    {
+      "name": "synology-media-nfs-stat",
+      "namespace": "synology-media",
+      "kind": "IngressRouteTCP",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "synology-media-nfs",
+          "namespace": "synology-media",
+          "backendPort": "55841",
+          "mode": "TCP",
+          "entryPoint": "nfs-stat"
+        }
+      ]
+    },
+    {
+      "name": "synology-media-smb",
+      "namespace": "synology-media",
+      "kind": "IngressRouteTCP",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "synology-media-smb",
+          "namespace": "synology-media",
+          "backendPort": "445",
+          "mode": "TCP",
+          "entryPoint": "smb"
+        }
+      ]
+    },
+    {
+      "name": "omada-discovery",
+      "namespace": "omada",
+      "kind": "IngressRouteUDP",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "omada",
+          "namespace": "omada",
+          "backendPort": "29810",
+          "mode": "UDP",
+          "entryPoint": "omada-discovery"
+        }
+      ]
+    },
+    {
+      "name": "synology-media-nfs-lock-udp",
+      "namespace": "synology-media",
+      "kind": "IngressRouteUDP",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "synology-media-nfs",
+          "namespace": "synology-media",
+          "backendPort": "48936",
+          "mode": "UDP",
+          "entryPoint": "nfs-lock-udp"
+        }
+      ]
+    },
+    {
+      "name": "synology-media-nfs-mount-udp",
+      "namespace": "synology-media",
+      "kind": "IngressRouteUDP",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "synology-media-nfs",
+          "namespace": "synology-media",
+          "backendPort": "892",
+          "mode": "UDP",
+          "entryPoint": "nfs-mount-udp"
+        }
+      ]
+    },
+    {
+      "name": "synology-media-nfs-rpc-udp",
+      "namespace": "synology-media",
+      "kind": "IngressRouteUDP",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "synology-media-nfs",
+          "namespace": "synology-media",
+          "backendPort": "111",
+          "mode": "UDP",
+          "entryPoint": "nfs-rpc-udp"
+        }
+      ]
+    },
+    {
+      "name": "synology-media-nfs-stat-udp",
+      "namespace": "synology-media",
+      "kind": "IngressRouteUDP",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "synology-media-nfs",
+          "namespace": "synology-media",
+          "backendPort": "59005",
+          "mode": "UDP",
+          "entryPoint": "nfs-stat-udp"
+        }
+      ]
+    },
+    {
+      "name": "synology-media-nfs-udp",
+      "namespace": "synology-media",
+      "kind": "IngressRouteUDP",
+      "owner": "Not identified in snapshot",
+      "bindings": [
+        {
+          "service": "synology-media-nfs",
+          "namespace": "synology-media",
+          "backendPort": "2049",
+          "mode": "UDP",
+          "entryPoint": "nfs-udp"
+        }
+      ]
+    }
+  ]
+}

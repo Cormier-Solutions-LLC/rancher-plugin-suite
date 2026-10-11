@@ -1,0 +1,214 @@
+{
+  "observedDate": "2026-10-11",
+  "certificates": [
+    {
+      "name": "open-webui-tls",
+      "namespace": "ai",
+      "secretName": "open-webui-tls",
+      "issuer": "letsencrypt-prod",
+      "issuerKind": "ClusterIssuer",
+      "hosts": [
+        "ai.cormierconsulting.io"
+      ],
+      "ready": "True",
+      "revision": 1
+    },
+    {
+      "name": "mcp-gateway-tls",
+      "namespace": "automation",
+      "secretName": "mcp-gateway-tls",
+      "issuer": "letsencrypt-prod",
+      "issuerKind": "ClusterIssuer",
+      "hosts": [
+        "mcp.cormierconsulting.io",
+        "mcp-admin.cormierconsulting.io",
+        "mcp-observe.cormierconsulting.io",
+        "mcp-phone.cormierconsulting.io"
+      ],
+      "ready": "True",
+      "revision": 4
+    },
+    {
+      "name": "rancher-tls",
+      "namespace": "cattle-system",
+      "secretName": "tls-rancher-ingress",
+      "issuer": "letsencrypt-prod",
+      "issuerKind": "ClusterIssuer",
+      "hosts": [
+        "rancher.cormierconsulting.io"
+      ],
+      "ready": "True",
+      "revision": 1
+    },
+    {
+      "name": "godaddy-webhook-ca",
+      "namespace": "cert-manager",
+      "secretName": "godaddy-webhook-ca",
+      "issuer": "godaddy-webhook-selfsign",
+      "issuerKind": null,
+      "hosts": [
+        null
+      ],
+      "ready": "True",
+      "revision": 1
+    },
+    {
+      "name": "godaddy-webhook-webhook-tls",
+      "namespace": "cert-manager",
+      "secretName": "godaddy-webhook-webhook-tls",
+      "issuer": "godaddy-webhook-ca",
+      "issuerKind": null,
+      "hosts": [
+        "godaddy-webhook",
+        "godaddy-webhook.cert-manager",
+        "godaddy-webhook.cert-manager.svc"
+      ],
+      "ready": "True",
+      "revision": 1
+    },
+    {
+      "name": "harbor-cormierconsulting-io",
+      "namespace": "harbor",
+      "secretName": "harbor-cormierconsulting-io-tls",
+      "issuer": "letsencrypt-prod",
+      "issuerKind": "ClusterIssuer",
+      "hosts": [
+        "harbor.cormierconsulting.io"
+      ],
+      "ready": "True",
+      "revision": 1
+    },
+    {
+      "name": "home-assistant-tls",
+      "namespace": "home-assistant",
+      "secretName": "home-assistant-tls",
+      "issuer": "letsencrypt-prod",
+      "issuerKind": "ClusterIssuer",
+      "hosts": [
+        "home-assistant.cormierconsulting.io"
+      ],
+      "ready": "True",
+      "revision": 2
+    },
+    {
+      "name": "omada-cormierconsulting-io",
+      "namespace": "omada",
+      "secretName": "omada-cormierconsulting-io-tls",
+      "issuer": "letsencrypt-prod",
+      "issuerKind": "ClusterIssuer",
+      "hosts": [
+        "omada.cormierconsulting.io"
+      ],
+      "ready": "True",
+      "revision": 1
+    },
+    {
+      "name": "plex-manager-tls",
+      "namespace": "plex-manager",
+      "secretName": "plex-manager-tls",
+      "issuer": "letsencrypt-prod",
+      "issuerKind": "ClusterIssuer",
+      "hosts": [
+        "plex-manager.cormierconsulting.io"
+      ],
+      "ready": "True",
+      "revision": 1
+    },
+    {
+      "name": "plex-server-tls",
+      "namespace": "plex-server",
+      "secretName": "plex-server-tls",
+      "issuer": "letsencrypt-prod",
+      "issuerKind": "ClusterIssuer",
+      "hosts": [
+        "plex-server.cormierconsulting.io"
+      ],
+      "ready": "True",
+      "revision": 1
+    },
+    {
+      "name": "gateway-cormierconsulting-io",
+      "namespace": "prod-realtime",
+      "secretName": "gateway-cormierconsulting-io-tls",
+      "issuer": "letsencrypt-prod",
+      "issuerKind": "ClusterIssuer",
+      "hosts": [
+        "gateway.cormierconsulting.io"
+      ],
+      "ready": "True",
+      "revision": 1
+    },
+    {
+      "name": "realtime-cormierconsulting-io",
+      "namespace": "prod-realtime",
+      "secretName": "realtime-cormierconsulting-io-tls",
+      "issuer": "letsencrypt-prod",
+      "issuerKind": "ClusterIssuer",
+      "hosts": [
+        "realtime.cormierconsulting.io"
+      ],
+      "ready": "True",
+      "revision": 1
+    },
+    {
+      "name": "speedtester-tls",
+      "namespace": "speedtester",
+      "secretName": "speedtester-tls",
+      "issuer": "letsencrypt-prod",
+      "issuerKind": "ClusterIssuer",
+      "hosts": [
+        "speedtester.cormierconsulting.io"
+      ],
+      "ready": "True",
+      "revision": 1
+    },
+    {
+      "name": "media-cormierconsulting-io",
+      "namespace": "synology-media",
+      "secretName": "media-cormierconsulting-io-tls",
+      "issuer": "letsencrypt-prod",
+      "issuerKind": "ClusterIssuer",
+      "hosts": [
+        "media.cormierconsulting.io"
+      ],
+      "ready": "True",
+      "revision": 1
+    },
+    {
+      "name": "torrent-tls",
+      "namespace": "torrent",
+      "secretName": "torrent-tls",
+      "issuer": "letsencrypt-prod",
+      "issuerKind": "ClusterIssuer",
+      "hosts": [
+        "torrent.cormierconsulting.io"
+      ],
+      "ready": "True",
+      "revision": 1
+    },
+    {
+      "name": "traefik-manager-tls",
+      "namespace": "traefik-system",
+      "secretName": "traefik-manager-tls",
+      "issuer": "letsencrypt-prod",
+      "issuerKind": "ClusterIssuer",
+      "hosts": [
+        "traefik.cormierconsulting.io"
+      ],
+      "ready": "True",
+      "revision": 1
+    },
+    {
+      "name": "windows-cormierconsulting-io",
+      "namespace": "windows-admin-center",
+      "secretName": "windows-cormierconsulting-io-tls",
+      "issuer": "letsencrypt-prod",
+      "issuerKind": "ClusterIssuer",
+      "hosts": [
+        "windows.cormierconsulting.io"
+      ],
+      "ready": "True",
+      "revision": 1
+    }
+  ]
+}

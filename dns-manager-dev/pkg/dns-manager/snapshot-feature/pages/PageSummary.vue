@@ -1,0 +1,1 @@
+<script setup lang="ts">defineProps<{count?:number;label?:string;help:string;tone?:string}>();</script><template><span class="snapshot-summary" :title="help">{{ count }} {{ label }}</span></template>

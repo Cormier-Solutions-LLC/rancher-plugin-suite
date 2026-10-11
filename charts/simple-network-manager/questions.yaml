@@ -1,0 +1,12 @@
+questions:
+  - variable: plugin.endpoint
+    label: Extension assets URL
+    description: Published extension directory containing files.txt and plugin/; reachable by Rancher.
+    type: string
+    required: true
+    group: Extension
+  - variable: plugin.compressedEndpoint
+    label: Compressed extension assets URL
+    description: Optional URL of the same version's compressed extension archive.
+    type: string
+    group: Extension

@@ -1,0 +1,1131 @@
+{
+  "resources": [
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "Ingress",
+      "metadata": {
+        "name": "open-webui",
+        "namespace": "ai"
+      },
+      "spec": {
+        "ingressClassName": "traefik",
+        "rules": [
+          {
+            "host": "ai.cormierconsulting.io",
+            "http": {
+              "paths": [
+                {
+                  "backend": {
+                    "service": {
+                      "name": "open-webui",
+                      "port": {
+                        "name": "http"
+                      }
+                    }
+                  },
+                  "path": "/",
+                  "pathType": "Prefix"
+                }
+              ]
+            }
+          }
+        ],
+        "tls": [
+          {
+            "hosts": [
+              "ai.cormierconsulting.io"
+            ],
+            "secretName": "open-webui-tls"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "Ingress",
+      "metadata": {
+        "name": "mcp-gateway",
+        "namespace": "automation"
+      },
+      "spec": {
+        "ingressClassName": "traefik",
+        "rules": [
+          {
+            "host": "mcp.cormierconsulting.io",
+            "http": {
+              "paths": [
+                {
+                  "backend": {
+                    "service": {
+                      "name": "mcp-gateway",
+                      "port": {
+                        "name": "mcp"
+                      }
+                    }
+                  },
+                  "path": "/mcp",
+                  "pathType": "Exact"
+                }
+              ]
+            }
+          },
+          {
+            "host": "mcp-admin.cormierconsulting.io",
+            "http": {
+              "paths": [
+                {
+                  "backend": {
+                    "service": {
+                      "name": "mcp-gateway",
+                      "port": {
+                        "name": "mcp"
+                      }
+                    }
+                  },
+                  "path": "/mcp",
+                  "pathType": "Exact"
+                }
+              ]
+            }
+          },
+          {
+            "host": "mcp-observe.cormierconsulting.io",
+            "http": {
+              "paths": [
+                {
+                  "backend": {
+                    "service": {
+                      "name": "mcp-gateway",
+                      "port": {
+                        "name": "mcp"
+                      }
+                    }
+                  },
+                  "path": "/mcp",
+                  "pathType": "Exact"
+                }
+              ]
+            }
+          },
+          {
+            "host": "mcp-phone.cormierconsulting.io",
+            "http": {
+              "paths": [
+                {
+                  "backend": {
+                    "service": {
+                      "name": "mcp-gateway",
+                      "port": {
+                        "name": "mcp"
+                      }
+                    }
+                  },
+                  "path": "/mcp",
+                  "pathType": "Exact"
+                }
+              ]
+            }
+          }
+        ],
+        "tls": [
+          {
+            "hosts": [
+              "mcp.cormierconsulting.io",
+              "mcp-admin.cormierconsulting.io",
+              "mcp-observe.cormierconsulting.io",
+              "mcp-phone.cormierconsulting.io"
+            ],
+            "secretName": "mcp-gateway-tls"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "Ingress",
+      "metadata": {
+        "name": "rancher",
+        "namespace": "cattle-system"
+      },
+      "spec": {
+        "rules": [
+          {
+            "host": "rancher.cormierconsulting.io",
+            "http": {
+              "paths": [
+                {
+                  "backend": {
+                    "service": {
+                      "name": "rancher",
+                      "port": {
+                        "number": 80
+                      }
+                    }
+                  },
+                  "path": "/",
+                  "pathType": "ImplementationSpecific"
+                }
+              ]
+            }
+          }
+        ],
+        "tls": [
+          {
+            "hosts": [
+              "rancher.cormierconsulting.io"
+            ],
+            "secretName": "tls-rancher-ingress"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "Ingress",
+      "metadata": {
+        "name": "harbor-ingress",
+        "namespace": "harbor"
+      },
+      "spec": {
+        "ingressClassName": "traefik",
+        "rules": [
+          {
+            "host": "harbor.cormierconsulting.io",
+            "http": {
+              "paths": [
+                {
+                  "backend": {
+                    "service": {
+                      "name": "harbor-core",
+                      "port": {
+                        "number": 80
+                      }
+                    }
+                  },
+                  "path": "/api/",
+                  "pathType": "Prefix"
+                },
+                {
+                  "backend": {
+                    "service": {
+                      "name": "harbor-core",
+                      "port": {
+                        "number": 80
+                      }
+                    }
+                  },
+                  "path": "/service/",
+                  "pathType": "Prefix"
+                },
+                {
+                  "backend": {
+                    "service": {
+                      "name": "harbor-core",
+                      "port": {
+                        "number": 80
+                      }
+                    }
+                  },
+                  "path": "/v2/",
+                  "pathType": "Prefix"
+                },
+                {
+                  "backend": {
+                    "service": {
+                      "name": "harbor-core",
+                      "port": {
+                        "number": 80
+                      }
+                    }
+                  },
+                  "path": "/c/",
+                  "pathType": "Prefix"
+                },
+                {
+                  "backend": {
+                    "service": {
+                      "name": "harbor-portal",
+                      "port": {
+                        "number": 80
+                      }
+                    }
+                  },
+                  "path": "/",
+                  "pathType": "Prefix"
+                }
+              ]
+            }
+          }
+        ],
+        "tls": [
+          {
+            "hosts": [
+              "harbor.cormierconsulting.io"
+            ],
+            "secretName": "harbor-cormierconsulting-io-tls"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "Ingress",
+      "metadata": {
+        "name": "home-assistant",
+        "namespace": "home-assistant"
+      },
+      "spec": {
+        "ingressClassName": "traefik",
+        "rules": [
+          {
+            "host": "home-assistant.cormierconsulting.io",
+            "http": {
+              "paths": [
+                {
+                  "backend": {
+                    "service": {
+                      "name": "home-assistant",
+                      "port": {
+                        "name": "http"
+                      }
+                    }
+                  },
+                  "path": "/",
+                  "pathType": "Prefix"
+                }
+              ]
+            }
+          }
+        ],
+        "tls": [
+          {
+            "hosts": [
+              "home-assistant.cormierconsulting.io"
+            ],
+            "secretName": "home-assistant-tls"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "Ingress",
+      "metadata": {
+        "name": "plex-manager",
+        "namespace": "plex-manager"
+      },
+      "spec": {
+        "ingressClassName": "traefik",
+        "rules": [
+          {
+            "host": "plex-manager.cormierconsulting.io",
+            "http": {
+              "paths": [
+                {
+                  "backend": {
+                    "service": {
+                      "name": "plex-manager",
+                      "port": {
+                        "number": 8181
+                      }
+                    }
+                  },
+                  "path": "/",
+                  "pathType": "Prefix"
+                }
+              ]
+            }
+          }
+        ],
+        "tls": [
+          {
+            "hosts": [
+              "plex-manager.cormierconsulting.io"
+            ],
+            "secretName": "plex-manager-tls"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "Ingress",
+      "metadata": {
+        "name": "speedtester",
+        "namespace": "speedtester"
+      },
+      "spec": {
+        "ingressClassName": "traefik",
+        "rules": [
+          {
+            "host": "speedtester.cormierconsulting.io",
+            "http": {
+              "paths": [
+                {
+                  "backend": {
+                    "service": {
+                      "name": "speedtest-tracker",
+                      "port": {
+                        "number": 80
+                      }
+                    }
+                  },
+                  "path": "/",
+                  "pathType": "Prefix"
+                }
+              ]
+            }
+          }
+        ],
+        "tls": [
+          {
+            "hosts": [
+              "speedtester.cormierconsulting.io"
+            ],
+            "secretName": "speedtester-tls"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "Ingress",
+      "metadata": {
+        "name": "torrent",
+        "namespace": "torrent"
+      },
+      "spec": {
+        "ingressClassName": "traefik",
+        "rules": [
+          {
+            "host": "torrent.cormierconsulting.io",
+            "http": {
+              "paths": [
+                {
+                  "backend": {
+                    "service": {
+                      "name": "torrent",
+                      "port": {
+                        "number": 8090
+                      }
+                    }
+                  },
+                  "path": "/",
+                  "pathType": "Prefix"
+                }
+              ]
+            }
+          }
+        ],
+        "tls": [
+          {
+            "hosts": [
+              "torrent.cormierconsulting.io"
+            ],
+            "secretName": "torrent-tls"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRoute",
+      "metadata": {
+        "name": "omada",
+        "namespace": "omada"
+      },
+      "spec": {
+        "entryPoints": [
+          "websecure"
+        ],
+        "routes": [
+          {
+            "kind": "Rule",
+            "match": "Host(`omada.cormierconsulting.io`)",
+            "services": [
+              {
+                "name": "omada",
+                "port": 443,
+                "scheme": "https",
+                "serversTransport": "omada"
+              }
+            ]
+          }
+        ],
+        "tls": {
+          "secretName": "omada-cormierconsulting-io-tls"
+        }
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRoute",
+      "metadata": {
+        "name": "prod-realtime-gateway",
+        "namespace": "prod-realtime"
+      },
+      "spec": {
+        "entryPoints": [
+          "websecure"
+        ],
+        "routes": [
+          {
+            "kind": "Rule",
+            "match": "Host(`gateway.cormierconsulting.io`) && Path(`/realtime/tickets`)",
+            "services": [
+              {
+                "name": "prod-realtime-gateway",
+                "port": "http",
+                "responseForwarding": {
+                  "flushInterval": "-1ms"
+                }
+              }
+            ]
+          },
+          {
+            "kind": "Rule",
+            "match": "Host(`gateway.cormierconsulting.io`) && Path(`/realtime/ws`)",
+            "services": [
+              {
+                "name": "prod-realtime-gateway",
+                "port": "http",
+                "responseForwarding": {
+                  "flushInterval": "-1ms"
+                }
+              }
+            ]
+          }
+        ],
+        "tls": {
+          "secretName": "gateway-cormierconsulting-io-tls"
+        }
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRoute",
+      "metadata": {
+        "name": "synology-media",
+        "namespace": "synology-media"
+      },
+      "spec": {
+        "entryPoints": [
+          "websecure"
+        ],
+        "routes": [
+          {
+            "kind": "Rule",
+            "match": "Host(`media.cormierconsulting.io`)",
+            "middlewares": [
+              {
+                "name": "synology-media-retry"
+              }
+            ],
+            "services": [
+              {
+                "name": "synology-media",
+                "port": 443,
+                "scheme": "https",
+                "serversTransport": "synology-media"
+              }
+            ]
+          }
+        ],
+        "tls": {
+          "secretName": "media-cormierconsulting-io-tls"
+        }
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRoute",
+      "metadata": {
+        "name": "windows-admin-center",
+        "namespace": "windows-admin-center"
+      },
+      "spec": {
+        "entryPoints": [
+          "websecure"
+        ],
+        "routes": [
+          {
+            "kind": "Rule",
+            "match": "Host(`windows.cormierconsulting.io`)",
+            "services": [
+              {
+                "name": "windows-admin-center",
+                "port": 443,
+                "scheme": "https",
+                "serversTransport": "windows-admin-center"
+              }
+            ]
+          }
+        ],
+        "tls": {
+          "secretName": "windows-cormierconsulting-io-tls"
+        }
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRouteTCP",
+      "metadata": {
+        "name": "omada-adoption",
+        "namespace": "omada"
+      },
+      "spec": {
+        "entryPoints": [
+          "omada-adoption"
+        ],
+        "routes": [
+          {
+            "match": "HostSNI(`*`)",
+            "services": [
+              {
+                "name": "omada",
+                "port": 29814
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRouteTCP",
+      "metadata": {
+        "name": "omada-device-info",
+        "namespace": "omada"
+      },
+      "spec": {
+        "entryPoints": [
+          "omada-info"
+        ],
+        "routes": [
+          {
+            "match": "HostSNI(`*`)",
+            "services": [
+              {
+                "name": "omada",
+                "port": 29815
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRouteTCP",
+      "metadata": {
+        "name": "omada-firmware",
+        "namespace": "omada"
+      },
+      "spec": {
+        "entryPoints": [
+          "omada-firmware"
+        ],
+        "routes": [
+          {
+            "match": "HostSNI(`*`)",
+            "services": [
+              {
+                "name": "omada",
+                "port": 8043
+              }
+            ]
+          }
+        ],
+        "tls": {
+          "passthrough": true
+        }
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRouteTCP",
+      "metadata": {
+        "name": "omada-legacy-adopt",
+        "namespace": "omada"
+      },
+      "spec": {
+        "entryPoints": [
+          "omada-legacy2"
+        ],
+        "routes": [
+          {
+            "match": "HostSNI(`*`)",
+            "services": [
+              {
+                "name": "omada",
+                "port": 29812
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRouteTCP",
+      "metadata": {
+        "name": "omada-legacy-manage",
+        "namespace": "omada"
+      },
+      "spec": {
+        "entryPoints": [
+          "omada-legacy1"
+        ],
+        "routes": [
+          {
+            "match": "HostSNI(`*`)",
+            "services": [
+              {
+                "name": "omada",
+                "port": 29811
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRouteTCP",
+      "metadata": {
+        "name": "omada-legacy-upgrade",
+        "namespace": "omada"
+      },
+      "spec": {
+        "entryPoints": [
+          "omada-legacy3"
+        ],
+        "routes": [
+          {
+            "match": "HostSNI(`*`)",
+            "services": [
+              {
+                "name": "omada",
+                "port": 29813
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRouteTCP",
+      "metadata": {
+        "name": "omada-monitor",
+        "namespace": "omada"
+      },
+      "spec": {
+        "entryPoints": [
+          "omada-monitor"
+        ],
+        "routes": [
+          {
+            "match": "HostSNI(`*`)",
+            "services": [
+              {
+                "name": "omada",
+                "port": 29817
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRouteTCP",
+      "metadata": {
+        "name": "omada-portal-http",
+        "namespace": "omada"
+      },
+      "spec": {
+        "entryPoints": [
+          "omada-http"
+        ],
+        "routes": [
+          {
+            "match": "HostSNI(`*`)",
+            "services": [
+              {
+                "name": "omada",
+                "port": 8088
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRouteTCP",
+      "metadata": {
+        "name": "omada-portal-https",
+        "namespace": "omada"
+      },
+      "spec": {
+        "entryPoints": [
+          "omada-https"
+        ],
+        "routes": [
+          {
+            "match": "HostSNI(`*`)",
+            "services": [
+              {
+                "name": "omada",
+                "port": 8843
+              }
+            ]
+          }
+        ],
+        "tls": {
+          "passthrough": true
+        }
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRouteTCP",
+      "metadata": {
+        "name": "omada-terminal",
+        "namespace": "omada"
+      },
+      "spec": {
+        "entryPoints": [
+          "omada-terminal"
+        ],
+        "routes": [
+          {
+            "match": "HostSNI(`*`)",
+            "services": [
+              {
+                "name": "omada",
+                "port": 29816
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRouteTCP",
+      "metadata": {
+        "name": "redis-edge",
+        "namespace": "prod-realtime"
+      },
+      "spec": {
+        "entryPoints": [
+          "redis"
+        ],
+        "routes": [
+          {
+            "match": "HostSNI(`realtime.cormierconsulting.io`)",
+            "services": [
+              {
+                "name": "prod-realtime-redis-master",
+                "nativeLB": true,
+                "port": 6379
+              }
+            ]
+          }
+        ],
+        "tls": {
+          "options": {
+            "name": "redis-edge",
+            "namespace": "prod-realtime"
+          },
+          "passthrough": false,
+          "secretName": "realtime-cormierconsulting-io-tls"
+        }
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRouteTCP",
+      "metadata": {
+        "name": "synology-media-nfs",
+        "namespace": "synology-media"
+      },
+      "spec": {
+        "entryPoints": [
+          "nfs"
+        ],
+        "routes": [
+          {
+            "match": "HostSNI(`*`)",
+            "services": [
+              {
+                "name": "synology-media-nfs",
+                "port": 2049
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRouteTCP",
+      "metadata": {
+        "name": "synology-media-nfs-lock",
+        "namespace": "synology-media"
+      },
+      "spec": {
+        "entryPoints": [
+          "nfs-lock"
+        ],
+        "routes": [
+          {
+            "match": "HostSNI(`*`)",
+            "services": [
+              {
+                "name": "synology-media-nfs",
+                "port": 49033
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRouteTCP",
+      "metadata": {
+        "name": "synology-media-nfs-mount",
+        "namespace": "synology-media"
+      },
+      "spec": {
+        "entryPoints": [
+          "nfs-mount"
+        ],
+        "routes": [
+          {
+            "match": "HostSNI(`*`)",
+            "services": [
+              {
+                "name": "synology-media-nfs",
+                "port": 892
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRouteTCP",
+      "metadata": {
+        "name": "synology-media-nfs-rpc",
+        "namespace": "synology-media"
+      },
+      "spec": {
+        "entryPoints": [
+          "nfs-rpc"
+        ],
+        "routes": [
+          {
+            "match": "HostSNI(`*`)",
+            "services": [
+              {
+                "name": "synology-media-nfs",
+                "port": 111
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRouteTCP",
+      "metadata": {
+        "name": "synology-media-nfs-stat",
+        "namespace": "synology-media"
+      },
+      "spec": {
+        "entryPoints": [
+          "nfs-stat"
+        ],
+        "routes": [
+          {
+            "match": "HostSNI(`*`)",
+            "services": [
+              {
+                "name": "synology-media-nfs",
+                "port": 55841
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRouteTCP",
+      "metadata": {
+        "name": "synology-media-smb",
+        "namespace": "synology-media"
+      },
+      "spec": {
+        "entryPoints": [
+          "smb"
+        ],
+        "routes": [
+          {
+            "match": "HostSNI(`*`)",
+            "services": [
+              {
+                "name": "synology-media-smb",
+                "port": 445
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRouteUDP",
+      "metadata": {
+        "name": "omada-discovery",
+        "namespace": "omada"
+      },
+      "spec": {
+        "entryPoints": [
+          "omada-discovery"
+        ],
+        "routes": [
+          {
+            "services": [
+              {
+                "name": "omada",
+                "port": 29810
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRouteUDP",
+      "metadata": {
+        "name": "synology-media-nfs-lock-udp",
+        "namespace": "synology-media"
+      },
+      "spec": {
+        "entryPoints": [
+          "nfs-lock-udp"
+        ],
+        "routes": [
+          {
+            "services": [
+              {
+                "name": "synology-media-nfs",
+                "port": 48936
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRouteUDP",
+      "metadata": {
+        "name": "synology-media-nfs-mount-udp",
+        "namespace": "synology-media"
+      },
+      "spec": {
+        "entryPoints": [
+          "nfs-mount-udp"
+        ],
+        "routes": [
+          {
+            "services": [
+              {
+                "name": "synology-media-nfs",
+                "port": 892
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRouteUDP",
+      "metadata": {
+        "name": "synology-media-nfs-rpc-udp",
+        "namespace": "synology-media"
+      },
+      "spec": {
+        "entryPoints": [
+          "nfs-rpc-udp"
+        ],
+        "routes": [
+          {
+            "services": [
+              {
+                "name": "synology-media-nfs",
+                "port": 111
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRouteUDP",
+      "metadata": {
+        "name": "synology-media-nfs-stat-udp",
+        "namespace": "synology-media"
+      },
+      "spec": {
+        "entryPoints": [
+          "nfs-stat-udp"
+        ],
+        "routes": [
+          {
+            "services": [
+              {
+                "name": "synology-media-nfs",
+                "port": 59005
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "IngressRouteUDP",
+      "metadata": {
+        "name": "synology-media-nfs-udp",
+        "namespace": "synology-media"
+      },
+      "spec": {
+        "entryPoints": [
+          "nfs-udp"
+        ],
+        "routes": [
+          {
+            "services": [
+              {
+                "name": "synology-media-nfs",
+                "port": 2049
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+**/bin/
+**/obj/
+.state/
+artifacts/
+node_modules/
+dist-preview/
+*.log

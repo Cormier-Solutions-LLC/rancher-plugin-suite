@@ -1,0 +1,39 @@
+/* Limit styling to this extension and its standalone preview shell. */
+:where(.snm, .preview-shell), :where(.snm, .preview-shell) * {
+  scrollbar-width: thin;
+  scrollbar-color: #59697d var(--input-bg, #1c2430);
+}
+:where(.snm, .preview-shell)::-webkit-scrollbar,
+:where(.snm, .preview-shell) *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+:where(.snm, .preview-shell)::-webkit-scrollbar-track,
+:where(.snm, .preview-shell) *::-webkit-scrollbar-track {
+  background: var(--input-bg, #1c2430);
+}
+:where(.snm, .preview-shell)::-webkit-scrollbar-thumb,
+:where(.snm, .preview-shell) *::-webkit-scrollbar-thumb {
+  background: #59697d;
+  border: 2px solid var(--input-bg, #1c2430);
+  border-radius: 8px;
+}
+:where(.snm, .preview-shell)::-webkit-scrollbar-thumb:hover,
+:where(.snm, .preview-shell) *::-webkit-scrollbar-thumb:hover {
+  background: #7a8ba1;
+}
+:where(.snm, .preview-shell)::-webkit-scrollbar-corner,
+:where(.snm, .preview-shell) *::-webkit-scrollbar-corner {
+  background: var(--input-bg, #1c2430);
+}
+:where(.snm, .preview-shell)::-webkit-scrollbar-button,
+:where(.snm, .preview-shell) *::-webkit-scrollbar-button {
+  display: none;
+}
+/* Preserve operating-system contrast choices. */
+@media (forced-colors: active) {
+  :where(.snm, .preview-shell), :where(.snm, .preview-shell) * {
+    scrollbar-color: auto;
+    scrollbar-width: auto;
+  }
+}

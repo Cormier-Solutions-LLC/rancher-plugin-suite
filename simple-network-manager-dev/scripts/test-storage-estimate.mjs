@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {estimateSnapshotStorage} from '../pkg/simple-network-manager/config/storage-estimate.mjs';
+const now=Date.parse('2026-01-31T12:00:00Z');
+const schedule={enabled:true,interval:1,unit:'hours',nextRun:'2026-01-31T13:00:00Z'};
+assert.deepEqual(estimateSnapshotStorage(2500,1000,schedule,now),{capacity:2,runOutAt:'2026-01-31T15:00:00.000Z',reason:''});
+assert.equal(estimateSnapshotStorage(500,1000,schedule,now).runOutAt,'2026-01-31T13:00:00.000Z');
+assert.equal(estimateSnapshotStorage(500,0,schedule,now).reason,'Save A Snapshot To Estimate Usage');
+assert.equal(estimateSnapshotStorage(500,1000,{...schedule,enabled:false},now).runOutAt,null);
+assert.equal(estimateSnapshotStorage(2100,1000,{...schedule,unit:'months',nextRun:'2026-01-31T12:00:00Z'},now).runOutAt,'2026-03-28T12:00:00.000Z','Month-end scheduling keeps calendar clamps.');
+assert.equal(estimateSnapshotStorage(1e15,1,{...schedule,unit:'months'},now).reason,'Beyond Supported Date Range');
+console.log('Storage estimates passed: remaining capacity, first failed scheduled capture, disabled/unknown states and calendar month boundaries.');

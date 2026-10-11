@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/LookupPolicy/LookupPolicy.csproj" />
+    <Reference Update="DnsServerCore.ApplicationCommon"><Private>true</Private></Reference>
+    <Reference Update="TechnitiumLibrary"><Private>true</Private></Reference>
+    <Reference Update="TechnitiumLibrary.Net"><Private>true</Private></Reference>
+    <Reference Update="TechnitiumLibrary.IO"><Private>true</Private></Reference>
+  </ItemGroup>
+  <Target Name="CopyDnsAppDependencyManifest" AfterTargets="Build">
+    <Copy SourceFiles="../../src/LookupPolicy/bin/$(Configuration)/$(TargetFramework)/Cormier.Dns.LookupPolicy.deps.json"
+          DestinationFolder="$(TargetDir)" />
+  </Target>
+</Project>

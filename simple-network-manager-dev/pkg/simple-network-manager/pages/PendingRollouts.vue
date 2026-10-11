@@ -1,0 +1,52 @@
+<script setup lang="ts">
+import { redactSecrets } from '../config/snapshot-secrets.mjs';
+import { contextMatches } from '../data/namespace-context';
+import DataGrid from './DataGrid.vue';
+import BulkActions from './BulkActions.vue';
+import PageActions from './PageActions.vue';
+import PageSummary from './PageSummary.vue';
+import SnapshotGate from './SnapshotGate.vue';
+import ResourceLink from './ResourceLink.vue';
+import { captureScheduleSource } from '../data/snapshot-schedule';
+import { applyPreviewChanges } from '../data/running-processes';
+import { displaySettings } from '../data/display-settings';
+import InventoryFilters from './InventoryFilters.vue';
+import { computed, ref, watch } from 'vue';
+import { pendingChanges, pendingCount } from '../data/pending-rollouts';
+import { manifestYaml } from '../config/manifest-yaml.mjs';
+import RolloutHistory from './RolloutHistory.vue';
+import ActionIcon from './ActionIcon.vue';
+import { inventoryDatasets } from '../data/inventory';
+const inventory = inventoryDatasets['publication-snapshot.json'];
+import { configurationRollouts } from '../data/publications';
+import { rolloutExamples } from '../data/rollout-examples';
+const selected = ref('');
+const namespaceFilter = ref('__all__');
+const search = ref('');
+const groupByNamespace = ref(false);
+const namespaceOptions = computed(() => [...new Set([...inventory.namespaces, ...pendingChanges.map(change => change.namespace), ...configurationRollouts.flatMap(record => record.before.map(draft => draft.namespace)), ...rolloutExamples.map(record => record.namespace)])].filter(Boolean).sort());
+const changes = computed(() => [...pendingChanges].filter(change => contextMatches(change.namespace)).filter(change => `${change.name} ${change.namespace} ${change.category}`.toLowerCase().includes(search.value.toLowerCase())).filter(change => namespaceFilter.value === '__all__' || !change.namespace || change.namespace === namespaceFilter.value).filter(change => namespaceFilter.value !== '__global__' || !change.namespace).sort((a, b) => b.updatedAt - a.updatedAt));
+const groups = computed(() => {
+  if (!groupByNamespace.value) return [{ namespace: '', changes: changes.value }];
+  return [...new Set(changes.value.map(change => change.namespace))].sort().map(namespace => ({ namespace, changes: changes.value.filter(change => change.namespace === namespace) }));
+});
+const content = (change: typeof pendingChanges[number]) => (change.configuration as any)?.operation === 'Delete' ? JSON.stringify({ operation: 'Delete', targets: change.resources.map((r:any)=>({kind:r.kind,...r.metadata})), ...change.configuration }, null, 2) : change.resources.length ? manifestYaml({ routeManifests: redactSecrets(change.resources) }) : JSON.stringify(change.configuration, null, 2);
+const download = (change: typeof pendingChanges[number]) => `data:text/plain;charset=utf-8,${encodeURIComponent(content(change))}`;
+const checked=ref<string[]>([]);const selectedChanges=computed(()=>changes.value.filter(c=>checked.value.includes(c.id)));const allChecked=computed({get:()=>changes.value.length>0&&changes.value.every(c=>checked.value.includes(c.id)),set:(value:boolean)=>checked.value=value?changes.value.map(c=>c.id):[]});watch(changes,()=>{checked.value=checked.value.filter(id=>changes.value.some(c=>c.id===id));});
+function cancelProposals(ids:string[]){for(let i=pendingChanges.length-1;i>=0;i--)if(ids.includes(pendingChanges[i].id))pendingChanges.splice(i,1);}
+const applying=ref(false),applyReady=ref(false),applyConfirmed=ref(false),applyError=ref(''),applyData=ref<any>(null),reviewed=ref('');const applyGate=ref<any>(null);function reviewApply(){applyData.value=captureScheduleSource();reviewed.value=JSON.stringify(selectedChanges.value);applying.value=true;applyConfirmed.value=false;applyReady.value=false;applyError.value='';}
+function apply(){if(!displaySettings.previewMode||!applyConfirmed.value||!applyGate.value?.checkNow())return;try{if(JSON.stringify(captureScheduleSource())!==JSON.stringify(applyData.value))throw new Error('Configuration changed during review. Review and snapshot again.');applyPreviewChanges(checked.value,reviewed.value);checked.value=[];applying.value=false;}catch(e){applyError.value=e instanceof Error?e.message:'Apply failed.';}}
+</script>
+<template>
+  <section class="pending-rollouts"><PageSummary :count="pendingCount" label="Pending" help="Saved configuration proposals wait here until selected, reviewed, backed up, and explicitly applied. Live cluster application is not connected in this preview."/><BulkActions :items="changes" v-model:selected="checked" :execute="cancelProposals" verb="Remove selected unapplied proposals. No cluster resources are deleted."/><PageActions><button v-if="selectedChanges.length" type="button" :disabled="!displaySettings.previewMode" title="Preview simulates application. Live cluster execution is not connected." class="header-action" @click="reviewApply"><ActionIcon icon="apply"/>Apply {{ selectedChanges.length }} Items</button></PageActions>
+
+    <InventoryFilters v-model:search="search" v-model:namespace="namespaceFilter" v-model:grouped="groupByNamespace" :namespaces="namespaceOptions" search-label="Find A Rollout" placeholder="Name, namespace, service, or change type…" />
+    <div class="pending-table"><DataGrid><thead><tr><th class="selection-cell"><input v-model="allChecked" type="checkbox" aria-label="Select All Pending Rollouts"></th><th>Change</th><th>Namespace</th><th>Type</th><th>Updated</th><th>Status</th><th class="actions-column">Actions</th></tr></thead><tbody><template v-for="group in groups" :key="group.namespace"><tr v-if="groupByNamespace" class="namespace-group"><th colspan="7">{{ group.namespace || 'Global' }} <small>{{ group.changes.length }} Changes</small></th></tr><template v-for="change in group.changes" :key="change.id"><tr><td class="selection-cell"><input v-model="checked" :value="change.id" type="checkbox" :aria-label="`Select ${change.name}`"></td><td>{{ change.name }}</td><td><ResourceLink kind="Namespace" :name="change.namespace" :label="change.namespace || 'Global'"/></td><td>{{ change.category }}</td><td :data-sort="change.updatedAt">{{ new Date(change.updatedAt).toLocaleString() }}</td><td>Pending · Preview</td><td><div class="snapshot-actions"><button class="icon-action" type="button" :title="`Review ${change.name}`" :aria-label="`Review pending ${change.name}`" :aria-expanded="selected === change.id" @click="selected = selected === change.id ? '' : change.id"><ActionIcon icon="details" /></button><a class="icon-action" :href="download(change)" :download="`${change.name}-pending.${change.resources.length ? 'yaml' : 'json'}`" :title="`Download ${change.name}`" :aria-label="`Download pending ${change.name}`"><ActionIcon icon="download" /></a></div></td></tr><tr v-if="selected === change.id"><td colspan="7"><p>{{ change.resources.length ? 'Proposed manifests' : 'Application configuration proposal' }}</p><pre>{{ content(change) }}</pre></td></tr></template></template></tbody></DataGrid></div>
+    <section v-if="applying" class="apply-review"><h3>Apply {{ selectedChanges.length }} Items</h3><p>Preview simulation only. No cluster changes will be made. Submitted items will appear in Running Processes.</p><DataGrid><thead><tr><th>Item</th><th>Namespace</th><th>Change</th></tr></thead><tbody><tr v-for="change in selectedChanges" :key="change.id"><td>{{ change.name }}</td><td>{{ change.namespace || 'Global' }}</td><td><pre>{{ content(change) }}</pre></td></tr></tbody></DataGrid><SnapshotGate ref="applyGate" :scope-key="JSON.stringify(applyData)" :data="applyData" @ready="applyReady=$event;applyConfirmed=false"/><label><input v-model="applyConfirmed" type="checkbox" :disabled="!applyReady">Confirm Apply {{ selectedChanges.length }} Items In Preview</label><p v-if="applyError" role="alert">{{ applyError }}</p><div class="apply-actions"><button type="button" :disabled="!applyReady||!applyConfirmed" @click="apply">Apply Selected (Preview)</button><button type="button" @click="applying=false">Cancel</button></div></section>
+  </section>
+</template>
+<style scoped>
+h2 { margin: 0; font-size: 21px; }.pending-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }.pending-heading span { color: #a9d2ff; font-size: 13px; }p { color: var(--muted, #a5b1c3); font-size: 12px; line-height: 1.7; }.pending-table { overflow-x: auto; }table { width: 100%; border-collapse: collapse; font-size: 12px; }th, td { text-align: left; padding: 12px 8px; border-bottom: 1px solid var(--border, #384352); }.snapshot-actions { display: flex; gap: 12px; justify-content: flex-end; }pre { white-space: pre; font-size: 12px; overflow: auto; max-height: 400px; background: var(--input-bg, #1c2430); padding: 16px; border-radius: 5px; }.session-records { margin-top: 24px; border-top: 1px solid var(--border, #384352); padding-top: 16px; }.session-records h3 { color: #91c3fc; font-size: 13px; margin: 0 0 16px; }.rollout-filters { display: flex; gap: 16px; margin: 22px 0; }.rollout-filters label { display: flex; flex-direction: column; gap: 7px; font-size: 12px; color: var(--muted, #a5b1c3); }.rollout-filters select { padding: 11px; min-width: 160px; background: var(--input-bg, #1c2430); color: inherit; border: 1px solid var(--border, #384352); border-radius: 5px; font: inherit; }.namespace-group th { color: #91c3fc; background: var(--input-bg, #1c2430); }.namespace-group small { font-weight: normal; margin-left: 10px; }
+</style>
+
+<style scoped>.apply-review{margin-top:20px;border:1px solid #619bd9;border-radius:6px;padding:20px}.apply-review label{display:flex;gap:10px;align-items:center;margin-top:16px}.apply-actions{display:flex;gap:12px;margin-top:18px}.apply-actions button{padding:10px 14px;background:#326fb4;color:white;border:0;border-radius:5px}.apply-actions button:disabled{opacity:.5}</style>

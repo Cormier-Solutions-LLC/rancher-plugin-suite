@@ -1,0 +1,344 @@
+{
+  "resources": [
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "open-webui-tls",
+        "namespace": "ai"
+      },
+      "spec": {
+        "dnsNames": [
+          "ai.cormierconsulting.io"
+        ],
+        "issuerRef": {
+          "group": "cert-manager.io",
+          "kind": "ClusterIssuer",
+          "name": "letsencrypt-prod"
+        },
+        "secretName": "open-webui-tls",
+        "usages": [
+          "digital signature",
+          "key encipherment"
+        ]
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "mcp-gateway-tls",
+        "namespace": "automation"
+      },
+      "spec": {
+        "dnsNames": [
+          "mcp.cormierconsulting.io",
+          "mcp-admin.cormierconsulting.io",
+          "mcp-observe.cormierconsulting.io",
+          "mcp-phone.cormierconsulting.io"
+        ],
+        "issuerRef": {
+          "group": "cert-manager.io",
+          "kind": "ClusterIssuer",
+          "name": "letsencrypt-prod"
+        },
+        "secretName": "mcp-gateway-tls",
+        "usages": [
+          "digital signature",
+          "key encipherment"
+        ]
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "rancher-tls",
+        "namespace": "cattle-system"
+      },
+      "spec": {
+        "dnsNames": [
+          "rancher.cormierconsulting.io"
+        ],
+        "issuerRef": {
+          "group": "cert-manager.io",
+          "kind": "ClusterIssuer",
+          "name": "letsencrypt-prod"
+        },
+        "renewBefore": "240h",
+        "secretName": "tls-rancher-ingress"
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "godaddy-webhook-ca",
+        "namespace": "cert-manager"
+      },
+      "spec": {
+        "commonName": "ca.godaddy-webhook.cert-manager",
+        "duration": "43800h",
+        "isCA": true,
+        "issuerRef": {
+          "name": "godaddy-webhook-selfsign"
+        },
+        "secretName": "godaddy-webhook-ca"
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "godaddy-webhook-webhook-tls",
+        "namespace": "cert-manager"
+      },
+      "spec": {
+        "dnsNames": [
+          "godaddy-webhook",
+          "godaddy-webhook.cert-manager",
+          "godaddy-webhook.cert-manager.svc"
+        ],
+        "duration": "8760h",
+        "issuerRef": {
+          "name": "godaddy-webhook-ca"
+        },
+        "secretName": "godaddy-webhook-webhook-tls"
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "harbor-cormierconsulting-io",
+        "namespace": "harbor"
+      },
+      "spec": {
+        "dnsNames": [
+          "harbor.cormierconsulting.io"
+        ],
+        "issuerRef": {
+          "kind": "ClusterIssuer",
+          "name": "letsencrypt-prod"
+        },
+        "secretName": "harbor-cormierconsulting-io-tls"
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "home-assistant-tls",
+        "namespace": "home-assistant"
+      },
+      "spec": {
+        "dnsNames": [
+          "home-assistant.cormierconsulting.io"
+        ],
+        "issuerRef": {
+          "group": "cert-manager.io",
+          "kind": "ClusterIssuer",
+          "name": "letsencrypt-prod"
+        },
+        "secretName": "home-assistant-tls",
+        "usages": [
+          "digital signature",
+          "key encipherment"
+        ]
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "omada-cormierconsulting-io",
+        "namespace": "omada"
+      },
+      "spec": {
+        "dnsNames": [
+          "omada.cormierconsulting.io"
+        ],
+        "issuerRef": {
+          "group": "cert-manager.io",
+          "kind": "ClusterIssuer",
+          "name": "letsencrypt-prod"
+        },
+        "secretName": "omada-cormierconsulting-io-tls"
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "plex-manager-tls",
+        "namespace": "plex-manager"
+      },
+      "spec": {
+        "dnsNames": [
+          "plex-manager.cormierconsulting.io"
+        ],
+        "issuerRef": {
+          "group": "cert-manager.io",
+          "kind": "ClusterIssuer",
+          "name": "letsencrypt-prod"
+        },
+        "secretName": "plex-manager-tls"
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "plex-server-tls",
+        "namespace": "plex-server"
+      },
+      "spec": {
+        "dnsNames": [
+          "plex-server.cormierconsulting.io"
+        ],
+        "issuerRef": {
+          "group": "cert-manager.io",
+          "kind": "ClusterIssuer",
+          "name": "letsencrypt-prod"
+        },
+        "secretName": "plex-server-tls"
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "gateway-cormierconsulting-io",
+        "namespace": "prod-realtime"
+      },
+      "spec": {
+        "dnsNames": [
+          "gateway.cormierconsulting.io"
+        ],
+        "issuerRef": {
+          "group": "cert-manager.io",
+          "kind": "ClusterIssuer",
+          "name": "letsencrypt-prod"
+        },
+        "secretName": "gateway-cormierconsulting-io-tls"
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "realtime-cormierconsulting-io",
+        "namespace": "prod-realtime"
+      },
+      "spec": {
+        "dnsNames": [
+          "realtime.cormierconsulting.io"
+        ],
+        "issuerRef": {
+          "group": "cert-manager.io",
+          "kind": "ClusterIssuer",
+          "name": "letsencrypt-prod"
+        },
+        "secretName": "realtime-cormierconsulting-io-tls"
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "speedtester-tls",
+        "namespace": "speedtester"
+      },
+      "spec": {
+        "dnsNames": [
+          "speedtester.cormierconsulting.io"
+        ],
+        "issuerRef": {
+          "group": "cert-manager.io",
+          "kind": "ClusterIssuer",
+          "name": "letsencrypt-prod"
+        },
+        "secretName": "speedtester-tls",
+        "usages": [
+          "digital signature",
+          "key encipherment"
+        ]
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "media-cormierconsulting-io",
+        "namespace": "synology-media"
+      },
+      "spec": {
+        "dnsNames": [
+          "media.cormierconsulting.io"
+        ],
+        "issuerRef": {
+          "group": "cert-manager.io",
+          "kind": "ClusterIssuer",
+          "name": "letsencrypt-prod"
+        },
+        "secretName": "media-cormierconsulting-io-tls"
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "torrent-tls",
+        "namespace": "torrent"
+      },
+      "spec": {
+        "dnsNames": [
+          "torrent.cormierconsulting.io"
+        ],
+        "issuerRef": {
+          "group": "cert-manager.io",
+          "kind": "ClusterIssuer",
+          "name": "letsencrypt-prod"
+        },
+        "secretName": "torrent-tls"
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "traefik-manager-tls",
+        "namespace": "traefik-system"
+      },
+      "spec": {
+        "dnsNames": [
+          "traefik.cormierconsulting.io"
+        ],
+        "issuerRef": {
+          "kind": "ClusterIssuer",
+          "name": "letsencrypt-prod"
+        },
+        "secretName": "traefik-manager-tls"
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "windows-cormierconsulting-io",
+        "namespace": "windows-admin-center"
+      },
+      "spec": {
+        "dnsNames": [
+          "windows.cormierconsulting.io"
+        ],
+        "issuerRef": {
+          "group": "cert-manager.io",
+          "kind": "ClusterIssuer",
+          "name": "letsencrypt-prod"
+        },
+        "secretName": "windows-cormierconsulting-io-tls"
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+apiVersion: v2
+name: dns-manager
+description: Rancher UI extension for DNS source, zone, and record management
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+annotations:
+  catalog.cattle.io/display-name: DNS Manager
+  catalog.cattle.io/namespace: cattle-ui-plugin-system
+  catalog.cattle.io/scope: management
+  catalog.cattle.io/ui-component: plugins
+  catalog.cattle.io/rancher-version: ">= 2.15.0 < 2.16.0"
+  catalog.cattle.io/ui-extensions-version: ">= 3.0.0 < 4.0.0"
+keywords: [dns, zones, records]

@@ -1,0 +1,297 @@
+{
+  "Ingress/ai/open-webui": {
+    "owners": [],
+    "release": "open-webui",
+    "releaseNamespace": "ai"
+  },
+  "Ingress/automation/mcp-gateway": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "automation"
+  },
+  "Ingress/cattle-system/rancher": {
+    "owners": [],
+    "release": "rancher",
+    "releaseNamespace": "cattle-system"
+  },
+  "Ingress/emby/emby": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "emby"
+  },
+  "Ingress/harbor/harbor-ingress": {
+    "owners": [],
+    "release": "harbor",
+    "releaseNamespace": "harbor"
+  },
+  "Ingress/home-assistant/home-assistant": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "home-assistant"
+  },
+  "Ingress/plex-manager/plex-manager": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "plex-manager"
+  },
+  "Ingress/speedtester/speedtester": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "speedtester"
+  },
+  "Ingress/torrent/torrent": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "torrent"
+  },
+  "IngressRoute/omada/omada": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "omada"
+  },
+  "IngressRoute/prod-realtime/prod-realtime-gateway": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "prod-realtime"
+  },
+  "IngressRoute/synology-media/synology-media": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "synology-media"
+  },
+  "IngressRoute/windows-admin-center/windows-admin-center": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "windows-admin-center"
+  },
+  "IngressRouteTCP/omada/omada-adoption": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "omada"
+  },
+  "IngressRouteTCP/omada/omada-device-info": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "omada"
+  },
+  "IngressRouteTCP/omada/omada-firmware": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "omada"
+  },
+  "IngressRouteTCP/omada/omada-legacy-adopt": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "omada"
+  },
+  "IngressRouteTCP/omada/omada-legacy-manage": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "omada"
+  },
+  "IngressRouteTCP/omada/omada-legacy-upgrade": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "omada"
+  },
+  "IngressRouteTCP/omada/omada-monitor": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "omada"
+  },
+  "IngressRouteTCP/omada/omada-portal-http": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "omada"
+  },
+  "IngressRouteTCP/omada/omada-portal-https": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "omada"
+  },
+  "IngressRouteTCP/omada/omada-terminal": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "omada"
+  },
+  "IngressRouteTCP/prod-realtime/redis-edge": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "prod-realtime"
+  },
+  "IngressRouteTCP/synology-media/synology-media-nfs": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "synology-media"
+  },
+  "IngressRouteTCP/synology-media/synology-media-nfs-lock": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "synology-media"
+  },
+  "IngressRouteTCP/synology-media/synology-media-nfs-mount": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "synology-media"
+  },
+  "IngressRouteTCP/synology-media/synology-media-nfs-rpc": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "synology-media"
+  },
+  "IngressRouteTCP/synology-media/synology-media-nfs-stat": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "synology-media"
+  },
+  "IngressRouteTCP/synology-media/synology-media-smb": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "synology-media"
+  },
+  "IngressRouteUDP/omada/omada-discovery": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "omada"
+  },
+  "IngressRouteUDP/synology-media/synology-media-nfs-lock-udp": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "synology-media"
+  },
+  "IngressRouteUDP/synology-media/synology-media-nfs-mount-udp": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "synology-media"
+  },
+  "IngressRouteUDP/synology-media/synology-media-nfs-rpc-udp": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "synology-media"
+  },
+  "IngressRouteUDP/synology-media/synology-media-nfs-stat-udp": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "synology-media"
+  },
+  "IngressRouteUDP/synology-media/synology-media-nfs-udp": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "synology-media"
+  },
+  "Certificate/ai/open-webui-tls": {
+    "owners": [
+      {
+        "kind": "Ingress",
+        "name": "open-webui"
+      }
+    ],
+    "release": "",
+    "releaseNamespace": "ai"
+  },
+  "Certificate/automation/mcp-gateway-tls": {
+    "owners": [
+      {
+        "kind": "Ingress",
+        "name": "mcp-gateway"
+      }
+    ],
+    "release": "",
+    "releaseNamespace": "automation"
+  },
+  "Certificate/cattle-system/rancher-tls": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "cattle-system"
+  },
+  "Certificate/cert-manager/godaddy-webhook-ca": {
+    "owners": [],
+    "release": "godaddy-webhook",
+    "releaseNamespace": "cert-manager"
+  },
+  "Certificate/cert-manager/godaddy-webhook-webhook-tls": {
+    "owners": [],
+    "release": "godaddy-webhook",
+    "releaseNamespace": "cert-manager"
+  },
+  "Certificate/emby/emby-tls": {
+    "owners": [
+      {
+        "kind": "Ingress",
+        "name": "emby"
+      }
+    ],
+    "release": "",
+    "releaseNamespace": "emby"
+  },
+  "Certificate/harbor/harbor-cormierconsulting-io": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "harbor"
+  },
+  "Certificate/home-assistant/home-assistant-tls": {
+    "owners": [
+      {
+        "kind": "Ingress",
+        "name": "home-assistant"
+      }
+    ],
+    "release": "",
+    "releaseNamespace": "home-assistant"
+  },
+  "Certificate/omada/omada-cormierconsulting-io": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "omada"
+  },
+  "Certificate/plex-manager/plex-manager-tls": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "plex-manager"
+  },
+  "Certificate/plex-server/plex-server-tls": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "plex-server"
+  },
+  "Certificate/prod-realtime/gateway-cormierconsulting-io": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "prod-realtime"
+  },
+  "Certificate/prod-realtime/realtime-cormierconsulting-io": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "prod-realtime"
+  },
+  "Certificate/speedtester/speedtester-tls": {
+    "owners": [
+      {
+        "kind": "Ingress",
+        "name": "speedtester"
+      }
+    ],
+    "release": "",
+    "releaseNamespace": "speedtester"
+  },
+  "Certificate/synology-media/media-cormierconsulting-io": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "synology-media"
+  },
+  "Certificate/torrent/torrent-tls": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "torrent"
+  },
+  "Certificate/traefik-system/traefik-manager-tls": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "traefik-system"
+  },
+  "Certificate/windows-admin-center/windows-cormierconsulting-io": {
+    "owners": [],
+    "release": "",
+    "releaseNamespace": "windows-admin-center"
+  }
+}

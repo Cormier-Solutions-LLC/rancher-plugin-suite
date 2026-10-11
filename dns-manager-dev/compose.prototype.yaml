@@ -1,0 +1,71 @@
+name: dns-manager-prototype
+x-server: &server
+  image: technitium/dns-server:15.6.0@sha256:1045db38fd2f2e4d9578f9168b7eb4862575469ed0ffc79e03f36bdc772a93b5
+  restart: "no"
+  environment:
+    DNS_SERVER_ADMIN_PASSWORD_FILE: /run/secrets/admin_password
+    DNS_SERVER_RECURSION: AllowOnlyForPrivateNetworks
+  secrets: [admin_password]
+  mem_limit: 512m
+services:
+  gateway:
+    image: technitium/dns-server:15.6.0@sha256:1045db38fd2f2e4d9578f9168b7eb4862575469ed0ffc79e03f36bdc772a93b5
+    entrypoint: ["dotnet", "/prototype/Gateway.dll"]
+    restart: "no"
+    mem_limit: 128m
+    volumes: ["./tests/Gateway/bin/Debug/net10.0:/prototype:ro"]
+    ports:
+      - "127.0.0.1:15380:15380"
+      - "127.0.0.1:15381:15381"
+      - "127.0.0.1:15382:15382"
+      - "127.0.0.1:15383:15383"
+      - "127.0.0.1:15384:15384"
+      - "127.0.0.1:15353:15353/tcp"
+      - "127.0.0.1:15353:15353/udp"
+      - "127.0.0.1:15354:15354/tcp"
+      - "127.0.0.1:15354:15354/udp"
+      - "127.0.0.1:15355:15355/tcp"
+      - "127.0.0.1:15355:15355/udp"
+      - "127.0.0.1:15356:15356/tcp"
+      - "127.0.0.1:15356:15356/udp"
+      - "127.0.0.1:15357:15357/tcp"
+      - "127.0.0.1:15357:15357/udp"
+    networks: [isolated, access]
+  source:
+    <<: *server
+    hostname: source-fixture
+    volumes: [source:/etc/dns]
+    networks: {isolated: {ipv4_address: 172.30.239.10}}
+  public:
+    <<: *server
+    hostname: public-fixture
+    volumes: [public:/etc/dns]
+    networks: {isolated: {ipv4_address: 172.30.239.20}}
+  dns01:
+    <<: *server
+    hostname: dns01
+    volumes: [dns01:/etc/dns]
+    networks: {isolated: {ipv4_address: 172.30.239.31}}
+  dns02:
+    <<: *server
+    hostname: dns02
+    volumes: [dns02:/etc/dns]
+    networks: {isolated: {ipv4_address: 172.30.239.32}}
+  dns03:
+    <<: *server
+    hostname: dns03
+    volumes: [dns03:/etc/dns]
+    networks: {isolated: {ipv4_address: 172.30.239.33}}
+networks:
+  access:
+  isolated:
+    internal: true
+    ipam: {config: [{subnet: 172.30.239.0/24}]}
+volumes:
+  source:
+  public:
+  dns01:
+  dns02:
+  dns03:
+secrets:
+  admin_password: {file: .state/admin-password.txt}

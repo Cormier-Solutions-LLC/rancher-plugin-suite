@@ -1,0 +1,449 @@
+{
+  "namespaces": [
+    {
+      "name": "action1-system",
+      "labels": {
+        "kubernetes.io/metadata.name": "action1-system",
+        "pod-security.kubernetes.io/audit": "restricted",
+        "pod-security.kubernetes.io/enforce": "restricted",
+        "pod-security.kubernetes.io/warn": "restricted"
+      },
+      "project": "",
+      "isSystem": false
+    },
+    {
+      "name": "ai",
+      "labels": {
+        "kubernetes.io/metadata.name": "ai"
+      },
+      "project": "",
+      "isSystem": false
+    },
+    {
+      "name": "arc-runners",
+      "labels": {
+        "kubernetes.io/metadata.name": "arc-runners",
+        "name": "arc-runners"
+      },
+      "project": "",
+      "isSystem": false
+    },
+    {
+      "name": "arc-systems",
+      "labels": {
+        "kubernetes.io/metadata.name": "arc-systems",
+        "name": "arc-systems"
+      },
+      "project": "",
+      "isSystem": false
+    },
+    {
+      "name": "automation",
+      "labels": {
+        "app.kubernetes.io/part-of": "automation-guests",
+        "kubernetes.io/metadata.name": "automation"
+      },
+      "project": "",
+      "isSystem": false
+    },
+    {
+      "name": "cattle-capi-system",
+      "labels": {
+        "app.kubernetes.io/managed-by": "Helm",
+        "field.cattle.io/projectId": "p-njsmb",
+        "kubernetes.io/metadata.name": "cattle-capi-system"
+      },
+      "project": "local:p-njsmb",
+      "isSystem": true
+    },
+    {
+      "name": "cattle-dashboards",
+      "labels": {
+        "app.kubernetes.io/instance": "rancher-monitoring",
+        "app.kubernetes.io/managed-by": "Helm",
+        "app.kubernetes.io/part-of": "rancher-monitoring",
+        "app.kubernetes.io/version": "v0.87.1",
+        "chart": "rancher-monitoring-110.0.1_up80.9.1-rancher.19",
+        "helm.sh/chart": "rancher-monitoring-110.0.1_up80.9.1-rancher.19",
+        "heritage": "Helm",
+        "kubernetes.io/metadata.name": "cattle-dashboards",
+        "name": "cattle-dashboards",
+        "release": "rancher-monitoring"
+      },
+      "project": "",
+      "isSystem": true
+    },
+    {
+      "name": "cattle-fleet-clusters-system",
+      "labels": {
+        "field.cattle.io/projectId": "p-njsmb",
+        "kubernetes.io/metadata.name": "cattle-fleet-clusters-system",
+        "objectset.rio.cattle.io/hash": "4510303f19b6cbafc9031148b1866f16c2be7aaa"
+      },
+      "project": "local:p-njsmb",
+      "isSystem": true
+    },
+    {
+      "name": "cattle-fleet-local-system",
+      "labels": {
+        "field.cattle.io/projectId": "p-njsmb",
+        "kubernetes.io/metadata.name": "cattle-fleet-local-system",
+        "objectset.rio.cattle.io/hash": "362023f752e7f1989d8b652e029bd2c658ae7c44"
+      },
+      "project": "local:p-njsmb",
+      "isSystem": true
+    },
+    {
+      "name": "cattle-fleet-system",
+      "labels": {
+        "field.cattle.io/projectId": "p-njsmb",
+        "kubernetes.io/metadata.name": "cattle-fleet-system",
+        "objectset.rio.cattle.io/hash": "4510303f19b6cbafc9031148b1866f16c2be7aaa"
+      },
+      "project": "local:p-njsmb",
+      "isSystem": true
+    },
+    {
+      "name": "cattle-global-data",
+      "labels": {
+        "cattle.io/creator": "norman",
+        "field.cattle.io/projectId": "p-njsmb",
+        "kubernetes.io/metadata.name": "cattle-global-data"
+      },
+      "project": "local:p-njsmb",
+      "isSystem": true
+    },
+    {
+      "name": "cattle-impersonation-system",
+      "labels": {
+        "authz.cluster.cattle.io/impersonator": "true",
+        "field.cattle.io/projectId": "p-njsmb",
+        "kubernetes.io/metadata.name": "cattle-impersonation-system"
+      },
+      "project": "local:p-njsmb",
+      "isSystem": true
+    },
+    {
+      "name": "cattle-local-user-passwords",
+      "labels": {
+        "field.cattle.io/projectId": "p-njsmb",
+        "kubernetes.io/metadata.name": "cattle-local-user-passwords"
+      },
+      "project": "local:p-njsmb",
+      "isSystem": true
+    },
+    {
+      "name": "cattle-monitoring-system",
+      "labels": {
+        "kubernetes.io/metadata.name": "cattle-monitoring-system"
+      },
+      "project": "",
+      "isSystem": true
+    },
+    {
+      "name": "cattle-project-p-wllkc",
+      "labels": {
+        "field.cattle.io/projectId": "p-wllkc",
+        "helm.cattle.io/helm-project-operated": "true",
+        "helm.cattle.io/projectId": "p-wllkc",
+        "kubernetes.io/metadata.name": "cattle-project-p-wllkc",
+        "objectset.rio.cattle.io/hash": "244ac0a875e2b814c08969b192e174205a719def"
+      },
+      "project": "local:p-wllkc",
+      "isSystem": false
+    },
+    {
+      "name": "cattle-system",
+      "labels": {
+        "field.cattle.io/projectId": "p-njsmb",
+        "kubernetes.io/metadata.name": "cattle-system"
+      },
+      "project": "local:p-njsmb",
+      "isSystem": true
+    },
+    {
+      "name": "cattle-tokens",
+      "labels": {
+        "field.cattle.io/projectId": "p-njsmb",
+        "kubernetes.io/metadata.name": "cattle-tokens"
+      },
+      "project": "local:p-njsmb",
+      "isSystem": true
+    },
+    {
+      "name": "cattle-turtles-system",
+      "labels": {
+        "field.cattle.io/projectId": "p-njsmb",
+        "kubernetes.io/metadata.name": "cattle-turtles-system"
+      },
+      "project": "local:p-njsmb",
+      "isSystem": true
+    },
+    {
+      "name": "cattle-ui-plugin-system",
+      "labels": {
+        "app.kubernetes.io/managed-by": "rancher",
+        "kubernetes.io/metadata.name": "cattle-ui-plugin-system"
+      },
+      "project": "",
+      "isSystem": true
+    },
+    {
+      "name": "cdi",
+      "labels": {
+        "app.kubernetes.io/part-of": "kubevirt",
+        "cdi.kubevirt.io": "",
+        "kubernetes.io/metadata.name": "cdi"
+      },
+      "project": "",
+      "isSystem": false
+    },
+    {
+      "name": "cert-manager",
+      "labels": {
+        "field.cattle.io/projectId": "p-njsmb",
+        "kubernetes.io/metadata.name": "cert-manager",
+        "name": "cert-manager"
+      },
+      "project": "local:p-njsmb",
+      "isSystem": true
+    },
+    {
+      "name": "cluster-fleet-local-local-1a3d67d0a899",
+      "labels": {
+        "field.cattle.io/projectId": "p-njsmb",
+        "fleet.cattle.io/managed": "true",
+        "kubernetes.io/metadata.name": "cluster-fleet-local-local-1a3d67d0a899"
+      },
+      "project": "local:p-njsmb",
+      "isSystem": true
+    },
+    {
+      "name": "compliance-operator-system",
+      "labels": {
+        "kubernetes.io/metadata.name": "compliance-operator-system"
+      },
+      "project": "",
+      "isSystem": true
+    },
+    {
+      "name": "default",
+      "labels": {
+        "field.cattle.io/projectId": "p-wllkc",
+        "helm.cattle.io/projectId": "p-wllkc",
+        "kubernetes.io/metadata.name": "default"
+      },
+      "project": "local:p-wllkc",
+      "isSystem": false
+    },
+    {
+      "name": "emby",
+      "labels": {
+        "app.kubernetes.io/part-of": "emby",
+        "kubernetes.io/metadata.name": "emby"
+      },
+      "project": "",
+      "isSystem": false
+    },
+    {
+      "name": "fleet-default",
+      "labels": {
+        "field.cattle.io/projectId": "p-njsmb",
+        "kubernetes.io/metadata.name": "fleet-default",
+        "objectset.rio.cattle.io/hash": "7e7ea272a8ed59a1ca6ea1587cb55d693b393102"
+      },
+      "project": "local:p-njsmb",
+      "isSystem": true
+    },
+    {
+      "name": "fleet-local",
+      "labels": {
+        "app.kubernetes.io/managed-by": "rancher",
+        "field.cattle.io/projectId": "p-njsmb",
+        "kubernetes.io/metadata.name": "fleet-local"
+      },
+      "project": "local:p-njsmb",
+      "isSystem": true
+    },
+    {
+      "name": "harbor",
+      "labels": {
+        "app.kubernetes.io/name": "harbor",
+        "kubernetes.io/metadata.name": "harbor"
+      },
+      "project": "",
+      "isSystem": false
+    },
+    {
+      "name": "home-assistant",
+      "labels": {
+        "app.kubernetes.io/name": "home-assistant",
+        "kubernetes.io/metadata.name": "home-assistant"
+      },
+      "project": "",
+      "isSystem": false
+    },
+    {
+      "name": "kube-node-lease",
+      "labels": {
+        "field.cattle.io/projectId": "p-njsmb",
+        "kubernetes.io/metadata.name": "kube-node-lease"
+      },
+      "project": "local:p-njsmb",
+      "isSystem": true
+    },
+    {
+      "name": "kube-public",
+      "labels": {
+        "field.cattle.io/projectId": "p-njsmb",
+        "kubernetes.io/metadata.name": "kube-public"
+      },
+      "project": "local:p-njsmb",
+      "isSystem": true
+    },
+    {
+      "name": "kube-system",
+      "labels": {
+        "field.cattle.io/projectId": "p-njsmb",
+        "kubernetes.io/metadata.name": "kube-system"
+      },
+      "project": "local:p-njsmb",
+      "isSystem": true
+    },
+    {
+      "name": "kubevirt",
+      "labels": {
+        "app.kubernetes.io/part-of": "kubevirt",
+        "kubernetes.io/metadata.name": "kubevirt",
+        "kubevirt.io": "",
+        "openshift.io/cluster-monitoring": "true",
+        "pod-security.kubernetes.io/enforce": "privileged"
+      },
+      "project": "",
+      "isSystem": false
+    },
+    {
+      "name": "local",
+      "labels": {
+        "kubernetes.io/metadata.name": "local"
+      },
+      "project": "",
+      "isSystem": false
+    },
+    {
+      "name": "longhorn-system",
+      "labels": {
+        "kubernetes.io/metadata.name": "longhorn-system",
+        "name": "longhorn-system"
+      },
+      "project": "",
+      "isSystem": true
+    },
+    {
+      "name": "metallb-system",
+      "labels": {
+        "kubernetes.io/metadata.name": "metallb-system",
+        "name": "metallb-system"
+      },
+      "project": "",
+      "isSystem": false
+    },
+    {
+      "name": "omada",
+      "labels": {
+        "kubernetes.io/metadata.name": "omada"
+      },
+      "project": "",
+      "isSystem": false
+    },
+    {
+      "name": "p-njsmb",
+      "labels": {
+        "kubernetes.io/metadata.name": "p-njsmb"
+      },
+      "project": "",
+      "isSystem": false
+    },
+    {
+      "name": "p-wllkc",
+      "labels": {
+        "kubernetes.io/metadata.name": "p-wllkc"
+      },
+      "project": "",
+      "isSystem": false
+    },
+    {
+      "name": "plex-manager",
+      "labels": {
+        "kubernetes.io/metadata.name": "plex-manager"
+      },
+      "project": "",
+      "isSystem": false
+    },
+    {
+      "name": "plex-server",
+      "labels": {
+        "kubernetes.io/metadata.name": "plex-server"
+      },
+      "project": "",
+      "isSystem": false
+    },
+    {
+      "name": "prod-realtime",
+      "labels": {
+        "kubernetes.io/metadata.name": "prod-realtime"
+      },
+      "project": "",
+      "isSystem": false
+    },
+    {
+      "name": "speedtester",
+      "labels": {
+        "kubernetes.io/metadata.name": "speedtester"
+      },
+      "project": "",
+      "isSystem": false
+    },
+    {
+      "name": "synology-media",
+      "labels": {
+        "kubernetes.io/metadata.name": "synology-media"
+      },
+      "project": "",
+      "isSystem": false
+    },
+    {
+      "name": "torrent",
+      "labels": {
+        "kubernetes.io/metadata.name": "torrent"
+      },
+      "project": "",
+      "isSystem": false
+    },
+    {
+      "name": "traefik-system",
+      "labels": {
+        "kubernetes.io/metadata.name": "traefik-system",
+        "name": "traefik-system"
+      },
+      "project": "",
+      "isSystem": false
+    },
+    {
+      "name": "user-jccb4",
+      "labels": {
+        "kubernetes.io/metadata.name": "user-jccb4"
+      },
+      "project": "",
+      "isSystem": false
+    },
+    {
+      "name": "windows-admin-center",
+      "labels": {
+        "kubernetes.io/metadata.name": "windows-admin-center"
+      },
+      "project": "",
+      "isSystem": false
+    }
+  ]
+}

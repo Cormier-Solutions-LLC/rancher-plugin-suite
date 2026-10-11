@@ -1,0 +1,8 @@
+import { reactive, computed } from 'vue';import { pendingChanges, type PendingChange } from './pending-rollouts';
+import { validateChangeBatch } from '../config/change-batch.mjs';
+export interface RunningProcess{id:string;name:string;namespace:string;category:string;status:string;startedAt:number;finishedAt?:number;progress:number;resources:object[];configuration?:object;simulated:boolean}
+export const runningProcesses=reactive<RunningProcess[]>([]);export const runningCount=computed(()=>runningProcesses.filter(p=>p.progress<100).length);
+export function applyPreviewChanges(ids:string[],reviewed:string){const chosen=pendingChanges.filter(c=>ids.includes(c.id));if(!chosen.length||JSON.stringify(chosen)!==reviewed)throw new Error('Pending changes changed during review. Review and snapshot again.');validateChangeBatch(chosen);
+ for(const change of chosen){const process:RunningProcess={id:crypto.randomUUID(),name:change.name,namespace:change.namespace,category:change.category,status:'Simulated: Queued',startedAt:Date.now(),progress:0,resources:JSON.parse(JSON.stringify(change.resources)),configuration:change.configuration?JSON.parse(JSON.stringify(change.configuration)):undefined,simulated:true};runningProcesses.push(process);for(const [delay,progress,status]of [[1000,30,'Simulated: Validating'],[2500,65,'Simulated: Applying'],[4500,100,'Simulated: Completed']]as const)setTimeout(()=>{process.progress=progress;process.status=status;if(progress===100)process.finishedAt=Date.now();const target=runningProcesses.find(p=>p.id===process.id);if(target)Object.assign(target,process);},delay);}
+ for(let i=pendingChanges.length-1;i>=0;i--)if(ids.includes(pendingChanges[i].id))pendingChanges.splice(i,1);
+}

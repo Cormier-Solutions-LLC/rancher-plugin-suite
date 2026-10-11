@@ -1,0 +1,90 @@
+# Optional standalone preview. Build and make this image available to cluster
+# nodes before applying. This is not the Rancher UI extension deployment.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: simple-network-manager-preview
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simple-network-manager-preview
+  namespace: simple-network-manager-preview
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: simple-network-manager-preview
+  template:
+    metadata:
+      labels:
+        app: simple-network-manager-preview
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: preview
+          image: simple-network-manager-preview:0.1.0
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: snapshots
+              mountPath: /var/lib/simple-network-manager/snapshots
+          ports:
+            - name: http
+              containerPort: 8080
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+      volumes:
+        - name: snapshots
+          persistentVolumeClaim:
+            claimName: simple-network-manager-snapshots
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: simple-network-manager-snapshots
+  namespace: simple-network-manager-preview
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: simple-network-manager-preview
+  namespace: simple-network-manager-preview
+spec:
+  type: ClusterIP
+  selector:
+    app: simple-network-manager-preview
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

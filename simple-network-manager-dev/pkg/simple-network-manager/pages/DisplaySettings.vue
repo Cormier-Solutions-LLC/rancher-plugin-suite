@@ -1,0 +1,12 @@
+<script setup lang="ts">
+import PageSummary from './PageSummary.vue';
+import { rancherOrigin } from '../data/resource-links';
+import { reactive, ref } from 'vue';
+import { displaySettings, saveDisplaySettings } from '../data/display-settings';
+import { useFormGuard } from '../data/form-guard';
+const form = reactive({ ...displaySettings, rancherOrigin:rancherOrigin.value }); const message = ref('');
+const guard = useFormGuard('settings', () => 'Display Settings', () => ({ ...form }), state => Object.assign(form,state), () => true);
+function save() { try { if(form.rancherOrigin){const url=new URL(form.rancherOrigin);if(!['http:','https:'].includes(url.protocol)||url.username||url.password)throw new Error('Use a Rancher HTTP or HTTPS origin without credentials.');form.rancherOrigin=url.origin;}localStorage.setItem('network-manager-rancher-origin',form.rancherOrigin);rancherOrigin.value=form.rancherOrigin;saveDisplaySettings(form); message.value = 'Settings Saved For This Browser.'; guard.clean(); } catch (error) { message.value = error instanceof Error ? error.message : 'Browser preferences could not be saved.'; } }
+</script>
+<template><section class="display-settings"><PageSummary help="Choose which status banners and preview notices appear, and configure the Rancher origin for standalone resource links. These preferences affect this browser; they do not change cluster access."/><form @submit.prevent="save"><label><input v-model="form.previewMode" type="checkbox">Preview</label><label><input v-model="form.snapshotBanner" type="checkbox">Show Snapshot Status Banner</label><label><input v-model="form.inspectionInfo" type="checkbox">Show Cluster Inspection Information</label><p>These preferences affect this browser’s display. Snapshot storage and scheduling remain active.</p><label>Rancher URL<input v-model.trim="form.rancherOrigin" type="url" placeholder="https://rancher.example.com" aria-label="Rancher URL"></label><button type="submit">Save Settings</button><p v-if="message" role="status">{{ message }}</p></form></section></template>
+<style scoped>h2 { margin-top:0; font-size:21px; }p { font-size:12px; color:var(--muted,#a5b1c3); line-height:1.7; }label { display:flex; gap:10px; align-items:center; padding:14px 0; font-size:13px; }button { padding:11px 16px; background:#326fb4; color:white; border:0; border-radius:5px; cursor:pointer; font:inherit; }input,button { outline-offset:3px; }</style>

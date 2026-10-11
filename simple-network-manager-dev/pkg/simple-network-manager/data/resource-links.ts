@@ -1,0 +1,5 @@
+import { ref } from 'vue';
+export const rancherOrigin=ref(localStorage.getItem('network-manager-rancher-origin')||'');
+export const clusterId=ref('local');export const nativeRancher=ref(false);
+const types:Record<string,string>={Namespace:'namespace',Secret:'secret',Service:'service',Ingress:'networking.k8s.io.ingress',IngressRoute:'traefik.io.ingressroute',IngressRouteTCP:'traefik.io.ingressroutetcp',IngressRouteUDP:'traefik.io.ingressrouteudp',Certificate:'cert-manager.io.certificate',Issuer:'cert-manager.io.issuer',ClusterIssuer:'cert-manager.io.clusterissuer',Deployment:'apps.deployment',StatefulSet:'apps.statefulset',DaemonSet:'apps.daemonset',Middleware:'traefik.io.middleware'};
+export function resourceUrl(kind:string,name:string,namespace=''){if(!name||name==='None'||!nativeRancher.value&&!rancherOrigin.value)return '';return `${nativeRancher.value?'':rancherOrigin.value}/c/${encodeURIComponent(clusterId.value)}/explorer/${types[kind]||kind}/${namespace?encodeURIComponent(namespace)+'/':''}${encodeURIComponent(name)}`;}

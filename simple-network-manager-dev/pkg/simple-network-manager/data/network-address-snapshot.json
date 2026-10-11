@@ -1,0 +1,5787 @@
+{
+  "observedAt": "2026-10-11T09:06:17.824599+00:00",
+  "services": [
+    {
+      "namespace": "ai",
+      "name": "lmstudio",
+      "clusterIPs": [
+        "10.77.144.171"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http",
+          "port": 1234,
+          "targetPort": 1234,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "ai",
+      "name": "ollama",
+      "clusterIPs": [
+        "10.77.163.118"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http",
+          "port": 11434,
+          "targetPort": 11434,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "ai",
+      "name": "open-webui",
+      "clusterIPs": [
+        "10.77.189.39"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http",
+          "port": 80,
+          "targetPort": "http",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "ai",
+      "name": "open-webui-redis",
+      "clusterIPs": [
+        "10.77.174.226"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http",
+          "port": 6379,
+          "targetPort": "http",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "automation",
+      "name": "browser-guest",
+      "clusterIPs": [
+        "10.77.144.185"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "mcp",
+          "port": 8080,
+          "targetPort": "mcp",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "automation",
+      "name": "browser-guest-login",
+      "clusterIPs": [
+        "10.77.167.238"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "novnc",
+          "port": 6080,
+          "targetPort": "novnc",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "automation",
+      "name": "mcp-gateway",
+      "clusterIPs": [
+        "10.77.145.133"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "mcp",
+          "port": 8080,
+          "targetPort": "http",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "automation",
+      "name": "phone-queue-controller",
+      "clusterIPs": [
+        "10.77.129.189"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "mcp",
+          "port": 8080,
+          "targetPort": "mcp",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "automation",
+      "name": "pixel-10-pro-xl",
+      "clusterIPs": [],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "adb",
+          "port": 5556,
+          "targetPort": "adb",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "novnc",
+          "port": 6080,
+          "targetPort": "novnc",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "grpc",
+          "port": 8554,
+          "targetPort": "grpc",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-capi-system",
+      "name": "capi-webhook-service",
+      "clusterIPs": [
+        "10.77.179.58"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "",
+          "port": 443,
+          "targetPort": "webhook-server",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-fleet-system",
+      "name": "gitjob",
+      "clusterIPs": [
+        "10.77.163.179"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http-80",
+          "port": 80,
+          "targetPort": 8080,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-fleet-system",
+      "name": "monitoring-fleet-controller",
+      "clusterIPs": [
+        "10.77.189.85"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8080,
+          "targetPort": 8080,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-fleet-system",
+      "name": "monitoring-gitjob",
+      "clusterIPs": [
+        "10.77.189.219"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8081,
+          "targetPort": 8081,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "name": "alertmanager-operated",
+      "clusterIPs": [],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http-web",
+          "port": 9093,
+          "targetPort": "http-web",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "tcp-mesh",
+          "port": 9094,
+          "targetPort": "mesh-tcp",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "udp-mesh",
+          "port": 9094,
+          "targetPort": "mesh-udp",
+          "protocol": "UDP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "name": "prometheus-operated",
+      "clusterIPs": [],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http-web",
+          "port": 9090,
+          "targetPort": "http-web",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "name": "rancher-monitoring-alertmanager",
+      "clusterIPs": [
+        "10.77.156.70"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http-web",
+          "port": 9093,
+          "targetPort": 9093,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "reloader-web",
+          "port": 8080,
+          "targetPort": "reloader-web",
+          "protocol": "TCP",
+          "appProtocol": "http"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "name": "rancher-monitoring-grafana",
+      "clusterIPs": [
+        "10.77.144.117"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "nginx-http",
+          "port": 80,
+          "targetPort": "grafana",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "name": "rancher-monitoring-kube-state-metrics",
+      "clusterIPs": [
+        "10.77.157.122"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http",
+          "port": 8080,
+          "targetPort": "http",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "name": "rancher-monitoring-operator",
+      "clusterIPs": [
+        "10.77.189.11"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "https",
+          "port": 443,
+          "targetPort": "https",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "name": "rancher-monitoring-prometheus",
+      "clusterIPs": [
+        "10.77.169.210"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http-web",
+          "port": 9090,
+          "targetPort": 8081,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "reloader-web",
+          "port": 8080,
+          "targetPort": "reloader-web",
+          "protocol": "TCP",
+          "appProtocol": "http"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "name": "rancher-monitoring-prometheus-adapter",
+      "clusterIPs": [
+        "10.77.168.165"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "https",
+          "port": 443,
+          "targetPort": "https",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "name": "rancher-monitoring-prometheus-node-exporter",
+      "clusterIPs": [
+        "10.77.185.78"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9796,
+          "targetPort": 9796,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "name": "rancher-monitoring-windows-exporter",
+      "clusterIPs": [
+        "10.77.173.252"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "windows-metrics",
+          "port": 9796,
+          "targetPort": 9796,
+          "protocol": "TCP",
+          "appProtocol": "http"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-system",
+      "name": "imperative-api-extension",
+      "clusterIPs": [
+        "10.77.165.66"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "",
+          "port": 6666,
+          "targetPort": 6666,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-system",
+      "name": "rancher",
+      "clusterIPs": [
+        "10.77.144.21"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http",
+          "port": 80,
+          "targetPort": 80,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "https",
+          "port": 443,
+          "targetPort": 443,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-system",
+      "name": "rancher-internal",
+      "clusterIPs": [
+        "10.77.157.83"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "https-internal",
+          "port": 443,
+          "targetPort": 444,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-system",
+      "name": "rancher-webhook",
+      "clusterIPs": [
+        "10.77.142.112"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "https",
+          "port": 443,
+          "targetPort": 9443,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "cdi",
+      "name": "cdi-api",
+      "clusterIPs": [
+        "10.77.159.20"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "",
+          "port": 443,
+          "targetPort": 8443,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "cdi",
+      "name": "cdi-prometheus-metrics",
+      "clusterIPs": [
+        "10.77.139.247"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "targetPort": "metrics",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "cdi",
+      "name": "cdi-uploadproxy",
+      "clusterIPs": [
+        "10.77.133.43"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "",
+          "port": 443,
+          "targetPort": 8443,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "cert-manager",
+      "name": "cert-manager",
+      "clusterIPs": [
+        "10.77.187.101"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9402,
+          "targetPort": 9402,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "cert-manager",
+      "name": "cert-manager-cainjector",
+      "clusterIPs": [
+        "10.77.136.122"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9402,
+          "targetPort": 9402,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "cert-manager",
+      "name": "cert-manager-webhook",
+      "clusterIPs": [
+        "10.77.179.23"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "https",
+          "port": 443,
+          "targetPort": "https",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "metrics",
+          "port": 9402,
+          "targetPort": "http-metrics",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "cert-manager",
+      "name": "godaddy-webhook",
+      "clusterIPs": [
+        "10.77.146.44"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "https",
+          "port": 443,
+          "targetPort": "https",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "compliance-operator-system",
+      "name": "service-rancher-compliance",
+      "clusterIPs": [
+        "10.77.153.0"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "",
+          "port": 443,
+          "targetPort": 443,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "default",
+      "name": "kubernetes",
+      "clusterIPs": [
+        "10.77.128.1"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "https",
+          "port": 443,
+          "targetPort": 6443,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "harbor",
+      "name": "harbor-core",
+      "clusterIPs": [
+        "10.77.172.74"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http-web",
+          "port": 80,
+          "targetPort": 8080,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "http-metrics",
+          "port": 8001,
+          "targetPort": 8001,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "harbor",
+      "name": "harbor-database",
+      "clusterIPs": [
+        "10.77.144.209"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "",
+          "port": 5432,
+          "targetPort": 5432,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "harbor",
+      "name": "harbor-exporter",
+      "clusterIPs": [
+        "10.77.150.96"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 8001,
+          "targetPort": 8001,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "harbor",
+      "name": "harbor-jobservice",
+      "clusterIPs": [
+        "10.77.155.219"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http-jobservice",
+          "port": 80,
+          "targetPort": 8080,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "http-metrics",
+          "port": 8001,
+          "targetPort": 8001,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "harbor",
+      "name": "harbor-portal",
+      "clusterIPs": [
+        "10.77.148.171"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "",
+          "port": 80,
+          "targetPort": 8080,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "harbor",
+      "name": "harbor-redis",
+      "clusterIPs": [
+        "10.77.150.232"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "",
+          "port": 6379,
+          "targetPort": 6379,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "harbor",
+      "name": "harbor-registry",
+      "clusterIPs": [
+        "10.77.141.126"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http-registry",
+          "port": 5000,
+          "targetPort": 5000,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "http-controller",
+          "port": 8080,
+          "targetPort": 8080,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "http-metrics",
+          "port": 8001,
+          "targetPort": 8001,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "home-assistant",
+      "name": "home-assistant",
+      "clusterIPs": [
+        "10.77.162.113"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http",
+          "port": 8123,
+          "targetPort": 80,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "name": "rancher-monitoring-coredns",
+      "clusterIPs": [],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9153,
+          "targetPort": 9153,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "name": "rancher-monitoring-kubelet",
+      "clusterIPs": [],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "https-metrics",
+          "port": 10250,
+          "targetPort": 10250,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "http-metrics",
+          "port": 10255,
+          "targetPort": 10255,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "cadvisor",
+          "port": 4194,
+          "targetPort": 4194,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "name": "rke2-coredns-rke2-coredns",
+      "clusterIPs": [
+        "10.77.128.10"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "udp-53",
+          "port": 53,
+          "targetPort": 53,
+          "protocol": "UDP",
+          "appProtocol": ""
+        },
+        {
+          "name": "tcp-53",
+          "port": 53,
+          "targetPort": 53,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "name": "rke2-metrics-server",
+      "clusterIPs": [
+        "10.77.157.82"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "https",
+          "port": 443,
+          "targetPort": "https",
+          "protocol": "TCP",
+          "appProtocol": "https"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "name": "kubevirt-operator-webhook",
+      "clusterIPs": [
+        "10.77.158.85"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "webhooks",
+          "port": 443,
+          "targetPort": "webhooks",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "name": "kubevirt-prometheus-metrics",
+      "clusterIPs": [],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 443,
+          "targetPort": "metrics",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "name": "virt-api",
+      "clusterIPs": [
+        "10.77.163.217"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "",
+          "port": 443,
+          "targetPort": 8443,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "name": "virt-exportproxy",
+      "clusterIPs": [
+        "10.77.132.64"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "",
+          "port": 443,
+          "targetPort": 8443,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "name": "virt-template-api-service",
+      "clusterIPs": [
+        "10.77.177.176"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http-api",
+          "port": 443,
+          "targetPort": "http-api",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "name": "virt-template-controller-manager-metrics-service",
+      "clusterIPs": [
+        "10.77.131.153"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 8443,
+          "targetPort": "http-metrics",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "name": "virt-template-webhook-service",
+      "clusterIPs": [
+        "10.77.184.199"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http-webhook",
+          "port": 443,
+          "targetPort": "http-webhook",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "name": "longhorn-admission-webhook",
+      "clusterIPs": [
+        "10.77.182.207"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "admission-webhook",
+          "port": 9502,
+          "targetPort": "admission-wh",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "name": "longhorn-backend",
+      "clusterIPs": [
+        "10.77.157.93"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "manager",
+          "port": 9500,
+          "targetPort": "manager",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "name": "longhorn-frontend",
+      "clusterIPs": [
+        "10.77.179.235"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http",
+          "port": 80,
+          "targetPort": "http",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "name": "longhorn-recovery-backend",
+      "clusterIPs": [
+        "10.77.157.253"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "recovery-backend",
+          "port": 9503,
+          "targetPort": "recov-backend",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "metallb-system",
+      "name": "frr-k8s-webhook-service",
+      "clusterIPs": [
+        "10.77.161.67"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "",
+          "port": 443,
+          "targetPort": "webhook",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "metallb-system",
+      "name": "metallb-webhook-service",
+      "clusterIPs": [
+        "10.77.144.39"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "",
+          "port": 443,
+          "targetPort": 9443,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "omada",
+      "name": "omada",
+      "clusterIPs": [
+        "10.77.185.181"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "https",
+          "port": 443,
+          "targetPort": 443,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "firmware",
+          "port": 8043,
+          "targetPort": 8043,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "adoption",
+          "port": 29814,
+          "targetPort": 29814,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "device-info",
+          "port": 29815,
+          "targetPort": 29815,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "terminal",
+          "port": 29816,
+          "targetPort": 29816,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "discovery",
+          "port": 29810,
+          "targetPort": 29810,
+          "protocol": "UDP",
+          "appProtocol": ""
+        },
+        {
+          "name": "portal-http",
+          "port": 8088,
+          "targetPort": 8088,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "portal-https",
+          "port": 8843,
+          "targetPort": 8843,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "legacy-manage",
+          "port": 29811,
+          "targetPort": 29811,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "legacy-adopt",
+          "port": 29812,
+          "targetPort": 29812,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "legacy-upgrade",
+          "port": 29813,
+          "targetPort": 29813,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "monitor",
+          "port": 29817,
+          "targetPort": 29817,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "plex-manager",
+      "name": "plex-manager",
+      "clusterIPs": [
+        "10.77.172.84"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http",
+          "port": 8181,
+          "targetPort": "http",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "plex-server",
+      "name": "plex-server",
+      "clusterIPs": [
+        "10.77.139.234"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "plex",
+          "port": 32400,
+          "targetPort": 32400,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "companion",
+          "port": 8324,
+          "targetPort": 8324,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "dlna-http",
+          "port": 32469,
+          "targetPort": 32469,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "dlna-ssdp",
+          "port": 1900,
+          "targetPort": 1900,
+          "protocol": "UDP",
+          "appProtocol": ""
+        },
+        {
+          "name": "gdm-1",
+          "port": 32410,
+          "targetPort": 32410,
+          "protocol": "UDP",
+          "appProtocol": ""
+        },
+        {
+          "name": "gdm-2",
+          "port": 32412,
+          "targetPort": 32412,
+          "protocol": "UDP",
+          "appProtocol": ""
+        },
+        {
+          "name": "gdm-3",
+          "port": 32413,
+          "targetPort": 32413,
+          "protocol": "UDP",
+          "appProtocol": ""
+        },
+        {
+          "name": "gdm-4",
+          "port": 32414,
+          "targetPort": 32414,
+          "protocol": "UDP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "prod-realtime",
+      "name": "prod-realtime-gateway",
+      "clusterIPs": [
+        "10.77.179.192"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http",
+          "port": 80,
+          "targetPort": "http",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "prod-realtime",
+      "name": "prod-realtime-redis",
+      "clusterIPs": [
+        "10.77.179.0"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "tcp-redis",
+          "port": 6379,
+          "targetPort": 6379,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "tcp-sentinel",
+          "port": 26379,
+          "targetPort": 26379,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "prod-realtime",
+      "name": "prod-realtime-redis-headless",
+      "clusterIPs": [],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "tcp-redis",
+          "port": 6379,
+          "targetPort": "redis",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "tcp-sentinel",
+          "port": 26379,
+          "targetPort": "redis-sentinel",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "prod-realtime",
+      "name": "prod-realtime-redis-master",
+      "clusterIPs": [
+        "10.77.175.231"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "tcp-redis",
+          "port": 6379,
+          "targetPort": 6379,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "prod-realtime",
+      "name": "prod-realtime-redis-metrics",
+      "clusterIPs": [
+        "10.77.188.181"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9121,
+          "targetPort": "metrics",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "speedtester",
+      "name": "speedtest-tracker",
+      "clusterIPs": [
+        "10.77.183.90"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http",
+          "port": 80,
+          "targetPort": "http",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "synology-media",
+      "name": "synology-media",
+      "clusterIPs": [
+        "10.77.144.181"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "https",
+          "port": 443,
+          "targetPort": 5001,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "synology-media",
+      "name": "synology-media-nfs",
+      "clusterIPs": [
+        "10.77.171.155"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "nfs",
+          "port": 2049,
+          "targetPort": 2049,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "nfs-udp",
+          "port": 2049,
+          "targetPort": 2049,
+          "protocol": "UDP",
+          "appProtocol": ""
+        },
+        {
+          "name": "nfs-rpc",
+          "port": 111,
+          "targetPort": 111,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "nfs-rpc-udp",
+          "port": 111,
+          "targetPort": 111,
+          "protocol": "UDP",
+          "appProtocol": ""
+        },
+        {
+          "name": "nfs-mount",
+          "port": 892,
+          "targetPort": 892,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "nfs-mount-udp",
+          "port": 892,
+          "targetPort": 892,
+          "protocol": "UDP",
+          "appProtocol": ""
+        },
+        {
+          "name": "nfs-lock",
+          "port": 49033,
+          "targetPort": 49033,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "nfs-lock-udp",
+          "port": 48936,
+          "targetPort": 48936,
+          "protocol": "UDP",
+          "appProtocol": ""
+        },
+        {
+          "name": "nfs-stat",
+          "port": 55841,
+          "targetPort": 55841,
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "nfs-stat-udp",
+          "port": 59005,
+          "targetPort": 59005,
+          "protocol": "UDP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "synology-media",
+      "name": "synology-media-smb",
+      "clusterIPs": [
+        "10.77.161.110"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "smb",
+          "port": 445,
+          "targetPort": 445,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "torrent",
+      "name": "torrent",
+      "clusterIPs": [
+        "10.77.146.177"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "webui",
+          "port": 8090,
+          "targetPort": "webui",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "peer-tcp",
+          "port": 9254,
+          "targetPort": "peer-tcp",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "peer-udp",
+          "port": 9254,
+          "targetPort": "peer-udp",
+          "protocol": "UDP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "traefik-system",
+      "name": "traefik",
+      "clusterIPs": [
+        "10.77.188.67"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "nfs",
+          "port": 2049,
+          "targetPort": "nfs",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "nfs-lock",
+          "port": 49033,
+          "targetPort": "nfs-lock",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "nfs-mount",
+          "port": 892,
+          "targetPort": "nfs-mount",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "nfs-rpc",
+          "port": 111,
+          "targetPort": "nfs-rpc",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "nfs-stat",
+          "port": 55841,
+          "targetPort": "nfs-stat",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "omada-adoption",
+          "port": 29814,
+          "targetPort": "omada-adoption",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "omada-firmware",
+          "port": 8043,
+          "targetPort": "omada-firmware",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "omada-http",
+          "port": 8088,
+          "targetPort": "omada-http",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "omada-https",
+          "port": 8843,
+          "targetPort": "omada-https",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "omada-info",
+          "port": 29815,
+          "targetPort": "omada-info",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "omada-legacy1",
+          "port": 29811,
+          "targetPort": "omada-legacy1",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "omada-legacy2",
+          "port": 29812,
+          "targetPort": "omada-legacy2",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "omada-legacy3",
+          "port": 29813,
+          "targetPort": "omada-legacy3",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "omada-monitor",
+          "port": 29817,
+          "targetPort": "omada-monitor",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "omada-terminal",
+          "port": 29816,
+          "targetPort": "omada-terminal",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "redis",
+          "port": 16379,
+          "targetPort": "redis",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "smb",
+          "port": 445,
+          "targetPort": "smb",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "web",
+          "port": 80,
+          "targetPort": "web",
+          "protocol": "TCP",
+          "appProtocol": ""
+        },
+        {
+          "name": "websecure",
+          "port": 443,
+          "targetPort": "websecure",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "traefik-system",
+      "name": "traefik-manager",
+      "clusterIPs": [
+        "10.77.166.215"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "http",
+          "port": 5000,
+          "targetPort": "http",
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "traefik-system",
+      "name": "traefik-udp",
+      "clusterIPs": [
+        "10.77.142.138"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "nfs-lock-udp",
+          "port": 48936,
+          "targetPort": "nfs-lock-udp",
+          "protocol": "UDP",
+          "appProtocol": ""
+        },
+        {
+          "name": "nfs-mount-udp",
+          "port": 892,
+          "targetPort": "nfs-mount-udp",
+          "protocol": "UDP",
+          "appProtocol": ""
+        },
+        {
+          "name": "nfs-rpc-udp",
+          "port": 111,
+          "targetPort": "nfs-rpc-udp",
+          "protocol": "UDP",
+          "appProtocol": ""
+        },
+        {
+          "name": "nfs-stat-udp",
+          "port": 59005,
+          "targetPort": "nfs-stat-udp",
+          "protocol": "UDP",
+          "appProtocol": ""
+        },
+        {
+          "name": "nfs-udp",
+          "port": 2049,
+          "targetPort": "nfs-udp",
+          "protocol": "UDP",
+          "appProtocol": ""
+        },
+        {
+          "name": "omada-discovery",
+          "port": 29810,
+          "targetPort": "omada-discovery",
+          "protocol": "UDP",
+          "appProtocol": ""
+        }
+      ]
+    },
+    {
+      "namespace": "windows-admin-center",
+      "name": "windows-admin-center",
+      "clusterIPs": [
+        "10.77.191.84"
+      ],
+      "externalName": "",
+      "ports": [
+        {
+          "name": "https",
+          "port": 443,
+          "targetPort": 6600,
+          "protocol": "TCP",
+          "appProtocol": ""
+        }
+      ]
+    }
+  ],
+  "endpoints": [
+    {
+      "namespace": "ai",
+      "service": "lmstudio",
+      "addresses": [
+        "10.99.1.5"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http",
+          "port": 1234,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "ai",
+      "service": "ollama",
+      "addresses": [
+        "10.99.1.5"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http",
+          "port": 11434,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "ai",
+      "service": "open-webui-redis",
+      "addresses": [
+        "10.77.21.170"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http",
+          "port": 6379,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "ai",
+      "service": "open-webui",
+      "addresses": [
+        "10.77.21.180"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http",
+          "port": 8080,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "automation",
+      "service": "browser-guest",
+      "addresses": [
+        "10.77.4.251"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "mcp",
+          "port": 8080,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "automation",
+      "service": "browser-guest-login",
+      "addresses": [
+        "10.77.4.251"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "novnc",
+          "port": 6080,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "automation",
+      "service": "mcp-gateway",
+      "addresses": [
+        "10.77.7.205"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "mcp",
+          "port": 8080,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "automation",
+      "service": "mcp-gateway",
+      "addresses": [
+        "10.77.9.201"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "mcp",
+          "port": 8080,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "automation",
+      "service": "mcp-gateway",
+      "addresses": [
+        "10.77.21.174"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "mcp",
+          "port": 8080,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "automation",
+      "service": "phone-queue-controller",
+      "addresses": [
+        "10.77.21.183"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "mcp",
+          "port": 8080,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "automation",
+      "service": "pixel-10-pro-xl",
+      "addresses": [
+        "10.77.21.182"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "adb",
+          "port": 5556,
+          "protocol": "TCP"
+        },
+        {
+          "name": "novnc",
+          "port": 6080,
+          "protocol": "TCP"
+        },
+        {
+          "name": "grpc",
+          "port": 8554,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-capi-system",
+      "service": "capi-webhook-service",
+      "addresses": [
+        "10.77.9.203"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "",
+          "port": 9443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-fleet-system",
+      "service": "gitjob",
+      "addresses": [
+        "10.77.4.246"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-80",
+          "port": 8080,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-fleet-system",
+      "service": "monitoring-fleet-controller",
+      "addresses": [
+        "10.77.4.244"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8080,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-fleet-system",
+      "service": "monitoring-gitjob",
+      "addresses": [
+        "10.77.4.246"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8081,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "alertmanager-operated",
+      "addresses": [
+        "10.77.22.67"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "tcp-mesh",
+          "port": 9094,
+          "protocol": "TCP"
+        },
+        {
+          "name": "udp-mesh",
+          "port": 9094,
+          "protocol": "UDP"
+        },
+        {
+          "name": "http-web",
+          "port": 9093,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "prometheus-operated",
+      "addresses": [
+        "10.77.22.60"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-web",
+          "port": 9090,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-alertmanager",
+      "addresses": [
+        "10.77.22.67"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "reloader-web",
+          "port": 8080,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-web",
+          "port": 9093,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-grafana",
+      "addresses": [
+        "10.77.7.218"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "nginx-http",
+          "port": 8080,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-kube-state-metrics",
+      "addresses": [
+        "10.77.6.232"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http",
+          "port": 8080,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-operator",
+      "addresses": [
+        "10.77.4.249"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https",
+          "port": 10250,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-prometheus-adapter",
+      "addresses": [
+        "10.77.22.63"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https",
+          "port": 6443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-prometheus",
+      "addresses": [
+        "10.77.22.60"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "reloader-web",
+          "port": 8080,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-web",
+          "port": 8081,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-prometheus-node-exporter",
+      "addresses": [
+        "10.99.15.11"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9796,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-prometheus-node-exporter",
+      "addresses": [
+        "10.99.15.28"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9796,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-prometheus-node-exporter",
+      "addresses": [
+        "10.99.15.22"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9796,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-prometheus-node-exporter",
+      "addresses": [
+        "10.99.15.13"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9796,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-prometheus-node-exporter",
+      "addresses": [
+        "10.99.15.20"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9796,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-prometheus-node-exporter",
+      "addresses": [
+        "10.99.15.23"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9796,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-prometheus-node-exporter",
+      "addresses": [
+        "10.99.15.15"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9796,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-prometheus-node-exporter",
+      "addresses": [
+        "10.99.15.27"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9796,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-prometheus-node-exporter",
+      "addresses": [
+        "10.99.15.14"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9796,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-prometheus-node-exporter",
+      "addresses": [
+        "10.99.15.26"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9796,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-prometheus-node-exporter",
+      "addresses": [
+        "10.99.15.19"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9796,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-prometheus-node-exporter",
+      "addresses": [
+        "10.99.15.16"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9796,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-prometheus-node-exporter",
+      "addresses": [
+        "10.99.15.18"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9796,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-prometheus-node-exporter",
+      "addresses": [
+        "10.99.15.25"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9796,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-prometheus-node-exporter",
+      "addresses": [
+        "10.99.15.17"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9796,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-prometheus-node-exporter",
+      "addresses": [
+        "10.99.15.21"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9796,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-prometheus-node-exporter",
+      "addresses": [
+        "10.99.15.24"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9796,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-prometheus-node-exporter",
+      "addresses": [
+        "10.99.15.29"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9796,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-monitoring-system",
+      "service": "rancher-monitoring-prometheus-node-exporter",
+      "addresses": [
+        "10.99.15.12"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9796,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-system",
+      "service": "imperative-api-extension",
+      "addresses": [
+        "10.77.9.216"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "",
+          "port": 6666,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-system",
+      "service": "imperative-api-extension",
+      "addresses": [
+        "10.77.22.68"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "",
+          "port": 6666,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-system",
+      "service": "imperative-api-extension",
+      "addresses": [
+        "10.77.17.28"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "",
+          "port": 6666,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-system",
+      "service": "rancher-internal",
+      "addresses": [
+        "10.77.9.216"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https-internal",
+          "port": 444,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-system",
+      "service": "rancher-internal",
+      "addresses": [
+        "10.77.22.68"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https-internal",
+          "port": 444,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-system",
+      "service": "rancher-internal",
+      "addresses": [
+        "10.77.17.28"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https-internal",
+          "port": 444,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-system",
+      "service": "rancher",
+      "addresses": [
+        "10.77.9.216"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https",
+          "port": 443,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http",
+          "port": 80,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-system",
+      "service": "rancher",
+      "addresses": [
+        "10.77.22.68"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https",
+          "port": 443,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http",
+          "port": 80,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-system",
+      "service": "rancher",
+      "addresses": [
+        "10.77.17.28"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https",
+          "port": 443,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http",
+          "port": 80,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cattle-system",
+      "service": "rancher-webhook",
+      "addresses": [
+        "10.77.9.207"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https",
+          "port": 9443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cdi",
+      "service": "cdi-api",
+      "addresses": [
+        "10.77.9.212"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cdi",
+      "service": "cdi-prometheus-metrics",
+      "addresses": [
+        "10.77.4.247"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cdi",
+      "service": "cdi-prometheus-metrics",
+      "addresses": [
+        "10.77.6.228"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cdi",
+      "service": "cdi-uploadproxy",
+      "addresses": [
+        "10.77.6.227"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cert-manager",
+      "service": "cert-manager-cainjector",
+      "addresses": [
+        "10.77.9.202"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9402,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cert-manager",
+      "service": "cert-manager",
+      "addresses": [
+        "10.77.9.211"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9402,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cert-manager",
+      "service": "cert-manager-webhook",
+      "addresses": [
+        "10.77.21.168"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https",
+          "port": 10250,
+          "protocol": "TCP"
+        },
+        {
+          "name": "metrics",
+          "port": 9402,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "cert-manager",
+      "service": "godaddy-webhook",
+      "addresses": [
+        "10.77.7.212"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https",
+          "port": 443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "default",
+      "service": "kubernetes",
+      "addresses": [
+        "10.99.15.11"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https",
+          "port": 6443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "default",
+      "service": "kubernetes",
+      "addresses": [
+        "10.99.15.12"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https",
+          "port": 6443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "default",
+      "service": "kubernetes",
+      "addresses": [
+        "10.99.15.13"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https",
+          "port": 6443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "harbor",
+      "service": "harbor-core",
+      "addresses": [
+        "10.77.7.208"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-web",
+          "port": 8080,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-metrics",
+          "port": 8001,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "harbor",
+      "service": "harbor-database",
+      "addresses": [
+        "10.77.23.77"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "",
+          "port": 5432,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "harbor",
+      "service": "harbor-exporter",
+      "addresses": [
+        "10.77.22.65"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 8001,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "harbor",
+      "service": "harbor-jobservice",
+      "addresses": [
+        "10.77.21.181"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 8001,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-jobservice",
+          "port": 8080,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "harbor",
+      "service": "harbor-portal",
+      "addresses": [
+        "10.77.22.64"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "",
+          "port": 8080,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "harbor",
+      "service": "harbor-redis",
+      "addresses": [
+        "10.77.23.75"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "",
+          "port": 6379,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "harbor",
+      "service": "harbor-registry",
+      "addresses": [
+        "10.77.25.131"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 8001,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-controller",
+          "port": 8080,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-registry",
+          "port": 5000,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "home-assistant",
+      "service": "home-assistant",
+      "addresses": [
+        "10.99.0.28"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http",
+          "port": 80,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "service": "rancher-monitoring-coredns",
+      "addresses": [
+        "10.77.7.206"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9153,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "service": "rancher-monitoring-coredns",
+      "addresses": [
+        "10.77.22.62"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9153,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "service": "rancher-monitoring-kubelet",
+      "addresses": [
+        "10.99.15.21"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https-metrics",
+          "port": 10250,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-metrics",
+          "port": 10255,
+          "protocol": "TCP"
+        },
+        {
+          "name": "cadvisor",
+          "port": 4194,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "service": "rancher-monitoring-kubelet",
+      "addresses": [
+        "10.99.15.22"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https-metrics",
+          "port": 10250,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-metrics",
+          "port": 10255,
+          "protocol": "TCP"
+        },
+        {
+          "name": "cadvisor",
+          "port": 4194,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "service": "rancher-monitoring-kubelet",
+      "addresses": [
+        "10.99.15.24"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https-metrics",
+          "port": 10250,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-metrics",
+          "port": 10255,
+          "protocol": "TCP"
+        },
+        {
+          "name": "cadvisor",
+          "port": 4194,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "service": "rancher-monitoring-kubelet",
+      "addresses": [
+        "10.99.15.13"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https-metrics",
+          "port": 10250,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-metrics",
+          "port": 10255,
+          "protocol": "TCP"
+        },
+        {
+          "name": "cadvisor",
+          "port": 4194,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "service": "rancher-monitoring-kubelet",
+      "addresses": [
+        "10.99.15.14"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https-metrics",
+          "port": 10250,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-metrics",
+          "port": 10255,
+          "protocol": "TCP"
+        },
+        {
+          "name": "cadvisor",
+          "port": 4194,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "service": "rancher-monitoring-kubelet",
+      "addresses": [
+        "10.99.15.15"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https-metrics",
+          "port": 10250,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-metrics",
+          "port": 10255,
+          "protocol": "TCP"
+        },
+        {
+          "name": "cadvisor",
+          "port": 4194,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "service": "rancher-monitoring-kubelet",
+      "addresses": [
+        "10.99.15.25"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https-metrics",
+          "port": 10250,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-metrics",
+          "port": 10255,
+          "protocol": "TCP"
+        },
+        {
+          "name": "cadvisor",
+          "port": 4194,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "service": "rancher-monitoring-kubelet",
+      "addresses": [
+        "10.99.15.11"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https-metrics",
+          "port": 10250,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-metrics",
+          "port": 10255,
+          "protocol": "TCP"
+        },
+        {
+          "name": "cadvisor",
+          "port": 4194,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "service": "rancher-monitoring-kubelet",
+      "addresses": [
+        "10.99.15.27"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https-metrics",
+          "port": 10250,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-metrics",
+          "port": 10255,
+          "protocol": "TCP"
+        },
+        {
+          "name": "cadvisor",
+          "port": 4194,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "service": "rancher-monitoring-kubelet",
+      "addresses": [
+        "10.99.15.23"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https-metrics",
+          "port": 10250,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-metrics",
+          "port": 10255,
+          "protocol": "TCP"
+        },
+        {
+          "name": "cadvisor",
+          "port": 4194,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "service": "rancher-monitoring-kubelet",
+      "addresses": [
+        "10.99.15.19"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https-metrics",
+          "port": 10250,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-metrics",
+          "port": 10255,
+          "protocol": "TCP"
+        },
+        {
+          "name": "cadvisor",
+          "port": 4194,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "service": "rancher-monitoring-kubelet",
+      "addresses": [
+        "10.99.15.12"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https-metrics",
+          "port": 10250,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-metrics",
+          "port": 10255,
+          "protocol": "TCP"
+        },
+        {
+          "name": "cadvisor",
+          "port": 4194,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "service": "rancher-monitoring-kubelet",
+      "addresses": [
+        "10.99.15.17"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https-metrics",
+          "port": 10250,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-metrics",
+          "port": 10255,
+          "protocol": "TCP"
+        },
+        {
+          "name": "cadvisor",
+          "port": 4194,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "service": "rancher-monitoring-kubelet",
+      "addresses": [
+        "10.99.15.26"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https-metrics",
+          "port": 10250,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-metrics",
+          "port": 10255,
+          "protocol": "TCP"
+        },
+        {
+          "name": "cadvisor",
+          "port": 4194,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "service": "rancher-monitoring-kubelet",
+      "addresses": [
+        "10.99.15.16"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https-metrics",
+          "port": 10250,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-metrics",
+          "port": 10255,
+          "protocol": "TCP"
+        },
+        {
+          "name": "cadvisor",
+          "port": 4194,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "service": "rancher-monitoring-kubelet",
+      "addresses": [
+        "10.99.15.29"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https-metrics",
+          "port": 10250,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-metrics",
+          "port": 10255,
+          "protocol": "TCP"
+        },
+        {
+          "name": "cadvisor",
+          "port": 4194,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "service": "rancher-monitoring-kubelet",
+      "addresses": [
+        "10.99.15.18"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https-metrics",
+          "port": 10250,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-metrics",
+          "port": 10255,
+          "protocol": "TCP"
+        },
+        {
+          "name": "cadvisor",
+          "port": 4194,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "service": "rancher-monitoring-kubelet",
+      "addresses": [
+        "10.99.15.20"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https-metrics",
+          "port": 10250,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-metrics",
+          "port": 10255,
+          "protocol": "TCP"
+        },
+        {
+          "name": "cadvisor",
+          "port": 4194,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "service": "rancher-monitoring-kubelet",
+      "addresses": [
+        "10.99.15.28"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https-metrics",
+          "port": 10250,
+          "protocol": "TCP"
+        },
+        {
+          "name": "http-metrics",
+          "port": 10255,
+          "protocol": "TCP"
+        },
+        {
+          "name": "cadvisor",
+          "port": 4194,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "service": "rke2-coredns-rke2-coredns",
+      "addresses": [
+        "10.77.7.206"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "tcp-53",
+          "port": 53,
+          "protocol": "TCP"
+        },
+        {
+          "name": "udp-53",
+          "port": 53,
+          "protocol": "UDP"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "service": "rke2-coredns-rke2-coredns",
+      "addresses": [
+        "10.77.22.62"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "tcp-53",
+          "port": 53,
+          "protocol": "TCP"
+        },
+        {
+          "name": "udp-53",
+          "port": 53,
+          "protocol": "UDP"
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "service": "rke2-metrics-server",
+      "addresses": [
+        "10.77.22.61"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https",
+          "port": 10250,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-operator-webhook",
+      "addresses": [
+        "10.77.0.7"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "webhooks",
+          "port": 8444,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-operator-webhook",
+      "addresses": [
+        "10.77.1.11"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "webhooks",
+          "port": 8444,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.0.7"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.0.8"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.6.215"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.4.236"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.4.250"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.6.229"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.6.225"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.3.12"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.14.32"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.18.49"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.25.126"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.22.57"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.9.204"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.1.12"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.1.11"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.9.208"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.23.68"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.15.33"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.21.167"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.7.210"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.20.47"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.7.220"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.7.222"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.16.30"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.10.41"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.12.40"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "kubevirt-prometheus-metrics",
+      "addresses": [
+        "10.77.17.32"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "virt-api",
+      "addresses": [
+        "10.77.6.229"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "virt-api",
+      "addresses": [
+        "10.77.7.220"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "virt-exportproxy",
+      "addresses": [
+        "10.77.4.250"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "virt-exportproxy",
+      "addresses": [
+        "10.77.9.204"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "virt-template-api-service",
+      "addresses": [
+        "10.77.4.245"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-api",
+          "port": 9443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "virt-template-controller-manager-metrics-service",
+      "addresses": [
+        "10.77.6.226"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 8443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "kubevirt",
+      "service": "virt-template-webhook-service",
+      "addresses": [
+        "10.77.6.226"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-webhook",
+          "port": 9443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-admission-webhook",
+      "addresses": [
+        "10.77.6.216"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "admission-webhook",
+          "port": 9502,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-admission-webhook",
+      "addresses": [
+        "10.77.4.237"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "admission-webhook",
+          "port": 9502,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-admission-webhook",
+      "addresses": [
+        "10.77.14.31"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "admission-webhook",
+          "port": 9502,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-admission-webhook",
+      "addresses": [
+        "10.77.15.30"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "admission-webhook",
+          "port": 9502,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-admission-webhook",
+      "addresses": [
+        "10.77.18.46"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "admission-webhook",
+          "port": 9502,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-admission-webhook",
+      "addresses": [
+        "10.77.21.165"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "admission-webhook",
+          "port": 9502,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-admission-webhook",
+      "addresses": [
+        "10.77.25.128"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "admission-webhook",
+          "port": 9502,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-admission-webhook",
+      "addresses": [
+        "10.77.9.214"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "admission-webhook",
+          "port": 9502,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-admission-webhook",
+      "addresses": [
+        "10.77.23.66"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "admission-webhook",
+          "port": 9502,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-admission-webhook",
+      "addresses": [
+        "10.77.20.46"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "admission-webhook",
+          "port": 9502,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-admission-webhook",
+      "addresses": [
+        "10.77.22.70"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "admission-webhook",
+          "port": 9502,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-admission-webhook",
+      "addresses": [
+        "10.77.7.219"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "admission-webhook",
+          "port": 9502,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-admission-webhook",
+      "addresses": [
+        "10.77.16.28"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "admission-webhook",
+          "port": 9502,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-admission-webhook",
+      "addresses": [
+        "10.77.17.30"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "admission-webhook",
+          "port": 9502,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-admission-webhook",
+      "addresses": [
+        "10.77.10.40"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "admission-webhook",
+          "port": 9502,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-admission-webhook",
+      "addresses": [
+        "10.77.12.39"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "admission-webhook",
+          "port": 9502,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-backend",
+      "addresses": [
+        "10.77.6.216"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "manager",
+          "port": 9500,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-backend",
+      "addresses": [
+        "10.77.4.237"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "manager",
+          "port": 9500,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-backend",
+      "addresses": [
+        "10.77.14.31"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "manager",
+          "port": 9500,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-backend",
+      "addresses": [
+        "10.77.15.30"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "manager",
+          "port": 9500,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-backend",
+      "addresses": [
+        "10.77.18.46"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "manager",
+          "port": 9500,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-backend",
+      "addresses": [
+        "10.77.21.165"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "manager",
+          "port": 9500,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-backend",
+      "addresses": [
+        "10.77.25.128"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "manager",
+          "port": 9500,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-backend",
+      "addresses": [
+        "10.77.9.214"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "manager",
+          "port": 9500,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-backend",
+      "addresses": [
+        "10.77.23.66"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "manager",
+          "port": 9500,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-backend",
+      "addresses": [
+        "10.77.20.46"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "manager",
+          "port": 9500,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-backend",
+      "addresses": [
+        "10.77.22.70"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "manager",
+          "port": 9500,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-backend",
+      "addresses": [
+        "10.77.7.219"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "manager",
+          "port": 9500,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-backend",
+      "addresses": [
+        "10.77.16.28"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "manager",
+          "port": 9500,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-backend",
+      "addresses": [
+        "10.77.17.30"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "manager",
+          "port": 9500,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-backend",
+      "addresses": [
+        "10.77.10.40"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "manager",
+          "port": 9500,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-backend",
+      "addresses": [
+        "10.77.12.39"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "manager",
+          "port": 9500,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-frontend",
+      "addresses": [
+        "10.77.21.166"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http",
+          "port": 8000,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-frontend",
+      "addresses": [
+        "10.77.7.214"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http",
+          "port": 8000,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-recovery-backend",
+      "addresses": [
+        "10.77.6.216"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "recovery-backend",
+          "port": 9503,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-recovery-backend",
+      "addresses": [
+        "10.77.4.237"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "recovery-backend",
+          "port": 9503,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-recovery-backend",
+      "addresses": [
+        "10.77.14.31"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "recovery-backend",
+          "port": 9503,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-recovery-backend",
+      "addresses": [
+        "10.77.15.30"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "recovery-backend",
+          "port": 9503,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-recovery-backend",
+      "addresses": [
+        "10.77.18.46"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "recovery-backend",
+          "port": 9503,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-recovery-backend",
+      "addresses": [
+        "10.77.21.165"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "recovery-backend",
+          "port": 9503,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-recovery-backend",
+      "addresses": [
+        "10.77.25.128"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "recovery-backend",
+          "port": 9503,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-recovery-backend",
+      "addresses": [
+        "10.77.9.214"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "recovery-backend",
+          "port": 9503,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-recovery-backend",
+      "addresses": [
+        "10.77.23.66"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "recovery-backend",
+          "port": 9503,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-recovery-backend",
+      "addresses": [
+        "10.77.20.46"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "recovery-backend",
+          "port": 9503,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-recovery-backend",
+      "addresses": [
+        "10.77.22.70"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "recovery-backend",
+          "port": 9503,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-recovery-backend",
+      "addresses": [
+        "10.77.7.219"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "recovery-backend",
+          "port": 9503,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-recovery-backend",
+      "addresses": [
+        "10.77.16.28"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "recovery-backend",
+          "port": 9503,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-recovery-backend",
+      "addresses": [
+        "10.77.17.30"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "recovery-backend",
+          "port": 9503,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-recovery-backend",
+      "addresses": [
+        "10.77.10.40"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "recovery-backend",
+          "port": 9503,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "longhorn-system",
+      "service": "longhorn-recovery-backend",
+      "addresses": [
+        "10.77.12.39"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "recovery-backend",
+          "port": 9503,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "metallb-system",
+      "service": "frr-k8s-webhook-service",
+      "addresses": [
+        "10.99.15.14"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "",
+          "port": 19443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "metallb-system",
+      "service": "metallb-webhook-service",
+      "addresses": [
+        "10.77.9.206"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "",
+          "port": 9443,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "omada",
+      "service": "omada",
+      "addresses": [
+        "10.99.1.1"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https",
+          "port": 443,
+          "protocol": "TCP"
+        },
+        {
+          "name": "firmware",
+          "port": 8043,
+          "protocol": "TCP"
+        },
+        {
+          "name": "adoption",
+          "port": 29814,
+          "protocol": "TCP"
+        },
+        {
+          "name": "device-info",
+          "port": 29815,
+          "protocol": "TCP"
+        },
+        {
+          "name": "terminal",
+          "port": 29816,
+          "protocol": "TCP"
+        },
+        {
+          "name": "discovery",
+          "port": 29810,
+          "protocol": "UDP"
+        },
+        {
+          "name": "portal-http",
+          "port": 8088,
+          "protocol": "TCP"
+        },
+        {
+          "name": "portal-https",
+          "port": 8843,
+          "protocol": "TCP"
+        },
+        {
+          "name": "legacy-manage",
+          "port": 29811,
+          "protocol": "TCP"
+        },
+        {
+          "name": "legacy-adopt",
+          "port": 29812,
+          "protocol": "TCP"
+        },
+        {
+          "name": "legacy-upgrade",
+          "port": 29813,
+          "protocol": "TCP"
+        },
+        {
+          "name": "monitor",
+          "port": 29817,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "plex-manager",
+      "service": "plex-manager",
+      "addresses": [
+        "10.77.22.78"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http",
+          "port": 8181,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "plex-server",
+      "service": "plex-server",
+      "addresses": [
+        "10.99.15.26"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "gdm-4",
+          "port": 32414,
+          "protocol": "UDP"
+        },
+        {
+          "name": "gdm-2",
+          "port": 32412,
+          "protocol": "UDP"
+        },
+        {
+          "name": "gdm-1",
+          "port": 32410,
+          "protocol": "UDP"
+        },
+        {
+          "name": "companion",
+          "port": 8324,
+          "protocol": "TCP"
+        },
+        {
+          "name": "gdm-3",
+          "port": 32413,
+          "protocol": "UDP"
+        },
+        {
+          "name": "dlna-ssdp",
+          "port": 1900,
+          "protocol": "UDP"
+        },
+        {
+          "name": "plex",
+          "port": 32400,
+          "protocol": "TCP"
+        },
+        {
+          "name": "dlna-http",
+          "port": 32469,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "prod-realtime",
+      "service": "prod-realtime-gateway",
+      "addresses": [
+        "10.77.9.223"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http",
+          "port": 8080,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "prod-realtime",
+      "service": "prod-realtime-gateway",
+      "addresses": [
+        "10.77.12.42"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http",
+          "port": 8080,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "prod-realtime",
+      "service": "prod-realtime-gateway",
+      "addresses": [
+        "10.77.23.80"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http",
+          "port": 8080,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "prod-realtime",
+      "service": "prod-realtime-redis-headless",
+      "addresses": [
+        "10.77.9.225"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "tcp-sentinel",
+          "port": 26379,
+          "protocol": "TCP"
+        },
+        {
+          "name": "tcp-redis",
+          "port": 6379,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "prod-realtime",
+      "service": "prod-realtime-redis-headless",
+      "addresses": [
+        "10.77.25.140"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "tcp-sentinel",
+          "port": 26379,
+          "protocol": "TCP"
+        },
+        {
+          "name": "tcp-redis",
+          "port": 6379,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "prod-realtime",
+      "service": "prod-realtime-redis-headless",
+      "addresses": [
+        "10.77.6.243"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "tcp-sentinel",
+          "port": 26379,
+          "protocol": "TCP"
+        },
+        {
+          "name": "tcp-redis",
+          "port": 6379,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "prod-realtime",
+      "service": "prod-realtime-redis-master",
+      "addresses": [
+        "10.77.25.140"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "tcp-redis",
+          "port": 6379,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "prod-realtime",
+      "service": "prod-realtime-redis-metrics",
+      "addresses": [
+        "10.77.9.225"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9121,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "prod-realtime",
+      "service": "prod-realtime-redis-metrics",
+      "addresses": [
+        "10.77.25.140"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9121,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "prod-realtime",
+      "service": "prod-realtime-redis-metrics",
+      "addresses": [
+        "10.77.6.243"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http-metrics",
+          "port": 9121,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "prod-realtime",
+      "service": "prod-realtime-redis",
+      "addresses": [
+        "10.77.9.225"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "tcp-sentinel",
+          "port": 26379,
+          "protocol": "TCP"
+        },
+        {
+          "name": "tcp-redis",
+          "port": 6379,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "prod-realtime",
+      "service": "prod-realtime-redis",
+      "addresses": [
+        "10.77.25.140"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "tcp-sentinel",
+          "port": 26379,
+          "protocol": "TCP"
+        },
+        {
+          "name": "tcp-redis",
+          "port": 6379,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "prod-realtime",
+      "service": "prod-realtime-redis",
+      "addresses": [
+        "10.77.6.243"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "tcp-sentinel",
+          "port": 26379,
+          "protocol": "TCP"
+        },
+        {
+          "name": "tcp-redis",
+          "port": 6379,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "speedtester",
+      "service": "speedtest-tracker",
+      "addresses": [
+        "10.77.25.135"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "http",
+          "port": 80,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "synology-media",
+      "service": "synology-media",
+      "addresses": [
+        "10.99.1.203"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https",
+          "port": 5001,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "synology-media",
+      "service": "synology-media",
+      "addresses": [
+        "10.99.1.204"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https",
+          "port": 5001,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "synology-media",
+      "service": "synology-media-nfs",
+      "addresses": [
+        "10.99.1.203"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "nfs",
+          "port": 2049,
+          "protocol": "TCP"
+        },
+        {
+          "name": "nfs-udp",
+          "port": 2049,
+          "protocol": "UDP"
+        },
+        {
+          "name": "nfs-rpc",
+          "port": 111,
+          "protocol": "TCP"
+        },
+        {
+          "name": "nfs-rpc-udp",
+          "port": 111,
+          "protocol": "UDP"
+        },
+        {
+          "name": "nfs-mount",
+          "port": 892,
+          "protocol": "TCP"
+        },
+        {
+          "name": "nfs-mount-udp",
+          "port": 892,
+          "protocol": "UDP"
+        },
+        {
+          "name": "nfs-lock",
+          "port": 49033,
+          "protocol": "TCP"
+        },
+        {
+          "name": "nfs-lock-udp",
+          "port": 48936,
+          "protocol": "UDP"
+        },
+        {
+          "name": "nfs-stat",
+          "port": 55841,
+          "protocol": "TCP"
+        },
+        {
+          "name": "nfs-stat-udp",
+          "port": 59005,
+          "protocol": "UDP"
+        }
+      ]
+    },
+    {
+      "namespace": "synology-media",
+      "service": "synology-media-smb",
+      "addresses": [
+        "10.99.1.203"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "smb",
+          "port": 445,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "synology-media",
+      "service": "synology-media-smb",
+      "addresses": [
+        "10.99.1.204"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "smb",
+          "port": 445,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "torrent",
+      "service": "torrent",
+      "addresses": [
+        "10.77.23.79"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "peer-udp",
+          "port": 9254,
+          "protocol": "UDP"
+        },
+        {
+          "name": "peer-tcp",
+          "port": 9254,
+          "protocol": "TCP"
+        },
+        {
+          "name": "webui",
+          "port": 8090,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "traefik-system",
+      "service": "traefik",
+      "addresses": [
+        "10.77.6.239"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "smb",
+          "port": 1445,
+          "protocol": "TCP"
+        },
+        {
+          "name": "websecure",
+          "port": 8443,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-https",
+          "port": 8843,
+          "protocol": "TCP"
+        },
+        {
+          "name": "nfs-mount",
+          "port": 1892,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-legacy3",
+          "port": 29813,
+          "protocol": "TCP"
+        },
+        {
+          "name": "web",
+          "port": 8000,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-adoption",
+          "port": 29814,
+          "protocol": "TCP"
+        },
+        {
+          "name": "redis",
+          "port": 16379,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-legacy2",
+          "port": 29812,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-firmware",
+          "port": 8043,
+          "protocol": "TCP"
+        },
+        {
+          "name": "nfs-rpc",
+          "port": 1111,
+          "protocol": "TCP"
+        },
+        {
+          "name": "nfs-lock",
+          "port": 49033,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-http",
+          "port": 8088,
+          "protocol": "TCP"
+        },
+        {
+          "name": "nfs",
+          "port": 2049,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-legacy1",
+          "port": 29811,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-terminal",
+          "port": 29816,
+          "protocol": "TCP"
+        },
+        {
+          "name": "nfs-stat",
+          "port": 55841,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-info",
+          "port": 29815,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-monitor",
+          "port": 29817,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "traefik-system",
+      "service": "traefik",
+      "addresses": [
+        "10.77.9.209"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "smb",
+          "port": 1445,
+          "protocol": "TCP"
+        },
+        {
+          "name": "websecure",
+          "port": 8443,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-https",
+          "port": 8843,
+          "protocol": "TCP"
+        },
+        {
+          "name": "nfs-mount",
+          "port": 1892,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-legacy3",
+          "port": 29813,
+          "protocol": "TCP"
+        },
+        {
+          "name": "web",
+          "port": 8000,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-adoption",
+          "port": 29814,
+          "protocol": "TCP"
+        },
+        {
+          "name": "redis",
+          "port": 16379,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-legacy2",
+          "port": 29812,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-firmware",
+          "port": 8043,
+          "protocol": "TCP"
+        },
+        {
+          "name": "nfs-rpc",
+          "port": 1111,
+          "protocol": "TCP"
+        },
+        {
+          "name": "nfs-lock",
+          "port": 49033,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-http",
+          "port": 8088,
+          "protocol": "TCP"
+        },
+        {
+          "name": "nfs",
+          "port": 2049,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-legacy1",
+          "port": 29811,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-terminal",
+          "port": 29816,
+          "protocol": "TCP"
+        },
+        {
+          "name": "nfs-stat",
+          "port": 55841,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-info",
+          "port": 29815,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-monitor",
+          "port": 29817,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "traefik-system",
+      "service": "traefik",
+      "addresses": [
+        "10.77.10.37"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "smb",
+          "port": 1445,
+          "protocol": "TCP"
+        },
+        {
+          "name": "websecure",
+          "port": 8443,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-https",
+          "port": 8843,
+          "protocol": "TCP"
+        },
+        {
+          "name": "nfs-mount",
+          "port": 1892,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-legacy3",
+          "port": 29813,
+          "protocol": "TCP"
+        },
+        {
+          "name": "web",
+          "port": 8000,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-adoption",
+          "port": 29814,
+          "protocol": "TCP"
+        },
+        {
+          "name": "redis",
+          "port": 16379,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-legacy2",
+          "port": 29812,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-firmware",
+          "port": 8043,
+          "protocol": "TCP"
+        },
+        {
+          "name": "nfs-rpc",
+          "port": 1111,
+          "protocol": "TCP"
+        },
+        {
+          "name": "nfs-lock",
+          "port": 49033,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-http",
+          "port": 8088,
+          "protocol": "TCP"
+        },
+        {
+          "name": "nfs",
+          "port": 2049,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-legacy1",
+          "port": 29811,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-terminal",
+          "port": 29816,
+          "protocol": "TCP"
+        },
+        {
+          "name": "nfs-stat",
+          "port": 55841,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-info",
+          "port": 29815,
+          "protocol": "TCP"
+        },
+        {
+          "name": "omada-monitor",
+          "port": 29817,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "namespace": "traefik-system",
+      "service": "traefik-udp",
+      "addresses": [
+        "10.77.6.239"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "nfs-mount-udp",
+          "port": 11892,
+          "protocol": "UDP"
+        },
+        {
+          "name": "nfs-udp",
+          "port": 12049,
+          "protocol": "UDP"
+        },
+        {
+          "name": "omada-discovery",
+          "port": 29810,
+          "protocol": "UDP"
+        },
+        {
+          "name": "nfs-rpc-udp",
+          "port": 11111,
+          "protocol": "UDP"
+        },
+        {
+          "name": "nfs-stat-udp",
+          "port": 59005,
+          "protocol": "UDP"
+        },
+        {
+          "name": "nfs-lock-udp",
+          "port": 48936,
+          "protocol": "UDP"
+        }
+      ]
+    },
+    {
+      "namespace": "traefik-system",
+      "service": "traefik-udp",
+      "addresses": [
+        "10.77.9.209"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "nfs-mount-udp",
+          "port": 11892,
+          "protocol": "UDP"
+        },
+        {
+          "name": "nfs-udp",
+          "port": 12049,
+          "protocol": "UDP"
+        },
+        {
+          "name": "omada-discovery",
+          "port": 29810,
+          "protocol": "UDP"
+        },
+        {
+          "name": "nfs-rpc-udp",
+          "port": 11111,
+          "protocol": "UDP"
+        },
+        {
+          "name": "nfs-stat-udp",
+          "port": 59005,
+          "protocol": "UDP"
+        },
+        {
+          "name": "nfs-lock-udp",
+          "port": 48936,
+          "protocol": "UDP"
+        }
+      ]
+    },
+    {
+      "namespace": "traefik-system",
+      "service": "traefik-udp",
+      "addresses": [
+        "10.77.10.37"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "nfs-mount-udp",
+          "port": 11892,
+          "protocol": "UDP"
+        },
+        {
+          "name": "nfs-udp",
+          "port": 12049,
+          "protocol": "UDP"
+        },
+        {
+          "name": "omada-discovery",
+          "port": 29810,
+          "protocol": "UDP"
+        },
+        {
+          "name": "nfs-rpc-udp",
+          "port": 11111,
+          "protocol": "UDP"
+        },
+        {
+          "name": "nfs-stat-udp",
+          "port": 59005,
+          "protocol": "UDP"
+        },
+        {
+          "name": "nfs-lock-udp",
+          "port": 48936,
+          "protocol": "UDP"
+        }
+      ]
+    },
+    {
+      "namespace": "windows-admin-center",
+      "service": "windows-admin-center",
+      "addresses": [
+        "10.99.1.5"
+      ],
+      "ready": true,
+      "ports": [
+        {
+          "name": "https",
+          "port": 6600,
+          "protocol": "TCP"
+        }
+      ]
+    }
+  ]
+}

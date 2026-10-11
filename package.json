@@ -1,0 +1,12 @@
+{
+  "name": "rancher-plugin-suite",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "preview": "node scripts/preview-suite.mjs",
+    "test:preview-data": "node --test preview-data/tests/*.test.mjs"
+  }
+}

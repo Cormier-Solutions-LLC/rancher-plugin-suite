@@ -1,0 +1,19 @@
+apiVersion: catalog.cattle.io/v1
+kind: UIPlugin
+metadata:
+  name: dns-manager
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: dns-manager
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+spec:
+  plugin:
+    name: dns-manager
+    version: {{ .Chart.AppVersion | quote }}
+    endpoint: {{ required "Set plugin.endpoint to the published extension directory URL" .Values.plugin.endpoint | quote }}
+    compressedEndpoint: {{ .Values.plugin.compressedEndpoint | quote }}
+    noCache: {{ .Values.plugin.noCache }}
+    noAuth: false
+    metadata:
+      {{- toYaml .Values.plugin.metadata | nindent 6 }}

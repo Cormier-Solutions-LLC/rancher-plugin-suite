@@ -1,0 +1,3659 @@
+{
+  "resources": [
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "lmstudio",
+        "namespace": "ai"
+      },
+      "spec": {
+        "clusterIP": "10.77.144.171",
+        "clusterIPs": [
+          "10.77.144.171"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http",
+            "port": 1234,
+            "protocol": "TCP",
+            "targetPort": 1234
+          }
+        ],
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "ollama",
+        "namespace": "ai"
+      },
+      "spec": {
+        "clusterIP": "10.77.163.118",
+        "clusterIPs": [
+          "10.77.163.118"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http",
+            "port": 11434,
+            "protocol": "TCP",
+            "targetPort": 11434
+          }
+        ],
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "open-webui",
+        "namespace": "ai",
+        "labels": {
+          "app.kubernetes.io/component": "open-webui",
+          "app.kubernetes.io/instance": "open-webui",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "open-webui",
+          "app.kubernetes.io/version": "0.11.3",
+          "helm.sh/chart": "open-webui-16.5.0"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.189.39",
+        "clusterIPs": [
+          "10.77.189.39"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http",
+            "port": 80,
+            "protocol": "TCP",
+            "targetPort": "http"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/component": "open-webui",
+          "app.kubernetes.io/instance": "open-webui"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "open-webui-redis",
+        "namespace": "ai",
+        "labels": {
+          "app.kubernetes.io/component": "open-webui-redis",
+          "app.kubernetes.io/instance": "open-webui",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "open-webui",
+          "app.kubernetes.io/version": "0.11.3",
+          "helm.sh/chart": "open-webui-16.5.0"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.174.226",
+        "clusterIPs": [
+          "10.77.174.226"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http",
+            "port": 6379,
+            "protocol": "TCP",
+            "targetPort": "http"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/component": "open-webui-redis",
+          "app.kubernetes.io/instance": "open-webui"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "browser-guest",
+        "namespace": "automation",
+        "labels": {
+          "app.kubernetes.io/name": "browser-guest"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.144.185",
+        "clusterIPs": [
+          "10.77.144.185"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "mcp",
+            "port": 8080,
+            "protocol": "TCP",
+            "targetPort": "mcp"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/name": "browser-guest"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "browser-guest-login",
+        "namespace": "automation",
+        "labels": {
+          "app.kubernetes.io/name": "browser-guest"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.167.238",
+        "clusterIPs": [
+          "10.77.167.238"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "novnc",
+            "port": 6080,
+            "protocol": "TCP",
+            "targetPort": "novnc"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/name": "browser-guest"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "mcp-gateway",
+        "namespace": "automation",
+        "labels": {
+          "app.kubernetes.io/name": "mcp-gateway"
+        }
+      },
+      "spec": {
+        "allocateLoadBalancerNodePorts": true,
+        "clusterIP": "10.77.145.133",
+        "clusterIPs": [
+          "10.77.145.133"
+        ],
+        "externalTrafficPolicy": "Local",
+        "healthCheckNodePort": 32320,
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "mcp",
+            "nodePort": 30417,
+            "port": 8080,
+            "protocol": "TCP",
+            "targetPort": "http"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/name": "mcp-gateway"
+        },
+        "sessionAffinity": "None",
+        "type": "LoadBalancer"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "phone-queue-controller",
+        "namespace": "automation",
+        "labels": {
+          "app.kubernetes.io/name": "phone-queue-controller"
+        }
+      },
+      "spec": {
+        "allocateLoadBalancerNodePorts": true,
+        "clusterIP": "10.77.129.189",
+        "clusterIPs": [
+          "10.77.129.189"
+        ],
+        "externalTrafficPolicy": "Local",
+        "healthCheckNodePort": 31232,
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "mcp",
+            "nodePort": 32137,
+            "port": 8080,
+            "protocol": "TCP",
+            "targetPort": "mcp"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/name": "phone-queue-controller"
+        },
+        "sessionAffinity": "None",
+        "type": "LoadBalancer"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "pixel-10-pro-xl",
+        "namespace": "automation",
+        "labels": {
+          "app.kubernetes.io/name": "pixel-10-pro-xl"
+        }
+      },
+      "spec": {
+        "clusterIP": "None",
+        "clusterIPs": [
+          "None"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "adb",
+            "port": 5556,
+            "protocol": "TCP",
+            "targetPort": "adb"
+          },
+          {
+            "name": "novnc",
+            "port": 6080,
+            "protocol": "TCP",
+            "targetPort": "novnc"
+          },
+          {
+            "name": "grpc",
+            "port": 8554,
+            "protocol": "TCP",
+            "targetPort": "grpc"
+          }
+        ],
+        "publishNotReadyAddresses": true,
+        "selector": {
+          "app.kubernetes.io/name": "pixel-10-pro-xl"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "capi-webhook-service",
+        "namespace": "cattle-capi-system",
+        "labels": {
+          "cluster.x-k8s.io/provider": "cluster-api",
+          "clusterctl.cluster.x-k8s.io": ""
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.179.58",
+        "clusterIPs": [
+          "10.77.179.58"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": "webhook-server"
+          }
+        ],
+        "selector": {
+          "cluster.x-k8s.io/provider": "cluster-api"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "gitjob",
+        "namespace": "cattle-fleet-system",
+        "labels": {
+          "app.kubernetes.io/managed-by": "Helm"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.163.179",
+        "clusterIPs": [
+          "10.77.163.179"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http-80",
+            "port": 80,
+            "protocol": "TCP",
+            "targetPort": 8080
+          }
+        ],
+        "selector": {
+          "app": "gitjob"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "monitoring-fleet-controller",
+        "namespace": "cattle-fleet-system",
+        "labels": {
+          "app": "fleet-controller",
+          "app.kubernetes.io/managed-by": "Helm"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.189.85",
+        "clusterIPs": [
+          "10.77.189.85"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "metrics",
+            "port": 8080,
+            "protocol": "TCP",
+            "targetPort": 8080
+          }
+        ],
+        "selector": {
+          "app": "fleet-controller",
+          "fleet.cattle.io/shard-default": "true"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "monitoring-gitjob",
+        "namespace": "cattle-fleet-system",
+        "labels": {
+          "app": "gitjob",
+          "app.kubernetes.io/managed-by": "Helm"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.189.219",
+        "clusterIPs": [
+          "10.77.189.219"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "metrics",
+            "port": 8081,
+            "protocol": "TCP",
+            "targetPort": 8081
+          }
+        ],
+        "selector": {
+          "app": "gitjob",
+          "fleet.cattle.io/shard-default": "true"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "alertmanager-operated",
+        "namespace": "cattle-monitoring-system",
+        "labels": {
+          "app.kubernetes.io/managed-by": "prometheus-operator",
+          "managed-by": "prometheus-operator",
+          "operated-alertmanager": "true"
+        }
+      },
+      "spec": {
+        "clusterIP": "None",
+        "clusterIPs": [
+          "None"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http-web",
+            "port": 9093,
+            "protocol": "TCP",
+            "targetPort": "http-web"
+          },
+          {
+            "name": "tcp-mesh",
+            "port": 9094,
+            "protocol": "TCP",
+            "targetPort": "mesh-tcp"
+          },
+          {
+            "name": "udp-mesh",
+            "port": 9094,
+            "protocol": "UDP",
+            "targetPort": "mesh-udp"
+          }
+        ],
+        "publishNotReadyAddresses": true,
+        "selector": {
+          "app.kubernetes.io/name": "alertmanager"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "prometheus-operated",
+        "namespace": "cattle-monitoring-system",
+        "labels": {
+          "app.kubernetes.io/managed-by": "prometheus-operator",
+          "managed-by": "prometheus-operator",
+          "operated-prometheus": "true"
+        }
+      },
+      "spec": {
+        "clusterIP": "None",
+        "clusterIPs": [
+          "None"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http-web",
+            "port": 9090,
+            "protocol": "TCP",
+            "targetPort": "http-web"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/name": "prometheus"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "rancher-monitoring-alertmanager",
+        "namespace": "cattle-monitoring-system",
+        "labels": {
+          "app": "rancher-monitoring-alertmanager",
+          "app.kubernetes.io/instance": "rancher-monitoring",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/part-of": "rancher-monitoring",
+          "app.kubernetes.io/version": "v0.87.1",
+          "chart": "rancher-monitoring-110.0.1_up80.9.1-rancher.19",
+          "helm.sh/chart": "rancher-monitoring-110.0.1_up80.9.1-rancher.19",
+          "heritage": "Helm",
+          "release": "rancher-monitoring",
+          "self-monitor": "true"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.156.70",
+        "clusterIPs": [
+          "10.77.156.70"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http-web",
+            "port": 9093,
+            "protocol": "TCP",
+            "targetPort": 9093
+          },
+          {
+            "appProtocol": "http",
+            "name": "reloader-web",
+            "port": 8080,
+            "protocol": "TCP",
+            "targetPort": "reloader-web"
+          }
+        ],
+        "selector": {
+          "alertmanager": "rancher-monitoring-alertmanager",
+          "app.kubernetes.io/name": "alertmanager"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "rancher-monitoring-grafana",
+        "namespace": "cattle-monitoring-system",
+        "labels": {
+          "app.kubernetes.io/instance": "rancher-monitoring",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "grafana",
+          "app.kubernetes.io/version": "12.3.1-1.12",
+          "helm.sh/chart": "grafana-10.4.1"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.144.117",
+        "clusterIPs": [
+          "10.77.144.117"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "nginx-http",
+            "port": 80,
+            "protocol": "TCP",
+            "targetPort": "grafana"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/instance": "rancher-monitoring",
+          "app.kubernetes.io/name": "grafana"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "rancher-monitoring-kube-state-metrics",
+        "namespace": "cattle-monitoring-system",
+        "labels": {
+          "app.kubernetes.io/component": "metrics",
+          "app.kubernetes.io/instance": "rancher-monitoring",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "kube-state-metrics",
+          "app.kubernetes.io/part-of": "kube-state-metrics",
+          "app.kubernetes.io/version": "2.17.0",
+          "helm.sh/chart": "kube-state-metrics-7.0.0",
+          "release": "rancher-monitoring"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.157.122",
+        "clusterIPs": [
+          "10.77.157.122"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "protocol": "TCP",
+            "targetPort": "http"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/instance": "rancher-monitoring",
+          "app.kubernetes.io/name": "kube-state-metrics"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "rancher-monitoring-operator",
+        "namespace": "cattle-monitoring-system",
+        "labels": {
+          "app": "rancher-monitoring-operator",
+          "app.kubernetes.io/component": "prometheus-operator",
+          "app.kubernetes.io/instance": "rancher-monitoring",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "rancher-monitoring-prometheus-operator",
+          "app.kubernetes.io/part-of": "rancher-monitoring",
+          "app.kubernetes.io/version": "v0.87.1",
+          "chart": "rancher-monitoring-110.0.1_up80.9.1-rancher.19",
+          "helm.sh/chart": "rancher-monitoring-110.0.1_up80.9.1-rancher.19",
+          "heritage": "Helm",
+          "release": "rancher-monitoring"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.189.11",
+        "clusterIPs": [
+          "10.77.189.11"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "https",
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": "https"
+          }
+        ],
+        "selector": {
+          "app": "rancher-monitoring-operator",
+          "release": "rancher-monitoring"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "rancher-monitoring-prometheus",
+        "namespace": "cattle-monitoring-system",
+        "labels": {
+          "app": "rancher-monitoring-prometheus",
+          "app.kubernetes.io/instance": "rancher-monitoring",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/part-of": "rancher-monitoring",
+          "app.kubernetes.io/version": "v0.87.1",
+          "chart": "rancher-monitoring-110.0.1_up80.9.1-rancher.19",
+          "helm.sh/chart": "rancher-monitoring-110.0.1_up80.9.1-rancher.19",
+          "heritage": "Helm",
+          "release": "rancher-monitoring",
+          "self-monitor": "true"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.169.210",
+        "clusterIPs": [
+          "10.77.169.210"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http-web",
+            "port": 9090,
+            "protocol": "TCP",
+            "targetPort": 8081
+          },
+          {
+            "appProtocol": "http",
+            "name": "reloader-web",
+            "port": 8080,
+            "protocol": "TCP",
+            "targetPort": "reloader-web"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/name": "prometheus",
+          "operator.prometheus.io/name": "rancher-monitoring-prometheus"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "rancher-monitoring-prometheus-adapter",
+        "namespace": "cattle-monitoring-system",
+        "labels": {
+          "app.kubernetes.io/component": "metrics",
+          "app.kubernetes.io/instance": "rancher-monitoring",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "prometheus-adapter",
+          "app.kubernetes.io/part-of": "prometheus-adapter",
+          "app.kubernetes.io/version": "v0.12.0",
+          "helm.sh/chart": "prometheus-adapter-5.2.0"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.168.165",
+        "clusterIPs": [
+          "10.77.168.165"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "https",
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": "https"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/instance": "rancher-monitoring",
+          "app.kubernetes.io/name": "prometheus-adapter"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "rancher-monitoring-prometheus-node-exporter",
+        "namespace": "cattle-monitoring-system",
+        "labels": {
+          "app.kubernetes.io/component": "metrics",
+          "app.kubernetes.io/instance": "rancher-monitoring",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "prometheus-node-exporter",
+          "app.kubernetes.io/part-of": "prometheus-node-exporter",
+          "app.kubernetes.io/version": "1.10.2",
+          "helm.sh/chart": "prometheus-node-exporter-4.49.2",
+          "jobLabel": "node-exporter",
+          "release": "rancher-monitoring"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.185.78",
+        "clusterIPs": [
+          "10.77.185.78"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http-metrics",
+            "port": 9796,
+            "protocol": "TCP",
+            "targetPort": 9796
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/instance": "rancher-monitoring",
+          "app.kubernetes.io/name": "prometheus-node-exporter"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "rancher-monitoring-windows-exporter",
+        "namespace": "cattle-monitoring-system",
+        "labels": {
+          "app.kubernetes.io/managed-by": "Helm",
+          "component": "windows-exporter",
+          "k8s-app": "rancher-monitoring-windows-exporter",
+          "provider": "kubernetes",
+          "release": "rancher-monitoring"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.173.252",
+        "clusterIPs": [
+          "10.77.173.252"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "appProtocol": "http",
+            "name": "windows-metrics",
+            "port": 9796,
+            "protocol": "TCP",
+            "targetPort": 9796
+          }
+        ],
+        "selector": {
+          "component": "windows-exporter",
+          "k8s-app": "rancher-monitoring-windows-exporter",
+          "provider": "kubernetes",
+          "release": "rancher-monitoring"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "imperative-api-extension",
+        "namespace": "cattle-system"
+      },
+      "spec": {
+        "clusterIP": "10.77.165.66",
+        "clusterIPs": [
+          "10.77.165.66"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "port": 6666,
+            "protocol": "TCP",
+            "targetPort": 6666
+          }
+        ],
+        "selector": {
+          "app": "rancher"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "rancher",
+        "namespace": "cattle-system",
+        "labels": {
+          "app": "rancher",
+          "app.kubernetes.io/managed-by": "Helm",
+          "chart": "rancher-2.15.1",
+          "heritage": "Helm",
+          "release": "rancher"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.144.21",
+        "clusterIPs": [
+          "10.77.144.21"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http",
+            "port": 80,
+            "protocol": "TCP",
+            "targetPort": 80
+          },
+          {
+            "name": "https",
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": 443
+          }
+        ],
+        "selector": {
+          "app": "rancher"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "rancher-internal",
+        "namespace": "cattle-system",
+        "labels": {
+          "app": "rancher",
+          "app.kubernetes.io/managed-by": "Helm",
+          "chart": "rancher-2.15.1",
+          "heritage": "Helm",
+          "release": "rancher"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.157.83",
+        "clusterIPs": [
+          "10.77.157.83"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "https-internal",
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": 444
+          }
+        ],
+        "selector": {
+          "app": "rancher"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "rancher-webhook",
+        "namespace": "cattle-system",
+        "labels": {
+          "app.kubernetes.io/managed-by": "Helm"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.142.112",
+        "clusterIPs": [
+          "10.77.142.112"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "https",
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": 9443
+          }
+        ],
+        "selector": {
+          "app": "rancher-webhook"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "cdi-api",
+        "namespace": "cdi",
+        "labels": {
+          "app": "containerized-data-importer",
+          "app.kubernetes.io/component": "storage",
+          "app.kubernetes.io/managed-by": "cdi-operator",
+          "cdi.kubevirt.io": "cdi-apiserver",
+          "operator.cdi.kubevirt.io/createVersion": "v1.66.0"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.159.20",
+        "clusterIPs": [
+          "10.77.159.20"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": 8443
+          }
+        ],
+        "selector": {
+          "cdi.kubevirt.io": "cdi-apiserver"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "cdi-prometheus-metrics",
+        "namespace": "cdi",
+        "labels": {
+          "app": "containerized-data-importer",
+          "app.kubernetes.io/component": "storage",
+          "app.kubernetes.io/managed-by": "cdi-operator",
+          "cdi.kubevirt.io": "",
+          "operator.cdi.kubevirt.io/createVersion": "v1.66.0",
+          "prometheus.cdi.kubevirt.io": "true"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.139.247",
+        "clusterIPs": [
+          "10.77.139.247"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "metrics",
+            "port": 8443,
+            "protocol": "TCP",
+            "targetPort": "metrics"
+          }
+        ],
+        "selector": {
+          "prometheus.cdi.kubevirt.io": "true"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "cdi-uploadproxy",
+        "namespace": "cdi",
+        "labels": {
+          "app": "containerized-data-importer",
+          "app.kubernetes.io/component": "storage",
+          "app.kubernetes.io/managed-by": "cdi-operator",
+          "cdi.kubevirt.io": "cdi-uploadproxy",
+          "operator.cdi.kubevirt.io/createVersion": "v1.66.0"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.133.43",
+        "clusterIPs": [
+          "10.77.133.43"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": 8443
+          }
+        ],
+        "selector": {
+          "cdi.kubevirt.io": "cdi-uploadproxy"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "cert-manager",
+        "namespace": "cert-manager",
+        "labels": {
+          "app": "cert-manager",
+          "app.kubernetes.io/component": "controller",
+          "app.kubernetes.io/instance": "cert-manager",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "cert-manager",
+          "app.kubernetes.io/version": "v1.21.1",
+          "helm.sh/chart": "cert-manager-v1.21.1"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.187.101",
+        "clusterIPs": [
+          "10.77.187.101"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http-metrics",
+            "port": 9402,
+            "protocol": "TCP",
+            "targetPort": 9402
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/component": "controller",
+          "app.kubernetes.io/instance": "cert-manager",
+          "app.kubernetes.io/name": "cert-manager"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "cert-manager-cainjector",
+        "namespace": "cert-manager",
+        "labels": {
+          "app": "cainjector",
+          "app.kubernetes.io/component": "cainjector",
+          "app.kubernetes.io/instance": "cert-manager",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "cainjector",
+          "app.kubernetes.io/version": "v1.21.1",
+          "helm.sh/chart": "cert-manager-v1.21.1"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.136.122",
+        "clusterIPs": [
+          "10.77.136.122"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http-metrics",
+            "port": 9402,
+            "protocol": "TCP",
+            "targetPort": 9402
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/component": "cainjector",
+          "app.kubernetes.io/instance": "cert-manager",
+          "app.kubernetes.io/name": "cainjector"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "cert-manager-webhook",
+        "namespace": "cert-manager",
+        "labels": {
+          "app": "webhook",
+          "app.kubernetes.io/component": "webhook",
+          "app.kubernetes.io/instance": "cert-manager",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "webhook",
+          "app.kubernetes.io/version": "v1.21.1",
+          "helm.sh/chart": "cert-manager-v1.21.1"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.179.23",
+        "clusterIPs": [
+          "10.77.179.23"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "https",
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": "https"
+          },
+          {
+            "name": "metrics",
+            "port": 9402,
+            "protocol": "TCP",
+            "targetPort": "http-metrics"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/component": "webhook",
+          "app.kubernetes.io/instance": "cert-manager",
+          "app.kubernetes.io/name": "webhook"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "godaddy-webhook",
+        "namespace": "cert-manager",
+        "labels": {
+          "app.kubernetes.io/instance": "godaddy-webhook",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "godaddy-webhook",
+          "app.kubernetes.io/version": "0.8.0",
+          "helm.sh/chart": "godaddy-webhook-0.8.0"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.146.44",
+        "clusterIPs": [
+          "10.77.146.44"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "https",
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": "https"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/instance": "godaddy-webhook",
+          "app.kubernetes.io/name": "godaddy-webhook"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "service-rancher-compliance",
+        "namespace": "compliance-operator-system",
+        "labels": {
+          "app.kubernetes.io/instance": "security-scan-runner-scan-4kcqr",
+          "app.kubernetes.io/name": "rancher-compliance",
+          "objectset.rio.cattle.io/hash": "3b06d07e6e18c8158c90fe750bfb8e30ce2604d9"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.153.0",
+        "clusterIPs": [
+          "10.77.153.0"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": 443
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/instance": "security-scan-runner-scan-4kcqr",
+          "app.kubernetes.io/name": "rancher-compliance"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "kubernetes",
+        "namespace": "default",
+        "labels": {
+          "component": "apiserver",
+          "provider": "kubernetes"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.128.1",
+        "clusterIPs": [
+          "10.77.128.1"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "https",
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": 6443
+          }
+        ],
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "emby",
+        "namespace": "emby"
+      },
+      "spec": {
+        "clusterIP": "10.77.165.28",
+        "clusterIPs": [
+          "10.77.165.28"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http",
+            "port": 8096,
+            "protocol": "TCP",
+            "targetPort": "http"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/name": "emby"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "emby-headless",
+        "namespace": "emby"
+      },
+      "spec": {
+        "clusterIP": "None",
+        "clusterIPs": [
+          "None"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http",
+            "port": 8096,
+            "protocol": "TCP",
+            "targetPort": "http"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/name": "emby"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "harbor-core",
+        "namespace": "harbor",
+        "labels": {
+          "app": "harbor",
+          "app.kubernetes.io/instance": "harbor",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "harbor",
+          "app.kubernetes.io/part-of": "harbor",
+          "app.kubernetes.io/version": "2.15.2",
+          "chart": "harbor",
+          "heritage": "Helm",
+          "release": "harbor"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.172.74",
+        "clusterIPs": [
+          "10.77.172.74"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http-web",
+            "port": 80,
+            "protocol": "TCP",
+            "targetPort": 8080
+          },
+          {
+            "name": "http-metrics",
+            "port": 8001,
+            "protocol": "TCP",
+            "targetPort": 8001
+          }
+        ],
+        "selector": {
+          "app": "harbor",
+          "component": "core",
+          "release": "harbor"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "harbor-database",
+        "namespace": "harbor",
+        "labels": {
+          "app": "harbor",
+          "app.kubernetes.io/instance": "harbor",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "harbor",
+          "app.kubernetes.io/part-of": "harbor",
+          "app.kubernetes.io/version": "2.15.2",
+          "chart": "harbor",
+          "heritage": "Helm",
+          "release": "harbor"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.144.209",
+        "clusterIPs": [
+          "10.77.144.209"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "port": 5432,
+            "protocol": "TCP",
+            "targetPort": 5432
+          }
+        ],
+        "selector": {
+          "app": "harbor",
+          "component": "database",
+          "release": "harbor"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "harbor-exporter",
+        "namespace": "harbor",
+        "labels": {
+          "app": "harbor",
+          "app.kubernetes.io/instance": "harbor",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "harbor",
+          "app.kubernetes.io/part-of": "harbor",
+          "app.kubernetes.io/version": "2.15.2",
+          "chart": "harbor",
+          "heritage": "Helm",
+          "release": "harbor"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.150.96",
+        "clusterIPs": [
+          "10.77.150.96"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http-metrics",
+            "port": 8001,
+            "protocol": "TCP",
+            "targetPort": 8001
+          }
+        ],
+        "selector": {
+          "app": "harbor",
+          "component": "exporter",
+          "release": "harbor"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "harbor-jobservice",
+        "namespace": "harbor",
+        "labels": {
+          "app": "harbor",
+          "app.kubernetes.io/instance": "harbor",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "harbor",
+          "app.kubernetes.io/part-of": "harbor",
+          "app.kubernetes.io/version": "2.15.2",
+          "chart": "harbor",
+          "heritage": "Helm",
+          "release": "harbor"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.155.219",
+        "clusterIPs": [
+          "10.77.155.219"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http-jobservice",
+            "port": 80,
+            "protocol": "TCP",
+            "targetPort": 8080
+          },
+          {
+            "name": "http-metrics",
+            "port": 8001,
+            "protocol": "TCP",
+            "targetPort": 8001
+          }
+        ],
+        "selector": {
+          "app": "harbor",
+          "component": "jobservice",
+          "release": "harbor"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "harbor-portal",
+        "namespace": "harbor",
+        "labels": {
+          "app": "harbor",
+          "app.kubernetes.io/instance": "harbor",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "harbor",
+          "app.kubernetes.io/part-of": "harbor",
+          "app.kubernetes.io/version": "2.15.2",
+          "chart": "harbor",
+          "heritage": "Helm",
+          "release": "harbor"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.148.171",
+        "clusterIPs": [
+          "10.77.148.171"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "port": 80,
+            "protocol": "TCP",
+            "targetPort": 8080
+          }
+        ],
+        "selector": {
+          "app": "harbor",
+          "component": "portal",
+          "release": "harbor"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "harbor-redis",
+        "namespace": "harbor",
+        "labels": {
+          "app": "harbor",
+          "app.kubernetes.io/instance": "harbor",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "harbor",
+          "app.kubernetes.io/part-of": "harbor",
+          "app.kubernetes.io/version": "2.15.2",
+          "chart": "harbor",
+          "heritage": "Helm",
+          "release": "harbor"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.150.232",
+        "clusterIPs": [
+          "10.77.150.232"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "port": 6379,
+            "protocol": "TCP",
+            "targetPort": 6379
+          }
+        ],
+        "selector": {
+          "app": "harbor",
+          "component": "redis",
+          "release": "harbor"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "harbor-registry",
+        "namespace": "harbor",
+        "labels": {
+          "app": "harbor",
+          "app.kubernetes.io/instance": "harbor",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "harbor",
+          "app.kubernetes.io/part-of": "harbor",
+          "app.kubernetes.io/version": "2.15.2",
+          "chart": "harbor",
+          "heritage": "Helm",
+          "release": "harbor"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.141.126",
+        "clusterIPs": [
+          "10.77.141.126"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http-registry",
+            "port": 5000,
+            "protocol": "TCP",
+            "targetPort": 5000
+          },
+          {
+            "name": "http-controller",
+            "port": 8080,
+            "protocol": "TCP",
+            "targetPort": 8080
+          },
+          {
+            "name": "http-metrics",
+            "port": 8001,
+            "protocol": "TCP",
+            "targetPort": 8001
+          }
+        ],
+        "selector": {
+          "app": "harbor",
+          "component": "registry",
+          "release": "harbor"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "home-assistant",
+        "namespace": "home-assistant",
+        "labels": {
+          "app.kubernetes.io/name": "home-assistant"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.162.113",
+        "clusterIPs": [
+          "10.77.162.113"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http",
+            "port": 8123,
+            "protocol": "TCP",
+            "targetPort": 80
+          }
+        ],
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "rancher-monitoring-coredns",
+        "namespace": "kube-system",
+        "labels": {
+          "app": "rancher-monitoring-coredns",
+          "app.kubernetes.io/instance": "rancher-monitoring",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/part-of": "rancher-monitoring",
+          "app.kubernetes.io/version": "v0.87.1",
+          "chart": "rancher-monitoring-110.0.1_up80.9.1-rancher.19",
+          "helm.sh/chart": "rancher-monitoring-110.0.1_up80.9.1-rancher.19",
+          "heritage": "Helm",
+          "jobLabel": "coredns",
+          "release": "rancher-monitoring"
+        }
+      },
+      "spec": {
+        "clusterIP": "None",
+        "clusterIPs": [
+          "None"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http-metrics",
+            "port": 9153,
+            "protocol": "TCP",
+            "targetPort": 9153
+          }
+        ],
+        "selector": {
+          "k8s-app": "kube-dns"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "rancher-monitoring-kubelet",
+        "namespace": "kube-system",
+        "labels": {
+          "app.kubernetes.io/managed-by": "prometheus-operator",
+          "app.kubernetes.io/name": "kubelet",
+          "k8s-app": "kubelet"
+        }
+      },
+      "spec": {
+        "clusterIP": "None",
+        "clusterIPs": [
+          "None"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4",
+          "IPv6"
+        ],
+        "ipFamilyPolicy": "RequireDualStack",
+        "ports": [
+          {
+            "name": "https-metrics",
+            "port": 10250,
+            "protocol": "TCP",
+            "targetPort": 10250
+          },
+          {
+            "name": "http-metrics",
+            "port": 10255,
+            "protocol": "TCP",
+            "targetPort": 10255
+          },
+          {
+            "name": "cadvisor",
+            "port": 4194,
+            "protocol": "TCP",
+            "targetPort": 4194
+          }
+        ],
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "rke2-coredns-rke2-coredns",
+        "namespace": "kube-system",
+        "labels": {
+          "app.kubernetes.io/instance": "rke2-coredns",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "rke2-coredns",
+          "helm.sh/chart": "rke2-coredns-1.46.201",
+          "k8s-app": "kube-dns",
+          "kubernetes.io/cluster-service": "true",
+          "kubernetes.io/name": "CoreDNS"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.128.10",
+        "clusterIPs": [
+          "10.77.128.10"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "udp-53",
+            "port": 53,
+            "protocol": "UDP",
+            "targetPort": 53
+          },
+          {
+            "name": "tcp-53",
+            "port": 53,
+            "protocol": "TCP",
+            "targetPort": 53
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/instance": "rke2-coredns",
+          "app.kubernetes.io/name": "rke2-coredns",
+          "k8s-app": "kube-dns"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "rke2-metrics-server",
+        "namespace": "kube-system",
+        "labels": {
+          "app": "rke2-metrics-server",
+          "app.kubernetes.io/instance": "rke2-metrics-server",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "rke2-metrics-server",
+          "app.kubernetes.io/version": "0.8.1",
+          "helm.sh/chart": "rke2-metrics-server-3.13.105"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.157.82",
+        "clusterIPs": [
+          "10.77.157.82"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "PreferDualStack",
+        "ports": [
+          {
+            "appProtocol": "https",
+            "name": "https",
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": "https"
+          }
+        ],
+        "selector": {
+          "app": "rke2-metrics-server",
+          "app.kubernetes.io/instance": "rke2-metrics-server",
+          "app.kubernetes.io/name": "rke2-metrics-server"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "kubevirt-operator-webhook",
+        "namespace": "kubevirt",
+        "labels": {
+          "app.kubernetes.io/component": "kubevirt",
+          "app.kubernetes.io/managed-by": "virt-operator",
+          "kubevirt.io": "",
+          "prometheus.kubevirt.io": "true"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.158.85",
+        "clusterIPs": [
+          "10.77.158.85"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "webhooks",
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": "webhooks"
+          }
+        ],
+        "selector": {
+          "kubevirt.io": "virt-operator"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "kubevirt-prometheus-metrics",
+        "namespace": "kubevirt",
+        "labels": {
+          "app.kubernetes.io/component": "kubevirt",
+          "app.kubernetes.io/managed-by": "virt-operator",
+          "kubevirt.io": "",
+          "prometheus.kubevirt.io": "true"
+        }
+      },
+      "spec": {
+        "clusterIP": "None",
+        "clusterIPs": [
+          "None"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "metrics",
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": "metrics"
+          }
+        ],
+        "selector": {
+          "prometheus.kubevirt.io": "true"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "virt-api",
+        "namespace": "kubevirt",
+        "labels": {
+          "app.kubernetes.io/component": "kubevirt",
+          "app.kubernetes.io/managed-by": "virt-operator",
+          "kubevirt.io": "virt-api"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.163.217",
+        "clusterIPs": [
+          "10.77.163.217"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": 8443
+          }
+        ],
+        "selector": {
+          "kubevirt.io": "virt-api"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "virt-exportproxy",
+        "namespace": "kubevirt",
+        "labels": {
+          "app.kubernetes.io/component": "kubevirt",
+          "app.kubernetes.io/managed-by": "virt-operator",
+          "kubevirt.io": "virt-exportproxy"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.132.64",
+        "clusterIPs": [
+          "10.77.132.64"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": 8443
+          }
+        ],
+        "selector": {
+          "kubevirt.io": "virt-exportproxy"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "virt-template-api-service",
+        "namespace": "kubevirt",
+        "labels": {
+          "app.kubernetes.io/component": "kubevirt",
+          "app.kubernetes.io/managed-by": "virt-operator",
+          "app.kubernetes.io/name": "virt-template",
+          "kubevirt.io": "virt-template-api-service"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.177.176",
+        "clusterIPs": [
+          "10.77.177.176"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "PreferDualStack",
+        "ports": [
+          {
+            "name": "http-api",
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": "http-api"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/name": "virt-template",
+          "control-plane": "apiserver"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "virt-template-controller-manager-metrics-service",
+        "namespace": "kubevirt",
+        "labels": {
+          "app.kubernetes.io/component": "kubevirt",
+          "app.kubernetes.io/managed-by": "virt-operator",
+          "app.kubernetes.io/name": "virt-template",
+          "control-plane": "controller-manager",
+          "kubevirt.io": "virt-template-controller-manager-metrics-service"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.131.153",
+        "clusterIPs": [
+          "10.77.131.153"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "PreferDualStack",
+        "ports": [
+          {
+            "name": "http-metrics",
+            "port": 8443,
+            "protocol": "TCP",
+            "targetPort": "http-metrics"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/name": "virt-template",
+          "control-plane": "controller-manager"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "virt-template-webhook-service",
+        "namespace": "kubevirt",
+        "labels": {
+          "app.kubernetes.io/component": "kubevirt",
+          "app.kubernetes.io/managed-by": "virt-operator",
+          "app.kubernetes.io/name": "virt-template",
+          "kubevirt.io": "virt-template-webhook-service"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.184.199",
+        "clusterIPs": [
+          "10.77.184.199"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "PreferDualStack",
+        "ports": [
+          {
+            "name": "http-webhook",
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": "http-webhook"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/name": "virt-template",
+          "control-plane": "controller-manager"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "longhorn-admission-webhook",
+        "namespace": "longhorn-system",
+        "labels": {
+          "app": "longhorn-admission-webhook",
+          "app.kubernetes.io/instance": "longhorn",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "longhorn",
+          "app.kubernetes.io/version": "v1.12.1",
+          "helm.sh/chart": "longhorn-1.12.1"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.182.207",
+        "clusterIPs": [
+          "10.77.182.207"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "admission-webhook",
+            "port": 9502,
+            "protocol": "TCP",
+            "targetPort": "admission-wh"
+          }
+        ],
+        "selector": {
+          "longhorn.io/admission-webhook": "longhorn-admission-webhook"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "longhorn-backend",
+        "namespace": "longhorn-system",
+        "labels": {
+          "app": "longhorn-manager",
+          "app.kubernetes.io/instance": "longhorn",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "longhorn",
+          "app.kubernetes.io/version": "v1.12.1",
+          "helm.sh/chart": "longhorn-1.12.1"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.157.93",
+        "clusterIPs": [
+          "10.77.157.93"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "manager",
+            "port": 9500,
+            "protocol": "TCP",
+            "targetPort": "manager"
+          }
+        ],
+        "selector": {
+          "app": "longhorn-manager"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "longhorn-frontend",
+        "namespace": "longhorn-system",
+        "labels": {
+          "app": "longhorn-ui",
+          "app.kubernetes.io/instance": "longhorn",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "longhorn",
+          "app.kubernetes.io/version": "v1.12.1",
+          "helm.sh/chart": "longhorn-1.12.1"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.179.235",
+        "clusterIPs": [
+          "10.77.179.235"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http",
+            "port": 80,
+            "protocol": "TCP",
+            "targetPort": "http"
+          }
+        ],
+        "selector": {
+          "app": "longhorn-ui"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "longhorn-recovery-backend",
+        "namespace": "longhorn-system",
+        "labels": {
+          "app": "longhorn-recovery-backend",
+          "app.kubernetes.io/instance": "longhorn",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "longhorn",
+          "app.kubernetes.io/version": "v1.12.1",
+          "helm.sh/chart": "longhorn-1.12.1"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.157.253",
+        "clusterIPs": [
+          "10.77.157.253"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "recovery-backend",
+            "port": 9503,
+            "protocol": "TCP",
+            "targetPort": "recov-backend"
+          }
+        ],
+        "selector": {
+          "longhorn.io/recovery-backend": "longhorn-recovery-backend"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "frr-k8s-webhook-service",
+        "namespace": "metallb-system",
+        "labels": {
+          "app.kubernetes.io/managed-by": "Helm"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.161.67",
+        "clusterIPs": [
+          "10.77.161.67"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": "webhook"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/component": "statuscleaner"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "metallb-webhook-service",
+        "namespace": "metallb-system",
+        "labels": {
+          "app.kubernetes.io/instance": "metallb",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "metallb",
+          "app.kubernetes.io/version": "v0.16.1",
+          "helm.sh/chart": "metallb-0.16.1"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.144.39",
+        "clusterIPs": [
+          "10.77.144.39"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": 9443
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/component": "controller",
+          "app.kubernetes.io/instance": "metallb",
+          "app.kubernetes.io/name": "metallb"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "omada",
+        "namespace": "omada",
+        "labels": {
+          "app.kubernetes.io/name": "omada"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.185.181",
+        "clusterIPs": [
+          "10.77.185.181"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "https",
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": 443
+          },
+          {
+            "name": "firmware",
+            "port": 8043,
+            "protocol": "TCP",
+            "targetPort": 8043
+          },
+          {
+            "name": "adoption",
+            "port": 29814,
+            "protocol": "TCP",
+            "targetPort": 29814
+          },
+          {
+            "name": "device-info",
+            "port": 29815,
+            "protocol": "TCP",
+            "targetPort": 29815
+          },
+          {
+            "name": "terminal",
+            "port": 29816,
+            "protocol": "TCP",
+            "targetPort": 29816
+          },
+          {
+            "name": "discovery",
+            "port": 29810,
+            "protocol": "UDP",
+            "targetPort": 29810
+          },
+          {
+            "name": "portal-http",
+            "port": 8088,
+            "protocol": "TCP",
+            "targetPort": 8088
+          },
+          {
+            "name": "portal-https",
+            "port": 8843,
+            "protocol": "TCP",
+            "targetPort": 8843
+          },
+          {
+            "name": "legacy-manage",
+            "port": 29811,
+            "protocol": "TCP",
+            "targetPort": 29811
+          },
+          {
+            "name": "legacy-adopt",
+            "port": 29812,
+            "protocol": "TCP",
+            "targetPort": 29812
+          },
+          {
+            "name": "legacy-upgrade",
+            "port": 29813,
+            "protocol": "TCP",
+            "targetPort": 29813
+          },
+          {
+            "name": "monitor",
+            "port": 29817,
+            "protocol": "TCP",
+            "targetPort": 29817
+          }
+        ],
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "plex-manager",
+        "namespace": "plex-manager"
+      },
+      "spec": {
+        "clusterIP": "10.77.172.84",
+        "clusterIPs": [
+          "10.77.172.84"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http",
+            "port": 8181,
+            "protocol": "TCP",
+            "targetPort": "http"
+          }
+        ],
+        "selector": {
+          "app": "plex-manager"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "plex-server",
+        "namespace": "plex-server"
+      },
+      "spec": {
+        "allocateLoadBalancerNodePorts": true,
+        "clusterIP": "10.77.139.234",
+        "clusterIPs": [
+          "10.77.139.234"
+        ],
+        "externalTrafficPolicy": "Cluster",
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "plex",
+            "nodePort": 31633,
+            "port": 32400,
+            "protocol": "TCP",
+            "targetPort": 32400
+          },
+          {
+            "name": "companion",
+            "nodePort": 30400,
+            "port": 8324,
+            "protocol": "TCP",
+            "targetPort": 8324
+          },
+          {
+            "name": "dlna-http",
+            "nodePort": 30288,
+            "port": 32469,
+            "protocol": "TCP",
+            "targetPort": 32469
+          },
+          {
+            "name": "dlna-ssdp",
+            "nodePort": 32678,
+            "port": 1900,
+            "protocol": "UDP",
+            "targetPort": 1900
+          },
+          {
+            "name": "gdm-1",
+            "nodePort": 31370,
+            "port": 32410,
+            "protocol": "UDP",
+            "targetPort": 32410
+          },
+          {
+            "name": "gdm-2",
+            "nodePort": 30595,
+            "port": 32412,
+            "protocol": "UDP",
+            "targetPort": 32412
+          },
+          {
+            "name": "gdm-3",
+            "nodePort": 32253,
+            "port": 32413,
+            "protocol": "UDP",
+            "targetPort": 32413
+          },
+          {
+            "name": "gdm-4",
+            "nodePort": 32062,
+            "port": 32414,
+            "protocol": "UDP",
+            "targetPort": 32414
+          }
+        ],
+        "selector": {
+          "app": "plex-server"
+        },
+        "sessionAffinity": "None",
+        "type": "LoadBalancer"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "prod-realtime-gateway",
+        "namespace": "prod-realtime",
+        "labels": {
+          "app.kubernetes.io/instance": "prod-realtime",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "realtime-gateway",
+          "app.kubernetes.io/version": "1.0.5-beta",
+          "helm.sh/chart": "realtime-gateway-1.0.5-beta"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.179.192",
+        "clusterIPs": [
+          "10.77.179.192"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http",
+            "port": 80,
+            "protocol": "TCP",
+            "targetPort": "http"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/instance": "prod-realtime",
+          "app.kubernetes.io/name": "realtime-gateway"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "prod-realtime-redis",
+        "namespace": "prod-realtime",
+        "labels": {
+          "app.kubernetes.io/component": "node",
+          "app.kubernetes.io/instance": "prod-realtime-redis",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "redis",
+          "app.kubernetes.io/version": "8.2.2",
+          "helm.sh/chart": "redis-23.1.1"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.179.0",
+        "clusterIPs": [
+          "10.77.179.0"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "tcp-redis",
+            "port": 6379,
+            "protocol": "TCP",
+            "targetPort": 6379
+          },
+          {
+            "name": "tcp-sentinel",
+            "port": 26379,
+            "protocol": "TCP",
+            "targetPort": 26379
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/component": "node",
+          "app.kubernetes.io/instance": "prod-realtime-redis",
+          "app.kubernetes.io/name": "redis"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "prod-realtime-redis-headless",
+        "namespace": "prod-realtime",
+        "labels": {
+          "app.kubernetes.io/instance": "prod-realtime-redis",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "redis",
+          "app.kubernetes.io/version": "8.2.2",
+          "helm.sh/chart": "redis-23.1.1"
+        }
+      },
+      "spec": {
+        "clusterIP": "None",
+        "clusterIPs": [
+          "None"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "tcp-redis",
+            "port": 6379,
+            "protocol": "TCP",
+            "targetPort": "redis"
+          },
+          {
+            "name": "tcp-sentinel",
+            "port": 26379,
+            "protocol": "TCP",
+            "targetPort": "redis-sentinel"
+          }
+        ],
+        "publishNotReadyAddresses": true,
+        "selector": {
+          "app.kubernetes.io/instance": "prod-realtime-redis",
+          "app.kubernetes.io/name": "redis"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "prod-realtime-redis-master",
+        "namespace": "prod-realtime",
+        "labels": {
+          "app.kubernetes.io/component": "node",
+          "app.kubernetes.io/instance": "prod-realtime-redis",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "redis",
+          "app.kubernetes.io/version": "8.2.2",
+          "helm.sh/chart": "redis-23.1.1"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.175.231",
+        "clusterIPs": [
+          "10.77.175.231"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "tcp-redis",
+            "port": 6379,
+            "protocol": "TCP",
+            "targetPort": 6379
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/instance": "prod-realtime-redis",
+          "app.kubernetes.io/name": "redis",
+          "isMaster": "true"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "prod-realtime-redis-metrics",
+        "namespace": "prod-realtime",
+        "labels": {
+          "app.kubernetes.io/component": "metrics",
+          "app.kubernetes.io/instance": "prod-realtime-redis",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "redis",
+          "app.kubernetes.io/version": "8.2.2",
+          "helm.sh/chart": "redis-23.1.1"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.188.181",
+        "clusterIPs": [
+          "10.77.188.181"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http-metrics",
+            "port": 9121,
+            "protocol": "TCP",
+            "targetPort": "metrics"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/instance": "prod-realtime-redis",
+          "app.kubernetes.io/name": "redis"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "speedtest-tracker",
+        "namespace": "speedtester",
+        "labels": {
+          "app.kubernetes.io/name": "speedtest-tracker"
+        }
+      },
+      "spec": {
+        "clusterIP": "10.77.183.90",
+        "clusterIPs": [
+          "10.77.183.90"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http",
+            "port": 80,
+            "protocol": "TCP",
+            "targetPort": "http"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/name": "speedtest-tracker"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "synology-media",
+        "namespace": "synology-media"
+      },
+      "spec": {
+        "clusterIP": "10.77.144.181",
+        "clusterIPs": [
+          "10.77.144.181"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "https",
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": 5001
+          }
+        ],
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "synology-media-nfs",
+        "namespace": "synology-media"
+      },
+      "spec": {
+        "clusterIP": "10.77.171.155",
+        "clusterIPs": [
+          "10.77.171.155"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "nfs",
+            "port": 2049,
+            "protocol": "TCP",
+            "targetPort": 2049
+          },
+          {
+            "name": "nfs-udp",
+            "port": 2049,
+            "protocol": "UDP",
+            "targetPort": 2049
+          },
+          {
+            "name": "nfs-rpc",
+            "port": 111,
+            "protocol": "TCP",
+            "targetPort": 111
+          },
+          {
+            "name": "nfs-rpc-udp",
+            "port": 111,
+            "protocol": "UDP",
+            "targetPort": 111
+          },
+          {
+            "name": "nfs-mount",
+            "port": 892,
+            "protocol": "TCP",
+            "targetPort": 892
+          },
+          {
+            "name": "nfs-mount-udp",
+            "port": 892,
+            "protocol": "UDP",
+            "targetPort": 892
+          },
+          {
+            "name": "nfs-lock",
+            "port": 49033,
+            "protocol": "TCP",
+            "targetPort": 49033
+          },
+          {
+            "name": "nfs-lock-udp",
+            "port": 48936,
+            "protocol": "UDP",
+            "targetPort": 48936
+          },
+          {
+            "name": "nfs-stat",
+            "port": 55841,
+            "protocol": "TCP",
+            "targetPort": 55841
+          },
+          {
+            "name": "nfs-stat-udp",
+            "port": 59005,
+            "protocol": "UDP",
+            "targetPort": 59005
+          }
+        ],
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "synology-media-smb",
+        "namespace": "synology-media"
+      },
+      "spec": {
+        "clusterIP": "10.77.161.110",
+        "clusterIPs": [
+          "10.77.161.110"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "smb",
+            "port": 445,
+            "protocol": "TCP",
+            "targetPort": 445
+          }
+        ],
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "torrent",
+        "namespace": "torrent",
+        "labels": {
+          "app.kubernetes.io/name": "torrent"
+        }
+      },
+      "spec": {
+        "allocateLoadBalancerNodePorts": true,
+        "clusterIP": "10.77.146.177",
+        "clusterIPs": [
+          "10.77.146.177"
+        ],
+        "externalTrafficPolicy": "Cluster",
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "webui",
+            "nodePort": 31224,
+            "port": 8090,
+            "protocol": "TCP",
+            "targetPort": "webui"
+          },
+          {
+            "name": "peer-tcp",
+            "nodePort": 31746,
+            "port": 9254,
+            "protocol": "TCP",
+            "targetPort": "peer-tcp"
+          },
+          {
+            "name": "peer-udp",
+            "nodePort": 31746,
+            "port": 9254,
+            "protocol": "UDP",
+            "targetPort": "peer-udp"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/name": "torrent"
+        },
+        "sessionAffinity": "None",
+        "type": "LoadBalancer"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "traefik",
+        "namespace": "traefik-system",
+        "labels": {
+          "app.kubernetes.io/instance": "traefik-traefik-system",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "traefik",
+          "helm.sh/chart": "traefik-41.4.0"
+        }
+      },
+      "spec": {
+        "allocateLoadBalancerNodePorts": true,
+        "clusterIP": "10.77.188.67",
+        "clusterIPs": [
+          "10.77.188.67"
+        ],
+        "externalTrafficPolicy": "Cluster",
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "loadBalancerIP": "10.99.15.50",
+        "ports": [
+          {
+            "name": "nfs",
+            "nodePort": 30402,
+            "port": 2049,
+            "protocol": "TCP",
+            "targetPort": "nfs"
+          },
+          {
+            "name": "nfs-lock",
+            "nodePort": 30861,
+            "port": 49033,
+            "protocol": "TCP",
+            "targetPort": "nfs-lock"
+          },
+          {
+            "name": "nfs-mount",
+            "nodePort": 30188,
+            "port": 892,
+            "protocol": "TCP",
+            "targetPort": "nfs-mount"
+          },
+          {
+            "name": "nfs-rpc",
+            "nodePort": 30998,
+            "port": 111,
+            "protocol": "TCP",
+            "targetPort": "nfs-rpc"
+          },
+          {
+            "name": "nfs-stat",
+            "nodePort": 31942,
+            "port": 55841,
+            "protocol": "TCP",
+            "targetPort": "nfs-stat"
+          },
+          {
+            "name": "omada-adoption",
+            "nodePort": 31659,
+            "port": 29814,
+            "protocol": "TCP",
+            "targetPort": "omada-adoption"
+          },
+          {
+            "name": "omada-firmware",
+            "nodePort": 32418,
+            "port": 8043,
+            "protocol": "TCP",
+            "targetPort": "omada-firmware"
+          },
+          {
+            "name": "omada-http",
+            "nodePort": 32757,
+            "port": 8088,
+            "protocol": "TCP",
+            "targetPort": "omada-http"
+          },
+          {
+            "name": "omada-https",
+            "nodePort": 31292,
+            "port": 8843,
+            "protocol": "TCP",
+            "targetPort": "omada-https"
+          },
+          {
+            "name": "omada-info",
+            "nodePort": 30983,
+            "port": 29815,
+            "protocol": "TCP",
+            "targetPort": "omada-info"
+          },
+          {
+            "name": "omada-legacy1",
+            "nodePort": 31304,
+            "port": 29811,
+            "protocol": "TCP",
+            "targetPort": "omada-legacy1"
+          },
+          {
+            "name": "omada-legacy2",
+            "nodePort": 32498,
+            "port": 29812,
+            "protocol": "TCP",
+            "targetPort": "omada-legacy2"
+          },
+          {
+            "name": "omada-legacy3",
+            "nodePort": 31624,
+            "port": 29813,
+            "protocol": "TCP",
+            "targetPort": "omada-legacy3"
+          },
+          {
+            "name": "omada-monitor",
+            "nodePort": 30832,
+            "port": 29817,
+            "protocol": "TCP",
+            "targetPort": "omada-monitor"
+          },
+          {
+            "name": "omada-terminal",
+            "nodePort": 30723,
+            "port": 29816,
+            "protocol": "TCP",
+            "targetPort": "omada-terminal"
+          },
+          {
+            "name": "redis",
+            "nodePort": 30969,
+            "port": 16379,
+            "protocol": "TCP",
+            "targetPort": "redis"
+          },
+          {
+            "name": "smb",
+            "nodePort": 30700,
+            "port": 445,
+            "protocol": "TCP",
+            "targetPort": "smb"
+          },
+          {
+            "name": "web",
+            "nodePort": 32554,
+            "port": 80,
+            "protocol": "TCP",
+            "targetPort": "web"
+          },
+          {
+            "name": "websecure",
+            "nodePort": 30202,
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": "websecure"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/instance": "traefik-traefik-system",
+          "app.kubernetes.io/name": "traefik"
+        },
+        "sessionAffinity": "None",
+        "type": "LoadBalancer"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "traefik-manager",
+        "namespace": "traefik-system"
+      },
+      "spec": {
+        "clusterIP": "10.77.166.215",
+        "clusterIPs": [
+          "10.77.166.215"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "http",
+            "port": 5000,
+            "protocol": "TCP",
+            "targetPort": "http"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/name": "traefik-manager"
+        },
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "traefik-udp",
+        "namespace": "traefik-system",
+        "labels": {
+          "app.kubernetes.io/instance": "traefik-traefik-system",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "traefik",
+          "helm.sh/chart": "traefik-41.4.0"
+        }
+      },
+      "spec": {
+        "allocateLoadBalancerNodePorts": true,
+        "clusterIP": "10.77.142.138",
+        "clusterIPs": [
+          "10.77.142.138"
+        ],
+        "externalTrafficPolicy": "Cluster",
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "loadBalancerIP": "10.99.15.50",
+        "ports": [
+          {
+            "name": "nfs-lock-udp",
+            "nodePort": 32233,
+            "port": 48936,
+            "protocol": "UDP",
+            "targetPort": "nfs-lock-udp"
+          },
+          {
+            "name": "nfs-mount-udp",
+            "nodePort": 30282,
+            "port": 892,
+            "protocol": "UDP",
+            "targetPort": "nfs-mount-udp"
+          },
+          {
+            "name": "nfs-rpc-udp",
+            "nodePort": 31651,
+            "port": 111,
+            "protocol": "UDP",
+            "targetPort": "nfs-rpc-udp"
+          },
+          {
+            "name": "nfs-stat-udp",
+            "nodePort": 31285,
+            "port": 59005,
+            "protocol": "UDP",
+            "targetPort": "nfs-stat-udp"
+          },
+          {
+            "name": "nfs-udp",
+            "nodePort": 30497,
+            "port": 2049,
+            "protocol": "UDP",
+            "targetPort": "nfs-udp"
+          },
+          {
+            "name": "omada-discovery",
+            "nodePort": 30248,
+            "port": 29810,
+            "protocol": "UDP",
+            "targetPort": "omada-discovery"
+          }
+        ],
+        "selector": {
+          "app.kubernetes.io/instance": "traefik-traefik-system",
+          "app.kubernetes.io/name": "traefik"
+        },
+        "sessionAffinity": "None",
+        "type": "LoadBalancer"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "windows-admin-center",
+        "namespace": "windows-admin-center"
+      },
+      "spec": {
+        "clusterIP": "10.77.191.84",
+        "clusterIPs": [
+          "10.77.191.84"
+        ],
+        "internalTrafficPolicy": "Cluster",
+        "ipFamilies": [
+          "IPv4"
+        ],
+        "ipFamilyPolicy": "SingleStack",
+        "ports": [
+          {
+            "name": "https",
+            "port": 443,
+            "protocol": "TCP",
+            "targetPort": 6600
+          }
+        ],
+        "sessionAffinity": "None",
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "Middleware",
+      "metadata": {
+        "name": "emby-https-redirect",
+        "namespace": "emby"
+      },
+      "spec": {
+        "redirectScheme": {
+          "permanent": true,
+          "scheme": "https"
+        }
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "Middleware",
+      "metadata": {
+        "name": "synology-media-retry",
+        "namespace": "synology-media"
+      },
+      "spec": {
+        "retry": {
+          "attempts": 3,
+          "initialInterval": "100ms"
+        }
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "TLSOption",
+      "metadata": {
+        "name": "redis-edge",
+        "namespace": "prod-realtime"
+      },
+      "spec": {
+        "minVersion": "VersionTLS12"
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "IngressClass",
+      "metadata": {
+        "name": "traefik",
+        "labels": {
+          "app.kubernetes.io/instance": "traefik-traefik-system",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "traefik",
+          "helm.sh/chart": "traefik-41.4.0"
+        }
+      },
+      "spec": {
+        "controller": "traefik.io/ingress-controller"
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "ClusterIssuer",
+      "metadata": {
+        "name": "letsencrypt-prod"
+      },
+      "spec": {
+        "acme": {
+          "email": "andrew@cormierconsulting.com",
+          "privateKeySecretRef": {
+            "name": "letsencrypt-prod-account-key"
+          },
+          "server": "https://acme-v02.api.letsencrypt.org/directory",
+          "solvers": [
+            {
+              "dns01": {
+                "webhook": {
+                  "config": {
+                    "apiKeySecretRef": {
+                      "key": "token",
+                      "name": "godaddy-api-key"
+                    },
+                    "production": true,
+                    "ttl": 600
+                  },
+                  "groupName": "acme.cormierconsulting.io",
+                  "solverName": "godaddy"
+                }
+              },
+              "selector": {
+                "dnsZones": [
+                  "cormierconsulting.io"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Issuer",
+      "metadata": {
+        "name": "godaddy-webhook-ca",
+        "namespace": "cert-manager",
+        "labels": {
+          "app.kubernetes.io/instance": "godaddy-webhook",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "godaddy-webhook",
+          "app.kubernetes.io/version": "0.8.0",
+          "helm.sh/chart": "godaddy-webhook-0.8.0"
+        }
+      },
+      "spec": {
+        "ca": {
+          "secretName": "godaddy-webhook-ca"
+        }
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Issuer",
+      "metadata": {
+        "name": "godaddy-webhook-selfsign",
+        "namespace": "cert-manager",
+        "labels": {
+          "app.kubernetes.io/instance": "godaddy-webhook",
+          "app.kubernetes.io/managed-by": "Helm",
+          "app.kubernetes.io/name": "godaddy-webhook",
+          "app.kubernetes.io/version": "0.8.0",
+          "helm.sh/chart": "godaddy-webhook-0.8.0"
+        }
+      },
+      "spec": {
+        "selfSigned": {}
+      }
+    }
+  ]
+}

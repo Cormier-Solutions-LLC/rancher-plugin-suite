@@ -1,0 +1,16 @@
+{
+  "name": "simple-network-manager-preview-build",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build:preview": "vite build"
+  },
+  "dependencies": {
+    "@zip.js/zip.js": "2.23.0",
+    "vue": "3.5.43"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "6.0.10",
+    "vite": "8.3.4"
+  }
+}

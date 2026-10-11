@@ -1,0 +1,30 @@
+FROM node:24-alpine AS build
+WORKDIR /app/simple-network-manager-dev
+COPY --from=preview-data / /app/preview-data/
+COPY container/package.json container/package-lock.json ./
+RUN npm ci --ignore-scripts --legacy-peer-deps
+COPY preview ./preview
+COPY pkg/simple-network-manager ./pkg/simple-network-manager
+COPY vite.config.mjs ./
+ARG SNM_PREVIEW_MODE=true
+ENV SNM_PREVIEW_MODE=$SNM_PREVIEW_MODE
+RUN npm run build:preview
+
+FROM node:24-alpine
+WORKDIR /app
+ENV HOST=0.0.0.0
+COPY --from=build /app/simple-network-manager-dev/node_modules/@zip.js /app/node_modules/@zip.js
+RUN mkdir -p /var/lib/simple-network-manager/snapshots && chown -R node:node /var/lib/simple-network-manager
+COPY --from=build /app/simple-network-manager-dev/dist-preview /app/public
+COPY container/server.mjs /app/container/server.mjs
+COPY pkg/simple-network-manager/config/manifest-yaml.mjs /app/pkg/simple-network-manager/config/manifest-yaml.mjs
+COPY pkg/simple-network-manager/config/snapshot-coverage.mjs /app/pkg/simple-network-manager/config/snapshot-coverage.mjs
+COPY pkg/simple-network-manager/config/snapshot-items.mjs /app/pkg/simple-network-manager/config/snapshot-items.mjs
+COPY pkg/simple-network-manager/config/snapshot-merge.mjs /app/pkg/simple-network-manager/config/snapshot-merge.mjs
+COPY pkg/simple-network-manager/config/snapshot-secrets.mjs /app/pkg/simple-network-manager/config/snapshot-secrets.mjs
+COPY pkg/simple-network-manager/config/storage-estimate.mjs /app/pkg/simple-network-manager/config/storage-estimate.mjs
+COPY pkg/simple-network-manager/config/backup-zip.mjs /app/pkg/simple-network-manager/config/backup-zip.mjs
+USER node
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s CMD wget -q -O /dev/null http://127.0.0.1:8080/healthz || exit 1
+CMD ["node", "/app/container/server.mjs"]
