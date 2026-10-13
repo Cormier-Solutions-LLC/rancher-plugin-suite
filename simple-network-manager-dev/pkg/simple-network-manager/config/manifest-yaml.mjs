@@ -26,5 +26,6 @@ export function manifestYaml(current) {
   const status = secretBackupStatus(resources,current.snapshotScope?.issuerSecretNamespace);
   const omissions = status.missing.map(id=>`# Secret Values Not Captured: ${id.replaceAll('\n',' ').replaceAll('\r',' ')}\n`).join('');
   if (!resources.length) return '# This snapshot contains no affected Kubernetes manifests.\n';
-  return '# Network Manager: Kubernetes manifest export\n# Preview: inspected resource specifications and local drafts; not a fresh live-cluster backup.\n# Contains configuration and captured Secret values. Store this file securely. Application data is not included.\n' + omissions + resources.map(resource => lines(JSON.parse(JSON.stringify(resource))).join('\n')).join('\n---\n') + '\n';
+  const includesValues = resources.some(resource => resource.kind === 'Secret' && (resource.data !== undefined || resource.stringData !== undefined));
+  return '# Network Manager: Kubernetes manifest export\n# Resource specifications from this review; exports can include unapplied proposals.\n# Verify the saved snapshot index for backup age and coverage. Application data is not included.\n' + (includesValues ? '# Includes captured Secret values. Store this file securely.\n' : '# Secret values are not included.\n') + omissions + resources.map(resource => lines(JSON.parse(JSON.stringify(resource))).join('\n')).join('\n---\n') + '\n';
 }

@@ -10,6 +10,7 @@ public sealed record PolicyOptions
     public string[] InternalZones { get; init; } = ["cormierconsulting.io", "cormierconsulting.com"];
     public string SourceServer { get; init; } = "10.99.3.2";
     public string PublicServer { get; init; } = "8.8.8.8";
+    public bool ValidatePublicDnssec { get; init; } = true;
     public int QueryTimeoutMilliseconds { get; init; } = 500;
     public int TotalTimeoutMilliseconds { get; init; } = 4000;
 

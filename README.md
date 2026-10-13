@@ -4,6 +4,7 @@ Rancher UI plugins, Helm registration charts, shared interface standards, and lo
 
 | Plugin | Source | Local preview | Status |
 | --- | --- | --- | --- |
+| Common Manager UI | [rancher-common-ui](rancher-common-ui/README.md) | Independent assets served to both previews | Required presentation runtime / separate Helm release |
 | Network Manager | [simple-network-manager-dev](simple-network-manager-dev/README.md) | http://127.0.0.1:5173 | Routing/certificate interface and native extension scaffold |
 | DNS Manager | [dns-manager-dev](dns-manager-dev/README.md) | http://127.0.0.1:5174 | DNS interface, native extension scaffold, and separate engine prototype |
 
@@ -18,13 +19,15 @@ npm run setup
 npm run preview
 ```
 
-The root preview launches both interfaces and their local snapshot APIs. Docker, Kubernetes, .NET, and cluster credentials are unnecessary. Stop with Ctrl+C. Ports 5173/5174 (UI) and 5183/5184 (snapshot API) must be free; startup fails clearly on conflicts.
+Open **http://127.0.0.1:5172/** for both plugins in one browser page. Compare both side by side, or select a manager for a full-width view without reloading its editor. The root preview launches both interfaces and their local snapshot APIs. Docker, Kubernetes, .NET, and cluster credentials are unnecessary. Stop with Ctrl+C. Ports 5172 (suite), 5173/5174 (UI), and 5183/5184 (snapshot API) must be free; startup fails clearly on conflicts.
 
-Choose a subset with `npm run preview -- dns-manager` or `npm run preview -- network-manager`. Each plugin also supports `npm ci` followed by `npm run preview` from its own folder. Root setup installs both locked dependency sets.
+Choose a subset with `npm run preview -- dns-manager` or `npm run preview -- network-manager`. Each plugin also supports `npm ci` followed by `npm run preview` from its own folder. Root setup installs all three locked dependency sets, including the common UI runtime.
 
 ## Editable shared data source
 
-The Mock Data control in each preview edits validated inventory or saved state. Saves update [preview-data/data](preview-data/README.md) inside this project, using atomic writes, provenance metadata, and revision checks. Drafts survive reloads. Conflicting writes are reported and can be recovered rather than silently overwriting newer edits.
+Root preview creates a fresh, prepopulated temporary source under `.local/preview-sessions/<session>/data/`, using the shared provider contract for both plugins. Edits and drafts survive browser reloads in that session; snapshots use the same session's `snapshots/` directory. These ignored folders remain available after stopping; a new run starts another copy of the project's fixtures. Preview labels and banners are off by default. Sample data remains identified in the suite header.
+
+The Mock Data control in each preview edits validated inventory or saved state. Per-plugin standalone previews save directly to [preview-data/data](preview-data/README.md); the root suite saves to its temporary session copy. Both use atomic writes, provenance metadata, and revision checks. Conflicting writes are reported and can be recovered rather than silently overwriting newer edits.
 
 Both providers use the same normalized inventory/state contract. [The Rancher adapter](preview-data/data-source.mjs) accepts authenticated read, draft persistence, and reviewed staging callbacks. Those deployment-specific bindings and live validation remain integration work. Pages accept the provider independently of the mock file store. Never put live credentials or decrypted Secret values into fixtures.
 
@@ -38,9 +41,28 @@ Local ZIP archives, scheduling, and cleanup state are stored under `.local/previ
 
 ## Standards and charts
 
+The [page-by-page UI comparison report](docs/ui-comparison-2026-10-11/report.html)
+compares shared appearance while excluding application context, data, fields, and
+domain behavior. Run `npm run review:ui` and open **http://127.0.0.1:5175/** to pick
+one checkbox per item and enter comments. Choices save to
+`docs/ui-comparison-2026-10-11/decisions.json`, survive server restart, and detect
+conflicting saves. Use **Mark review complete**, then tell Codex the report is ready
+to continue the shared UI implementation. **Export choices** keeps a portable JSON
+copy; the [Markdown worksheet](docs/ui-comparison-2026-10-11/report.md) is a manual
+alternative and does not synchronize with the interactive report. Stop with Ctrl+C.
+
+The shared standard now requires a separately installed `rancher-common-ui` plugin
+consumed at runtime by both managers, with independent Helm updates and enforced
+compatibility. The implementation now follows your completed review (revision 94). Both managers
+resolve its shared controls at runtime and block initialization if it is absent or
+incompatible. [Accepted choices and validation](docs/ui-comparison-2026-10-11/implementation.md)
+and [installation, independent upgrades, and rollback](rancher-common-ui/README.md)
+document the implementation; live Rancher installation remains to be validated.
+
 - [Shared Rancher plugin standard](RANCHER-PLUGIN-DESIGN.md): shared pages, controls, previews, snapshots, and datasource rules.
 - [Network Manager variations](NETWORK-MANAGER-STANDARDS.md).
 - [DNS Manager design and variations](DNS-MANAGER-DESIGN.md).
+- [Common Manager UI Helm chart](charts/rancher-common-ui/README.md).
 - [Network Manager Helm chart](charts/simple-network-manager/README.md).
 - [DNS Manager Helm chart](charts/dns-manager/README.md).
 
@@ -49,6 +71,8 @@ The charts register UIPlugin assets in Rancher's management cluster. They requir
 ## Build and verify
 
 ```sh
+npm run build:common-ui
+npm run test:common-ui
 npm run test:preview-data
 npm --prefix simple-network-manager-dev run test:configuration
 npm --prefix simple-network-manager-dev run build:preview

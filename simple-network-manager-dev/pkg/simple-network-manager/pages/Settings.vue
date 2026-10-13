@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ActionIcon from './ActionIcon.vue';
 import { contextMatches } from '../data/namespace-context';
 import DataGrid from './DataGrid.vue';
 import PageSummary from './PageSummary.vue';
@@ -7,18 +8,24 @@ import ResourceLink from './ResourceLink.vue';
 import CreateButton from './CreateButton.vue';
 import PageActions from './PageActions.vue';
 import { displaySettings } from '../data/display-settings';
+import { pendingChanges } from '../data/pending-rollouts';
+import { liveRolloutSource } from '../data/running-processes';
+import { issuerProfileDeletion } from '../config/delete-issuer-profile';
 import InventoryFilters from './InventoryFilters.vue';
 import { computed, nextTick, reactive, ref, watch } from 'vue';
-import { buildIssuer, type IssuerSettings } from '../config/issuer';
+import { type IssuerSettings } from '../config/issuer';
+import {issuerEditorSettings,buildIssuerEditorChange,issuerValidationLabel,issuerProfileKey,findIssuerProfile} from '../config/issuer-editor';
 import { queueChange } from '../data/pending-rollouts';
 import { issuerProfiles, rememberIssuer, credentialReferences, accountReferences, addCredentialReference, addCredentialKey, validateSecretName } from '../data/workspace';
 import { useFormGuard } from '../data/form-guard';
 import { existingIssuerSettings } from '../data/issuer-snapshot';
 const settings = reactive<IssuerSettings>({ ...existingIssuerSettings });
 const selectedProfile = ref('');
+const selectedIssuerResource=computed(()=>findIssuerProfile(issuerProfiles,selectedProfile.value)?.manifest as any);
+const clusterProfiles=computed(()=>issuerProfiles.filter(profile=>(profile.manifest as any)?.kind==='ClusterIssuer'));
 const search = ref('');
-const checked=ref<string[]>([]);const allChecked=computed({get:()=>shownProfiles.value.length>0&&shownProfiles.value.every(p=>checked.value.includes(p.name)),set:(value:boolean)=>checked.value=value?shownProfiles.value.map(p=>p.name):[]});
-function queueDeletes(ids:string[]){for(const profile of issuerProfiles.filter(p=>ids.includes(p.name)))queueChange({id:`delete:issuer:${profile.name}`,category:'Delete Issuer',name:profile.name,namespace:profileNamespace(profile),resources:profile.manifest?[profile.manifest]:[],configuration:{operation:'Delete',secretPreserved:true}});}
+const checked=ref<string[]>([]);const allChecked=computed({get:()=>shownProfiles.value.length>0&&shownProfiles.value.every(p=>checked.value.includes(issuerProfileKey(p))),set:(value:boolean)=>checked.value=value?shownProfiles.value.map(issuerProfileKey):[]});
+function queueDeletes(ids:string[]){const changes=issuerProfiles.filter(p=>ids.includes(issuerProfileKey(p))).map(profile=>issuerProfileDeletion(profile,pendingChanges,liveRolloutSource.value,displaySettings.previewMode));changes.forEach(queueChange);}
 const namespaceFilter = ref('__all__');
 const groupByNamespace = ref(false);
 const profileNamespace = (profile: typeof issuerProfiles[number]) => {
@@ -36,6 +43,7 @@ const creating = ref(false);
 const referenceEditor = ref<'secret' | 'key' | 'account' | ''>('');
 const referenceDraft = reactive({ name: '', key: 'token' });
 const referenceError = ref('');
+const profileNotice=ref('');
 const referenceNameInput = ref<HTMLInputElement | null>(null);
 const referenceKeyInput = ref<HTMLInputElement | null>(null);
 const credentialKeys = computed(() => credentialReferences.find(item => item.name === settings.secretName)?.keys || []);
@@ -83,16 +91,23 @@ function saveReference() {
   catch (cause) { referenceError.value = cause instanceof Error ? cause.message : 'Check the reference and try again.'; }
 }
 function loadProfile() {
-  const profile = issuerProfiles.find(item => item.name === selectedProfile.value);
-  if (profile?.settings) {
+  const profile = findIssuerProfile(issuerProfiles,selectedProfile.value);
+  try {
+    const selectedSettings=issuerEditorSettings(profile);
+    selectedProfile.value=issuerProfileKey(profile);
+    profileNotice.value='';
     editorVisible.value = true;
     creating.value = false;
-    Object.assign(settings, profile.settings);
+    Object.assign(settings, selectedSettings);
+  }catch(cause){
+    editorVisible.value=false;referenceEditor.value='';manifest.value='';
+    profileNotice.value=cause instanceof Error?cause.message:'Refresh and select the issuer again.';
   }
 }
-function selectProfile(name: string) { guard.leave(() => { selectedProfile.value = name; loadProfile(); }); }
-function newIssuer() { guard.leave(resetIssuer); }
+function selectProfile(name: string) { guard.start(() => { selectedProfile.value = name; loadProfile(); }); }
+function newIssuer() { guard.start(resetIssuer); }
 function resetIssuer() {
+  profileNotice.value='';
   editorVisible.value = true;
   creating.value = true;
   selectedProfile.value = '';
@@ -112,27 +127,27 @@ watch(() => settings.environment, (value, old) => {
 });
 function generate() {
   try {
-    if (creating.value && issuerProfiles.some(profile => profile.name === settings.name)) throw new Error('That issuer profile already exists. Choose a different name or select the existing profile to edit it.');
-    const resource = buildIssuer(settings);
+    const resource = buildIssuerEditorChange(settings,creating.value,selectedProfile.value,issuerProfiles);
     rememberIssuer({ name: settings.name, environment: settings.environment, challenge: settings.challenge, source: 'Local draft', manifest: resource, settings: { ...settings } });
-    selectedProfile.value = settings.name;
+    selectedProfile.value = `ClusterIssuer//${settings.name}`;
     creating.value = false;
     manifest.value = JSON.stringify(resource, null, 2);
-    error.value = ''; guard.clean();
+    error.value = ''; guard.complete();
   }
   catch (cause) { error.value = cause instanceof Error ? cause.message : 'Check the settings and try again.'; }
 }
 const guard = useFormGuard('issuer-profiles', () => settings.name || 'Issuer profile',
   () => ({ settings: { ...settings }, selectedProfile: selectedProfile.value, creating: creating.value, editorVisible: editorVisible.value, referenceEditor: referenceEditor.value, referenceDraft: { ...referenceDraft } }),
-  state => { Object.assign(settings, state.settings); selectedProfile.value = state.selectedProfile; creating.value = state.creating; editorVisible.value = state.editorVisible; referenceEditor.value = state.referenceEditor; Object.assign(referenceDraft, state.referenceDraft); }, () => editorVisible.value);
+  state => { Object.assign(settings, state.settings); selectedProfile.value = state.selectedProfile; creating.value = state.creating; editorVisible.value = state.editorVisible; referenceEditor.value = state.referenceEditor; Object.assign(referenceDraft, state.referenceDraft); if(editorVisible.value&&!creating.value){try{issuerEditorSettings(findIssuerProfile(issuerProfiles,selectedProfile.value));}catch{loadProfile();}} }, () => editorVisible.value);
 </script>
 <template>
   <section class="settings">
-    <div class="issuer-profiles"><PageSummary :count="shownProfiles.length" label="Profiles" help="Issuer profiles configure certificate validation and reuse credential Secret references. Select a profile to edit it; saved changes wait in Pending Rollouts."/><BulkActions :items="shownProfiles.map(p=>({id:p.name,name:p.name,namespace:profileNamespace(p)}))" v-model:selected="checked" :execute="queueDeletes"/><InventoryFilters v-model:search="search" v-model:namespace="namespaceFilter" v-model:grouped="groupByNamespace" :namespaces="namespaceOptions" search-label="Find An Issuer Profile" placeholder="Name, namespace, domain, or environment…" /><DataGrid><thead><tr><th class="selection-cell"><input v-model="allChecked" type="checkbox" aria-label="Select All Issuer Profiles"></th><th>Issuer</th><th>Namespace</th><th>Environment</th><th>Validation</th><th>Source</th></tr></thead><tbody><template v-for="group in profileGroups" :key="group.namespace"><tr v-if="groupByNamespace" class="namespace-group"><th colspan="6">{{ group.namespace || 'Global' }}</th></tr><tr v-for="profile in group.profiles" :key="profile.name" :class="{ selected: selectedProfile === profile.name }" @click="selectProfile(profile.name)"><td class="selection-cell" @click.stop><input v-model="checked" :value="profile.name" type="checkbox" :aria-label="`Select ${profile.name}`"></td><td><button type="button" class="profile-name" @click.stop="selectProfile(profile.name)" :aria-pressed="selectedProfile === profile.name">{{ profile.name }}</button></td><td><ResourceLink kind="Namespace" :name="profileNamespace(profile)" :label="profileNamespace(profile) || 'Global'"/></td><td>{{ profile.environment }}</td><td>{{ profile.challenge === 'dns01' ? 'DNS challenge' : 'HTTP challenge' }}</td><td>{{ profile.source }}</td></tr></template></tbody></DataGrid></div>
-    <div class="profile-controls"><PageActions><CreateButton label="Create New Issuer" @create="newIssuer" /></PageActions><button v-if="editorVisible" type="button" class="secondary" @click="guard.leave(() => { editorVisible = false; selectedProfile = ''; referenceEditor = ''; })">Close issuer setup</button></div>
+    <p v-if="profileNotice" role="alert">{{profileNotice}} <ResourceLink v-if="selectedIssuerResource" :kind="selectedIssuerResource.kind" :name="selectedIssuerResource.metadata.name" :namespace="selectedIssuerResource.metadata?.namespace" label="Open issuer in Rancher" /></p>
+    <div v-if="!editorVisible" class="issuer-profiles"><PageSummary :count="shownProfiles.length" label="Profiles" help="Issuer profiles configure certificate validation and reuse credential Secret references. Select a profile to edit it; saved changes wait in Pending Rollouts."/><BulkActions :items="shownProfiles.map(p=>({id:issuerProfileKey(p),name:p.name,namespace:profileNamespace(p)}))" v-model:selected="checked" :execute="queueDeletes"/><InventoryFilters v-model:search="search" v-model:namespace="namespaceFilter" v-model:grouped="groupByNamespace" :namespaces="namespaceOptions" search-label="Find An Issuer Profile" placeholder="Name, namespace, domain, or environment…" /><DataGrid><thead><tr><th class="selection-cell"><input v-model="allChecked" type="checkbox" aria-label="Select All Issuer Profiles"></th><th>Issuer</th><th>Namespace</th><th>Environment</th><th>Validation</th><th>Source</th></tr></thead><tbody><template v-for="group in profileGroups" :key="group.namespace"><tr v-if="groupByNamespace" class="namespace-group"><th colspan="6">{{ group.namespace || 'Global' }}</th></tr><tr v-for="profile in group.profiles" :key="issuerProfileKey(profile)" :class="{ selected: selectedProfile === issuerProfileKey(profile) }" @click="selectProfile(issuerProfileKey(profile))"><td class="selection-cell" @click.stop><input v-model="checked" :value="issuerProfileKey(profile)" type="checkbox" :aria-label="`Select ${profile.name}${profileNamespace(profile) ? ` in ${profileNamespace(profile)}` : ''}`"></td><td><button type="button" class="profile-name" @click.stop="selectProfile(issuerProfileKey(profile))" :aria-pressed="selectedProfile === issuerProfileKey(profile)">{{ profile.name }}</button></td><td><ResourceLink kind="Namespace" :name="profileNamespace(profile)" :label="profileNamespace(profile) || 'Global'"/></td><td>{{ profile.environment }}</td><td>{{ issuerValidationLabel(profile) }}</td><td>{{ profile.source }}</td></tr></template></tbody></DataGrid></div>
+    <div class="profile-controls"><PageActions><CreateButton label="Create New Issuer" @create="newIssuer" /></PageActions></div>
     <section v-if="editorVisible" class="issuer-editor">
-    <div class="settings-intro"><h2>Let’s Encrypt setup</h2><p>Configure certificate issuance through cert-manager. Generate a draft to review before making cluster changes.</p></div>
-    <p class="hint">Prefilled from the cluster inspection. Secret dropdowns show references already used by issuers; secret values are never included. The live integration will discover available references under your Rancher permissions.</p>
+    <div class="settings-intro"><h2>Let’s Encrypt setup</h2><p>Configure certificate issuance through cert-manager. Generate a draft to review before making cluster changes. Editing updates the first validation method; additional methods and account options are preserved.</p></div>
+    <p class="hint">Prefilled from the cluster inspection. Secret dropdowns show references already used by issuers; secret values are never included. Live references are discovered under your Rancher permissions.</p>
     <section v-if="referenceEditor" class="reference-editor" aria-labelledby="reference-title">
       <h3 id="reference-title">{{ referenceEditor === 'secret' ? 'New credential Secret draft' : referenceEditor === 'key' ? 'Add a key to the selected Secret' : 'New ACME account Secret name' }}</h3>
       <form @submit.prevent="saveReference">
@@ -147,18 +162,18 @@ const guard = useFormGuard('issuer-profiles', () => settings.name || 'Issuer pro
         <div class="actions"><button type="submit" class="primary">{{ referenceEditor === 'account' ? 'Use account Secret name' : 'Add local draft' }}</button><button type="button" class="secondary" @click="referenceEditor = ''">Cancel</button></div>
       </form>
     </section>
-    <form @submit.prevent="generate">
+    <form id="issuer-editor" @submit.prevent="generate">
       <div class="form-section"><h3>ACME account</h3>
         <div class="fields">
           <label><span class="field-label">Account email</span><input v-model.trim="settings.email" type="email" placeholder="admin@example.com" required autocomplete="off"></label>
           <label><span class="field-label">Let’s Encrypt environment</span><select v-model="settings.environment"><option value="staging">Staging — test certificates</option><option value="production">Production — trusted certificates</option></select></label>
-          <label v-if="!creating"><span class="field-label">ClusterIssuer name</span><select :value="selectedProfile" @change="chooseIssuer"><option v-for="profile in issuerProfiles" :key="profile.name" :value="profile.name">{{ profile.name }}</option><option value="__add__">+ Add issuer profile…</option></select></label>
+          <label v-if="!creating"><span class="field-label">ClusterIssuer name</span><select :value="selectedProfile" @change="chooseIssuer"><option v-for="profile in clusterProfiles" :key="issuerProfileKey(profile)" :value="issuerProfileKey(profile)">{{ profile.name }}</option><option value="__add__">+ Add issuer profile…</option></select></label>
           <label v-else><span class="field-label">New ClusterIssuer name</span><input v-model.trim="settings.name" required></label>
           <label><span class="field-label">Validation method</span><select v-model="settings.challenge"><option value="dns01">DNS challenge — GoDaddy webhook</option><option value="http01">HTTP challenge — Traefik ingress</option></select></label>
           <label><span class="field-label">Account key Secret</span><select :value="settings.accountSecretName" @change="chooseReference('account', $event)"><option value="">Create automatically for this issuer</option><option v-for="name in accountReferences" :key="name" :value="name">{{ name }}</option><option value="__add__">+ Add account Secret name…</option></select></label>
           <label v-if="settings.challenge === 'http01'"><span class="field-label">Base domains</span><textarea v-model.trim="settings.zone" placeholder="example.com, example.net" rows="3" required /><small>Comma-separated or one per line. These supply the connection editor’s domain choices.</small></label>
         </div>
-        <p class="hint">Staging certificates are for testing and will not be trusted by browsers. cert-manager creates the account key; this form does not collect a private key.</p>
+        <p class="hint"><template v-if="settings.environment==='staging'">Staging certificates are for testing and will not be trusted by browsers.</template><template v-else>Production certificates are trusted by browsers after successful validation.</template> cert-manager manages the account key; this form does not collect a private key.</p>
       </div>
       <div v-if="settings.challenge === 'dns01'" class="form-section"><h3>GoDaddy DNS validation</h3>
         <div class="fields">
@@ -172,9 +187,9 @@ const guard = useFormGuard('issuer-profiles', () => settings.name || 'Issuer pro
       </div>
       <div v-else class="form-section"><h3>HTTP validation</h3><div class="fields"><label><span class="field-label">Ingress class</span><input v-model.trim="settings.ingressClass" required></label></div><p class="hint">The requested domain must resolve to this ingress, and its HTTP challenge path must be reachable from the internet on port 80. HTTP validation does not issue wildcard certificates.</p></div>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
-      <div class="actions"><button type="submit" class="primary">Generate configuration draft</button><span>Draft only · nothing is saved or applied to the cluster</span></div>
+      <PageActions><button type="submit" form="issuer-editor" class="header-action"><ActionIcon icon="save"/>Save Draft</button><button type="button" class="header-action secondary" @click="guard.leave(() => { editorVisible = false; selectedProfile = ''; referenceEditor = ''; })"><ActionIcon icon="cancel"/>Cancel</button></PageActions>
     </form>
-    <div v-if="manifest" class="generated" aria-live="polite"><div class="generated-heading"><h3>ClusterIssuer configuration</h3><a :href="download" :download="`${settings.name}.json`">Download draft</a></div><p>Review this manifest and verify the credential reference and webhook installation. A ready issuer handles issuance and renewal, but each route still needs a certificate request and TLS secret reference. Automatic route setup is planned for the live integration.</p><pre><code>{{ manifest }}</code></pre></div>
+    <div v-if="manifest" class="generated" aria-live="polite"><div class="generated-heading"><h3>ClusterIssuer configuration</h3><a :href="download" :download="`${settings.name}.json`">Download draft</a></div><p>Review this manifest and verify the credential reference and webhook installation. A ready issuer handles issuance and renewal, but each route still needs a certificate request and TLS secret reference. Use New Connection to publish a route with its certificate request and TLS Secret reference.</p><pre><code>{{ manifest }}</code></pre></div>
     </section>
   </section>
 </template>

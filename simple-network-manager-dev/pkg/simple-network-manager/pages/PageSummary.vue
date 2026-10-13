@@ -1,7 +1,8 @@
-<script setup lang="ts">
-import { onMounted, ref } from 'vue';
-import HelpTip from './HelpTip.vue';
-defineProps<{ count?: number; label?: string; help: string; tone?: string }>();const mounted=ref(false);onMounted(()=>mounted.value=true);
-</script>
-<template><Teleport v-if="mounted" to="#snm-page-help"><HelpTip :text="help" /></Teleport><Teleport v-if="mounted && count !== undefined" to="#snm-page-count"><span class="page-count" :class="tone" :aria-label="`${count} ${label || 'Items'}`" :title="label">{{ count }}</span></Teleport></template>
-<style scoped>.page-count{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 5px;border-radius:12px;background:#263d56;font-size:13px;color:#a9d2ff;white-space:nowrap;font-variant-numeric:tabular-nums;box-sizing:border-box}.page-count.warning{color:#edbb69;background:#493a23}.page-count.error{color:#ffb3ad;background:#4c282e}</style>
+<script setup>
+import * as Vue from 'vue';import {component} from '../../../../rancher-common-ui/client/index.mjs';
+import {refreshing} from '../data/page-refresh';import {navigationCounts,navigationTones} from '../data/navigation-counts';
+import {openContextHelp} from '../data/help-context';
+const Shared=component('PageSummary',Vue);const page=Vue.inject('manager-page',Vue.ref(''));const attrs=Vue.useAttrs();
+const count=Vue.computed(()=>attrs.count===undefined?undefined:navigationCounts.value[page.value]??attrs.count);
+const tone=Vue.computed(()=>navigationTones.value[page.value]??attrs.tone);
+</script><template><Shared v-bind="$attrs" :count="count" :tone="tone" help-target="#snm-page-help" count-target="#snm-page-count" :loading="refreshing" @open-help="openContextHelp($event)"/></template>

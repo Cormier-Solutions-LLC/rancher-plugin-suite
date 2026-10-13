@@ -1,0 +1,8 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {reconcileIssuerWorkspace} from '../reconcile-issuer-workspace.mjs';
+const profile=(name,source,namespace='')=>({name,source,manifest:{kind:namespace?'Issuer':'ClusterIssuer',metadata:{name,...(namespace?{namespace}:{})}},settings:{name,ingressClass:'traefik'}});
+test('live refresh adds and updates observed profiles and references without replacing local drafts or losing scope',()=>{
+ const live=profile('existing','Live Kubernetes observation'),local=profile('draft','Local draft'),state={issuerProfiles:[live,local],credentialReferences:[{name:'key',namespace:'cert-manager',keys:['old']}],accountReferences:['saved']};
+ const updated={...live,settings:{name:live.name,ingressClass:'updated'}},loaded={issuerProfiles:[updated,{...local,source:'Live Kubernetes observation'},profile('new','Live Kubernetes observation'),profile('existing','Live Kubernetes observation','demo')],credentialReferences:[{name:'key',namespace:'cert-manager',keys:['old','new']},{name:'other',namespace:'cert-manager',keys:['token']}],accountReferences:['saved','account']};
+ const next=reconcileIssuerWorkspace(state,loaded);assert.equal(next.issuerProfiles.length,4);assert.equal(next.issuerProfiles[0].settings.ingressClass,'updated');assert.deepEqual(next.issuerProfiles[1],local);assert.deepEqual(next.credentialReferences[0].keys,['old','new']);assert.deepEqual(next.accountReferences,['saved','account']);assert.equal(state.issuerProfiles[0].settings.ingressClass,'traefik');assert.deepEqual(state.credentialReferences[0].keys,['old']);
+ assert.deepEqual(reconcileIssuerWorkspace(next,loaded),next);
+});

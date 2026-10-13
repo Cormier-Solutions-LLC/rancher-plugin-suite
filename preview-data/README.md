@@ -2,6 +2,8 @@
 
 Every plugin's standalone preview consumes a document with `schemaVersion`, `pluginId`, `revision`, `updatedAt`, immutable `source` provenance, and `data: { inventory, state }`.
 
+Repository-root `npm run preview` presents both managers at http://127.0.0.1:5172/ in one browser page, with side-by-side and full-width modes. It copies the prepopulated project sources into `.local/preview-sessions/<session>/data/` and saves edits there. Snapshots are isolated under that session's `snapshots/` directory. The launcher passes `RANCHER_SUITE_PREVIEW_SESSION` to both plugins; standalone plugin commands retain direct project-source persistence. Session files remain after stopping, and each new root run creates fresh copies. Preview labels and banners start disabled without disabling mock inventory.
+
 `data/network-manager.json` contains keyed inspection datasets; `data/dns-manager.json` contains zones, records, and the DNS source. State holds saved configuration/drafts/settings. Each preview's Mock Data control can edit and save validated JSON. Saving reloads the interface to initialize all derived views consistently. Finish or cancel an active editor first.
 
 The Vite-only `/__preview-data/<plugin>` API writes only its configured project file. It requires same-origin JSON writes, validates shapes and identifiers, and uses revision checks plus a file lock and atomic replacement. File errors/conflicts remain visible. Download Unsaved Data preserves pending work; Reload Source explicitly discards it. Do not commit personal runtime state or credentials.

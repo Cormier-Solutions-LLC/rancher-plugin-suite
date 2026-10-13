@@ -1,0 +1,38 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: torrent-webui-access
+  namespace: torrent
+  labels:
+    app.kubernetes.io/part-of: manager-installation
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: torrent
+  policyTypes: [Ingress]
+  ingress:
+    # Preserve existing unrestricted traffic to every other TCP port/protocol.
+    - ports:
+        - protocol: TCP
+          port: 1
+          endPort: 8089
+        - protocol: TCP
+          port: 8091
+          endPort: 65535
+        - protocol: UDP
+        - protocol: SCTP
+    - ports:
+        - protocol: TCP
+          port: 8090
+      from:
+        - ipBlock:
+            cidr: 10.99.0.0/20
+        - ipBlock:
+            cidr: 10.77.0.0/20
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+              app.kubernetes.io/instance: traefik-traefik-system

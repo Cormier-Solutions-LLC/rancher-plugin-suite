@@ -23,6 +23,23 @@ These requirements specialize the shared standard for routing and certificates.
 
 ### Navigation and inventory
 
+Approved alignment decisions (2026-10-11): Network Manager uses Rancher's existing
+menu renderer, typography, disclosure controls, active-route behavior and count
+placement. The completed shared review also selects these right-side counts for DNS Manager;
+shared badge and divider styling applies only to manager-owned navigation links. Its single
+namespace picker is the host picker, with one equivalent global control in the
+standalone preview. Page filters omit duplicate namespace selectors. Inventory
+pages precede the common operation/support pages.
+
+The snapshot format, encryption, credential-presence coverage and quota-aware
+storage follow the shared standard. Preserve legacy backups without migration or
+deletion. Incomplete managed forms join Pending Rollouts as Needs Completion,
+count in the same scoped pending total, and cannot be applied. Display preferences
+and backup scheduling forms are not managed-resource rollout proposals. Successful
+validation replaces a working draft with the valid pending proposal; starting a
+new item must not overwrite another saved working draft.
+
+
 - Required inventory pages: Overview, TLS & Certificates, TLS Issuer Profiles,
   Port Configurations, followed by the shared Pending Rollouts, Running Processes,
   Snapshots, Diagnostics, Settings, Help ending. Older preview menu order is evidence,
@@ -31,7 +48,7 @@ These requirements specialize the shared standard for routing and certificates.
   were removed as separate pages.
 - Overview combines inspected routing resources and local drafts. Its flow is Incoming Traffic
   → Traefik Listener → Destination Service, with Resource Context alongside it.
-- Sidebar counts apply to certificates, pending rollouts, issuer profiles, and port configurations.
+- Sidebar counts apply to Overview routes, certificates, pending rollouts, issuer profiles, port configurations, running processes, snapshots and Diagnostics. The top-right count uses the same scoped total and severity as its menu item.
   Certificates include observed resources plus unique prepared new-certificate drafts.
 - Correlate Ingress, Traefik HTTP/TCP/UDP routes, Middleware, Services, EndpointSlices, listeners,
   Certificates, Issuers, Orders, Challenges, and ownership. Configured mappings and traffic health are separate.
@@ -126,11 +143,12 @@ Network-specific capture and restoration include:
   credential replacements. Editing a reusable preset cannot silently rewrite its
   consumers. Preserve ownership and unrelated routes/Secrets.
 
-The current preview uses server-side JSON/YAML pairs and saved inspection data,
-and does not supply fresh live capture or the required encrypted ZIP implementation.
-Its dedicated path/volume, Docker/PVC recovery commands, and source limitations stay
-in the README and recovery runbook. Existing format and implementation evidence do
-not override the shared backup contract.
+The current preview saves server-side ZIP captures using saved inspection data,
+with optional AES-256 encrypted credential-inclusive payloads and preserved legacy
+JSON/YAML records. Fresh live capture remains a backend integration requirement.
+Its dedicated path/volume, configured quota, recovery commands and source limitations
+stay in the README and recovery runbook. A storage forecast must use effective
+quota-bounded capacity and complete archive size, reporting unavailable when unknown in live mode; previews use marked mock capacity until a quota is configured.
 
 ## 4. Diagnostics and notification destinations
 
@@ -164,7 +182,23 @@ implementation and release checks in the evidence files after they actually pass
 documentation consolidation alone does not validate native installation or live writes.
 
 The current [Network Manager alignment review](simple-network-manager-dev/STANDARDS-ALIGNMENT-REVIEW.md)
-records pending decisions where newer shared requirements differ from earlier accepted
-preview behavior. Help and scoped rolling diagnostics additions are recorded in the
-implementation evidence; they do not close ZIP/encryption, native integration or
-other remaining acceptance gaps.
+records the resolved navigation, snapshot and working-draft decisions, implemented
+alignment and remaining native/live acceptance requirements. Tests cover ZIP/encryption,
+managed working drafts, scoped diagnostics, refresh cancellation and schedule guards;
+the evidence does not claim native installation or live backend verification.
+
+The [2026-10-11 full compliance audit](simple-network-manager-dev/docs/audit-2026-10-11/report.md)
+assesses every registered Network Manager route and each indexed shared requirement.
+It records observed UI deviations, failing snapshot regressions and a prioritized
+remediation plan. Earlier passing checks do not supersede these more specific
+failures; audit completion does not mean remediation or native/live acceptance.
+
+
+Follow-up UI rules: use DNS breadcrumb/grid presentation and component colors,
+retain the master/detail Overview layout, space collapsible detail panels apart,
+and add menu dividers after Overview and before Pending Rollouts. Use Network
+count badges; errors are red, warnings yellow, and Diagnostics is green with no
+scoped incidents in the last 24 hours. Remove duplicate snapshot grid counts.
+Schedule/cleanup panels and actions never scroll internally. Save Schedule and
+Enable use Snapshot Options and retain protected schedule passwords in backend
+Secrets. See [credential storage and recovery](preview-data/snapshot-credentials.md).

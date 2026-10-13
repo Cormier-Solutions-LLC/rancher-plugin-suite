@@ -1,9 +1,13 @@
 # DNS Manager development project
 
-Selected DNS engine: Technitium DNS Server 15.6.0 / .NET 10, pinned by image digest.
+The isolated prototype uses Technitium DNS Server 15.6.0 / .NET 10, pinned by image digest.
+The live cluster uses the pinned 15.6.1-axfr1 compatibility image for Windows transfers.
 The project contains a standalone interface, a buildable native Rancher extension,
-and an isolated DNS-engine/policy prototype. Live installation, Windows management,
-and Kubernetes HA acceptance remain pending. Shared requirements live in
+and an isolated DNS-engine/policy prototype. Native installation, Windows record
+management, transfer recovery and container/endpoint failover have passed live tests.
+Physical-host failure and DNS cutover remain pending. See the dated evidence and
+remaining gates in [live acceptance](../docs/manager-live-validation.md).
+Shared requirements live in
 [Rancher Plugin Design Standard](../RANCHER-PLUGIN-DESIGN.md); DNS behavior lives in
 [DNS Manager Design](../DNS-MANAGER-DESIGN.md).
 
@@ -22,6 +26,11 @@ npm run preview
 ```
 
 Open **http://127.0.0.1:5174**. Stop with **Ctrl+C**. Network Manager uses 5173.
+For both plugins in one browser page, run `npm run preview` from the repository
+root and open **http://127.0.0.1:5172/**. The suite prepopulates temporary editable
+sources and isolated snapshots under `../.local/preview-sessions/<session>/`.
+Preview labels and banners start disabled; real issue notifications remain visible
+and navigate to their remediation pages.
 The standalone wrapper loads `pkg/dns-manager/pages/Dashboard.vue`; simulated
 Rancher chrome appears only in standalone mode. Current preview inventory and
 saved state use the shared project-owned source at
@@ -55,10 +64,16 @@ checks do not establish production restore or scheduler acceptance.
 
 ## Build and check the interface
 
+The [2026-10-11 DNS standards audit](docs/standards-audit/2026-10-11/REPORT.md)
+includes every standards item, visual evidence and a prioritized repair plan.
+See [UI test instructions](tests/ui/README.md) for the passing regression suite,
+unsuppressed known-gap acceptance tests and isolated audit preview.
+
 ```powershell
 npm run build:preview
 npm run build:extension
 npm test
+npm run test:ui
 ```
 
 Preview assets are written to `dist-preview/`. The native build writes the versioned
@@ -126,7 +141,10 @@ responses clear AD; this prototype does not implement DNSSEC validation.
 may send an FQDN before the server sees the original short input. Actual client and
 Omada behavior must be verified before promising the end-to-end short-name sequence.
 
-## Remaining production proof
+## Production acceptance areas
+
+Use [live acceptance](../docs/manager-live-validation.md) for completed tests and
+remaining gates; this list defines the operational scope rather than its status.
 
 - Windows zone inventory, transfer authorization, IXFR/NOTIFY behavior, reverse/AD
   record coverage, restricted record editing, and secure dynamic-update boundaries.
@@ -134,10 +152,22 @@ Omada behavior must be verified before promising the end-to-end short-name seque
   and special-use name handling, cache limits, policy reload concurrency, and abuse controls.
 - Kubernetes placement across physical hosts, Longhorn recovery, SOA expiry handling,
   rolling updates, Traefik/MetalLB TCP and UDP failover, and Omada upstream selection.
-- First verify the `kubcontroller` management endpoint survives controller01 loss.
-  Three standalone DNS containers on one Docker host do not prove Kubernetes HA.
+- The shared Kubernetes management endpoint passed controlled endpoint failover.
+  Abrupt physical-host failure remains unverified. Three standalone DNS containers
+  on one Docker host do not prove Kubernetes HA.
 - Native Rancher authorization, snapshots/restoration, atomic ordering and per-instance
-  reconciliation. Native page registration and local bundles exist; installed host behavior remains unverified.
+  reconciliation. DNS Manager 0.1.22 passes installed native record CRUD, selective
+  record restoration, managed forward-zone creation/deletion, backup gates and
+  replica confirmation. Managed IPv4/IPv6 reverse zones and parent delegation
+  cleanup also pass live adapter tests. Original source zones remain protected.
+  Deleted previously manager-owned zones now restore through native Rancher with
+  complete supported records, TTLs, fresh serials and replica confirmation.
+  Navigation Apply, full snapshot restore, interrupted-confirmation reconciliation
+  and immediate six-item native route handoff now pass. Named credential references,
+  fresh encrypted native/manual capture, unattended capture and persistent backend
+  restart recovery also pass. Native source Create, Update, Delete, snapshot Restore,
+  and cleanup now pass through Rancher. Native changed and missing credential restoration
+  also passes with dependent-service confirmation. Mixed credential/configuration restoration is rejected before any draft is staged; native status banners now reflect management reachability with readable text.
 
 Consult [validation evidence](VALIDATION.md) for the bounded claims established so far.
 
@@ -147,3 +177,7 @@ interaction with sample data. Its local preview snapshots and saved order do not
 replace the authenticated management backend or its durable snapshot requirement.
 See the [shared preview reference](../RANCHER-PLUGIN-DESIGN.md#dns-manager-preview-and-local-development-reference)
 for historical interface evidence and remaining native integration work.
+
+Canonical DNS record ordering now prevents false backup gaps and stale reviews when Windows returns the same records in another order. Fresh native backup coverage passes at 8/8 after reload, with original records, credentials and archives preserved. Coverage waits for index reads and reports storage failures without claiming complete coverage.
+
+Encrypted bridge credential capture verifies the live ServiceAccount UID and authenticates the saved token against the cluster before declaring capture complete. Identity and credential changes during verification abort capture. The current deployed runtime passes real authentication/rejection, native encrypted backup recovery, isolated source lifecycle checks, and native changed/missing credential Apply with independent dependency readback.

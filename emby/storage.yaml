@@ -1,0 +1,82 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: emby-longhorn-retain
+  labels:
+    app.kubernetes.io/part-of: emby
+provisioner: driver.longhorn.io
+allowVolumeExpansion: true
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+parameters:
+  numberOfReplicas: "3"
+  staleReplicaTimeout: "30"
+  fromBackup: ""
+  fsType: ext4
+  dataLocality: disabled
+  unmapMarkSnapChainRemoved: ignored
+  disableRevisionCounter: "true"
+  dataEngine: v1
+  backupTargetName: default
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: emby-config
+  namespace: emby
+  labels:
+    app.kubernetes.io/part-of: emby
+spec:
+  accessModes: [ReadWriteOncePod]
+  storageClassName: emby-longhorn-retain
+  resources:
+    requests:
+      storage: 20Gi
+---
+# Capacity is descriptive for the existing export, not a NAS quota or allocation.
+# This export was measured inside Proxmox guest 105 on proxmox09.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: emby-media-nfs
+  labels:
+    app.kubernetes.io/part-of: emby
+spec:
+  capacity:
+    storage: 43Ti
+  accessModes: [ReadOnlyMany]
+  volumeMode: Filesystem
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  claimRef:
+    namespace: emby
+    name: emby-media
+  mountOptions:
+    - nfsvers=3
+    - proto=tcp
+    - hard
+    - timeo=600
+    - retrans=2
+  csi:
+    driver: nfs.csi.k8s.io
+    volumeHandle: emby-media-proxmox09-private-other
+    readOnly: true
+    volumeAttributes:
+      server: "10.99.2.109"
+      share: /mnt/network-share/Proxmox/private/other
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: emby-media
+  namespace: emby
+  labels:
+    app.kubernetes.io/part-of: emby
+spec:
+  accessModes: [ReadOnlyMany]
+  volumeMode: Filesystem
+  storageClassName: ""
+  volumeName: emby-media-nfs
+  resources:
+    requests:
+      storage: 43Ti

@@ -1,0 +1,9 @@
+import fs from 'node:fs';import assert from 'node:assert/strict';import {randomUUID} from 'node:crypto';
+import {createLiveNetworkSource} from '../live-management/rancher-network.mjs';import {restorationManifest} from '../simple-network-manager-dev/pkg/simple-network-manager/config/restoration-manifest.mjs';
+const base='http://127.0.0.1:15888',ns='manager-acceptance',tag=randomUUID().slice(0,8);let writes=0;
+const request=(url,init)=>{if(init?.method&&init.method!=='GET')writes++;return fetch(base+url.replace('/k8s/clusters/local',''),{...init,signal:AbortSignal.timeout(15000)});};
+const source=createLiveNetworkSource('local',request,'user-jccb4');await source.reload();
+const response=await fetch(base+'/apis/traefik.io/v1alpha1/namespaces/'+ns+'/ingressroutes/manager-acceptance-http-80');assert.ok(response.ok);const route=restorationManifest(await response.json());route.metadata.name='manager-listener-reject-'+tag;route.spec.entryPoints=['missing-manager-listener'];
+await assert.rejects(source.stageChanges([{name:'Unavailable listener acceptance',resources:[route]},{name:'Mixed catalog must remain unsaved',resources:[],configuration:{id:'listener-'+tag,name:'Listener rejection '+tag,namespace:ns,ports:[{label:'HTTP',port:80,mode:'HTTP'}]}}]),/listener .*not published/);
+assert.equal(writes,0,'Reject the whole batch before any resource or catalog write.');assert.equal((await fetch(base+'/apis/traefik.io/v1alpha1/namespaces/'+ns+'/ingressroutes/'+route.metadata.name)).status,404);
+const report={observedAt:new Date().toISOString(),passed:true,checks:['Missing listener rejects mixed publication/catalog batch','Zero Kubernetes mutation requests','Proposed route absent']};fs.writeFileSync('.local/manager-installation/listener-rejection-live-tests.json',JSON.stringify(report,null,2));console.log('Live listener rejection passed with zero mutations.');

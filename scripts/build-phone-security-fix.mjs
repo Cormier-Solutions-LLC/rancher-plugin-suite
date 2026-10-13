@@ -1,0 +1,11 @@
+import fs from 'node:fs';import assert from 'node:assert/strict';import {randomUUID,createHash} from 'node:crypto';
+const dir='.local/manager-installation',path=dir+'/phone-security-build-owned.json',base='http://127.0.0.1:15888',repo='C:/Users/acormier/Documents/ChatGPT/openai automation/build/phone-queue';
+assert.ok(!fs.existsSync(path),'Reconcile existing build instead of resubmitting');
+const id=randomUUID(),name='manager-phone-security-build-20261012',context='manager-phone-security-context-20261012',image='harbor.cormierconsulting.io/automation/phone-queue:2026.10.12-security-fix-4',owned=[];
+const code=fs.readFileSync(repo+'/controller.py','utf8'),dockerfile=fs.readFileSync(repo+'/Dockerfile','utf8'),ledger={id,image,intentAt:new Date().toISOString(),sourceHash:createHash('sha256').update(code).digest('hex'),owned};
+function save(){fs.writeFileSync(path,JSON.stringify(ledger,null,2));}save();
+const job=JSON.parse(fs.readFileSync(dir+'/phone-build-job-template-private.json','utf8').replace(/^\uFEFF/,''));job.metadata={name,namespace:'automation',labels:{'manager-acceptance-id':id}};delete job.status;job.spec.backoffLimit=0;job.spec.template.metadata.labels['manager-acceptance-id']=id;job.spec.template.spec.volumes.find(v=>v.name==='context-source').configMap.name=context;job.spec.template.spec.containers[0].args[job.spec.template.spec.containers[0].args.length-1]='type=image,name='+image+',push=true';
+for(const [url,obj]of [['/api/v1/namespaces/automation/configmaps',{apiVersion:'v1',kind:'ConfigMap',metadata:{name:context,namespace:'automation',labels:{'manager-acceptance-id':id}},immutable:true,data:{'controller.py':code,Dockerfile:dockerfile}}],['/apis/batch/v1/namespaces/automation/jobs',job]]){
+ assert.equal((await fetch(base+url+'/'+obj.metadata.name)).status,404);const r=await fetch(base+url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj)});assert.equal(r.status,201);const created=await r.json();owned.push({url:url+'/'+obj.metadata.name,uid:created.metadata.uid});save();
+}
+ledger.startedAt=new Date().toISOString();save();console.log(JSON.stringify({buildStarted:true,job:name,image,credentialsMountedFromExistingBuilderSecret:true}));

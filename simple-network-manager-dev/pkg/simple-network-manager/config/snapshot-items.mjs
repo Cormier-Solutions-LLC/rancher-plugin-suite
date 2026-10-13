@@ -1,10 +1,10 @@
-import { resourceCoverageId } from './snapshot-coverage.mjs';
+import { resourceCoverageId,issuerProfileCoverageId } from './snapshot-coverage.mjs';
 import { snapshotManifests } from './manifest-yaml.mjs';
 const copy=value=>JSON.parse(JSON.stringify(value));
 export function snapshotItems(current={}){const items=[];const add=(id,type,value,name,namespace='')=>items.push({id,type,value:copy(value),name,namespace});
  for(const config of [current.configuration,...(current.relatedConfigurations||[])].filter(Boolean))add(`configuration/${config.id}`,'configuration',config,config.name,config.namespace);
  for(const resource of snapshotManifests(current))add(resourceCoverageId(resource),'resource',resource,resource.metadata.name,resource.metadata.namespace);
- for(const profile of current.issuerProfiles||[])add(`issuer-profile/${profile.name}`,'issuer',profile,profile.name,profile.manifest?.metadata?.namespace);
+ for(const profile of current.issuerProfiles||[])add(issuerProfileCoverageId(profile),'issuer',profile,profile.name,profile.manifest?.metadata?.namespace);
  for(const service of current.observedServiceReferences||[])add(`service/${service.namespace||''}/${service.name}`,'service',service,service.name,service.namespace);
  for(const [type,list]of [['publication',current.localPublications||[]],['connection',current.editedConnections||[]]])for(const draft of list)add(`draft/${type}/${draft.namespace}/${draft.name}`,type,draft,draft.name,draft.namespace);
  for(const proposal of current.pendingChanges||[])add(`proposal/${proposal.id}`,'proposal',proposal,proposal.name,proposal.namespace);

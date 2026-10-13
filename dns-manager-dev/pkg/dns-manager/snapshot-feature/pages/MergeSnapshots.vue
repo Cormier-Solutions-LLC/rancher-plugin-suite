@@ -19,6 +19,7 @@ import { coverageEntries } from '../config/snapshot-coverage.mjs';
 import { editorDirty, registerEditorSave, rememberFormDraft, activeFormDraft, formDrafts } from '../data/editor-session';
 
 const unlockRecords=ref<any[]>([]), unlocking=ref(true), skipped=ref<any[]>([]);
+const protectedOutput=ref(false);
 let sessionPasswords:Record<string,string>={}, mergedPassword='';
 const controller=new AbortController();
 let savedDraft:any;
@@ -70,6 +71,7 @@ async function acceptUnlocked(payload:any) {
  loading.value=true;busy.value=true;error.value='';
  try {
  sources.value=payload.sources;sessionPasswords=payload.passwords;skipped.value=payload.excluded;
+ protectedOutput.value=Object.keys(payload.passwords||{}).length>0;
      try {current.value = await captureRelevantSecrets(captureScheduleSource(), allItems.value.filter(isSecret).map((item:any)=>item.value));} catch {current.value=captureScheduleSource();}
     sourceBaseline.value = JSON.stringify(coverageEntries(captureScheduleSource()));
     selectedIds.value = savedDraft?.selectedIds || items.value.filter((item:any) => !isSecret(item)).map((item:any) => item.id);
@@ -124,7 +126,7 @@ async function finish() {
   if (JSON.stringify(coverageEntries(captureScheduleSource())) !== sourceBaseline.value) { error.value = 'Current configuration changed. Review each item type again before merging.'; confirmed.value = false; step.value = 1; reached.value = 1; current.value = refreshed; sourceBaseline.value = JSON.stringify(coverageEntries(captureScheduleSource())); return; }
   busy.value = true; error.value = '';
   try {
-    if(containsSecretValues(result.value.current)){const options=await askSnapshotOptions(true,controller.signal);mergedPassword=options.password;}
+    if(protectedOutput.value||containsSecretValues(result.value.current)){const options=await askSnapshotOptions(true,controller.signal);mergedPassword=options.password;}
     merged.value = await mergeOrderedSnapshots(sources.value.map(source => source.id), includedIds.value, selectionPlan.value.preservedSecrets,sessionPasswords,mergedPassword);
     editorDirty.value = false;
     formDrafts.value = formDrafts.value.filter(draft => draft.id !== activeFormDraft.value); activeFormDraft.value = '';
@@ -136,7 +138,7 @@ async function removeOriginals() {
   try { await deleteSnapshots(sources.value.map(source => source.id), merged.value.id, true, sessionPasswords,mergedPassword); removed.value = true; sessionPasswords={}; mergedPassword=''; }
   catch (e) { error.value = `Merged snapshot saved. Original snapshots were retained: ${e instanceof Error ? e.message : 'cleanup failed'}`; }
 }
-async function retryCleanup() { busy.value = true; try{if(containsSecretValues(merged.value.current))mergedPassword=await askBackupPassword();await removeOriginals();}catch(e){error.value=e instanceof Error?e.message:'Cleanup cancelled.';}finally{busy.value=false;mergedPassword='';sessionPasswords={};} }
+async function retryCleanup() { busy.value = true; try{if(protectedOutput.value||containsSecretValues(merged.value.current))mergedPassword=await askBackupPassword();await removeOriginals();}catch(e){error.value=e instanceof Error?e.message:'Cleanup cancelled.';}finally{busy.value=false;mergedPassword='';sessionPasswords={};} }
 function openMerged() { historyContext.value = { snapshotId:merged.value.id, routeId:'', name:'Merged Snapshot', namespace:'', service:'' }; emit('navigate','history'); }
 </script>
 

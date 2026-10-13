@@ -1,8 +1,10 @@
+import { loadPreviewRuntime } from '../../rancher-common-ui/client/index.mjs';
 import { createApp } from 'vue';
 import { createPreviewDataClient, createStaticPreviewDataClient } from '../../preview-data/client.mjs';
 import initialSource from 'virtual:rancher-suite-source';
 import { mountPreviewDataEditor } from '../../preview-data/editor.mjs';
 async function start() {
+  await loadPreviewRuntime();
   const source = import.meta.env.DEV ? await createPreviewDataClient('dns-manager') : createStaticPreviewDataClient(initialSource);
   const { default: Preview } = await import('./Preview.vue');
   createApp(Preview, { dataSource: source }).mount('#app');

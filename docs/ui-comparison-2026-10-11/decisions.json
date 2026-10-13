@@ -1,0 +1,146 @@
+{
+  "schemaVersion": 1,
+  "reportId": "network-dns-ui-2026-10-11",
+  "revision": 94,
+  "completed": true,
+  "generalComment": "drop the \"Approximately 563,716,635 More Snapshots Fit\" and \"Automatic snapshots enabled. Settings saved on the hosting server.\" text from the dns viewget rid of the Snapshot Storage title, left justify buttons if they wrap to the next line.  keep the buttons together.",
+  "choices": {
+    "shell-layout": {
+      "choice": "dns",
+      "comment": ""
+    },
+    "navigation": {
+      "choice": "network",
+      "comment": ""
+    },
+    "theme": {
+      "choice": "blend",
+      "comment": "i like the general layout and form of the dns look, but i want the left menu style from the network look"
+    },
+    "heading-layout": {
+      "choice": "dns",
+      "comment": ""
+    },
+    "action-style": {
+      "choice": "network",
+      "comment": ""
+    },
+    "notifications": {
+      "choice": "dns",
+      "comment": ""
+    },
+    "refresh": {
+      "choice": "dns",
+      "comment": ""
+    },
+    "overview-detail": {
+      "choice": "custom",
+      "comment": "create both of these layouts as choices  as they represent different types of information."
+    },
+    "inventory-grid": {
+      "choice": "dns",
+      "comment": ""
+    },
+    "inventory-filters": {
+      "choice": "network",
+      "comment": ""
+    },
+    "integration-grid": {
+      "choice": "dns",
+      "comment": ""
+    },
+    "configuration-grid": {
+      "choice": "dns",
+      "comment": ""
+    },
+    "selection-controls": {
+      "choice": "dns",
+      "comment": ""
+    },
+    "editor-location": {
+      "choice": "dns",
+      "comment": ""
+    },
+    "editor-fields": {
+      "choice": "dns",
+      "comment": ""
+    },
+    "editor-actions": {
+      "choice": "network",
+      "comment": ""
+    },
+    "pending-review": {
+      "choice": "network",
+      "comment": ""
+    },
+    "pending-layout": {
+      "choice": "network",
+      "comment": ""
+    },
+    "process-empty": {
+      "choice": "blend",
+      "comment": "use dns look and feel with network looks features"
+    },
+    "snapshot-grid": {
+      "choice": "dns",
+      "comment": "But fix the date range it's weird on the dns look."
+    },
+    "snapshot-schedule": {
+      "choice": "dns",
+      "comment": ""
+    },
+    "snapshot-storage": {
+      "choice": "dns",
+      "comment": ""
+    },
+    "snapshot-capture": {
+      "choice": "network",
+      "comment": ""
+    },
+    "snapshot-coverage": {
+      "choice": "network",
+      "comment": ""
+    },
+    "snapshot-recovery": {
+      "choice": "blend",
+      "comment": "use the netowkr style flow with data diffs and merges with the dns look"
+    },
+    "diagnostics-count": {
+      "choice": "blend",
+      "comment": "Network layout, dns style"
+    },
+    "diagnostics-layout": {
+      "choice": "blend",
+      "comment": "Network layout, dns style"
+    },
+    "settings-layout": {
+      "choice": "dns",
+      "comment": ""
+    },
+    "settings-actions": {
+      "choice": "dns",
+      "comment": ""
+    },
+    "context-help": {
+      "choice": "dns",
+      "comment": ""
+    },
+    "help-page": {
+      "choice": "dns",
+      "comment": ""
+    },
+    "overview-layout": {
+      "choice": "custom",
+      "comment": "create both of these layouts as choices  as they represent different types of information."
+    },
+    "record-detail": {
+      "choice": "custom",
+      "comment": "keep both styles as options as they're different approaches"
+    },
+    "snapshot-layout": {
+      "choice": "dns",
+      "comment": ""
+    }
+  },
+  "savedAt": "2026-10-11T17:55:51.061Z"
+}

@@ -1,1 +1,1 @@
-<script setup lang="ts">defineProps<{count?:number;label?:string;help:string;tone?:string}>();</script><template><span class="snapshot-summary" :title="help">{{ count }} {{ label }}</span></template>
+<script>import * as Vue from 'vue';import {component} from '../../../../../rancher-common-ui/client/index.mjs';export default component('PageSummary',Vue);</script>

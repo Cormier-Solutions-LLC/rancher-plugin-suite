@@ -5,5 +5,5 @@ export function diagnosticIncidents(rows: DiagnosticRow[], now: number, matchesS
   const incidents = rows.filter(row => Number.isFinite(row.time) && row.time >= now - hours * 3600000 && row.time <= now && matchesScope(row.namespace) && ['WARN', 'ERROR'].includes(row.severity));
   const errors = incidents.filter(row => row.severity === 'ERROR').length;
   const warnings = incidents.length - errors;
-  return { total: incidents.length, errors, warnings, tone: errors ? 'error' : warnings ? 'warning' : '' };
+  return { total: incidents.length, errors, warnings, tone: errors ? 'error' : warnings ? 'warning' : 'success' };
 }

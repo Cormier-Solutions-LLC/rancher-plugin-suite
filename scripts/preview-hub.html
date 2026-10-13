@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Rancher Plugin Suite Preview</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#141b24;color:#eaf0f5;font:14px system-ui,sans-serif}
+    header{padding:12px 18px;border-bottom:1px solid #364657;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+    h1{font-size:18px;margin:0}nav{display:flex;gap:6px}button{background:#253344;color:inherit;border:1px solid #52667e;border-radius:5px;padding:8px 12px;cursor:pointer}
+    button[aria-pressed=true]{background:#286da8;border-color:#559de1}button:focus-visible,a:focus-visible{outline:2px solid #8fcaff;outline-offset:2px}
+    .note{padding:8px 18px;color:#b8c9d9;font-size:12px;overflow-wrap:anywhere}.note span{color:#eaf0f5}
+    main{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:0 8px 8px;height:calc(100dvh - 125px);min-height:480px}
+    main.single{grid-template-columns:1fr}section{display:flex;flex-direction:column;min-width:0;border:1px solid #364657;border-radius:5px;overflow:hidden}
+    section[hidden]{display:none}.panel-title{padding:8px 12px;background:#202c3a;display:flex;justify-content:space-between;gap:8px}a{color:#8fcaff}iframe{width:100%;flex:1;border:0;background:#1b2430}
+    @media(max-width:900px){main:not(.single){grid-template-columns:1fr;height:auto}main:not(.single) section{height:750px}}
+  </style>
+</head>
+<body>
+  <header><h1>Rancher Plugin Suite</h1><nav aria-label="Preview layout"></nav></header>
+  <div class="note">Prepopulated temporary mock data · Edits save for this session · No cluster connection<br>Session: <span id="session">Loading…</span></div>
+  <main aria-label="Plugin previews"></main>
+  <script type="module">
+    const nav=document.querySelector('nav'), main=document.querySelector('main');
+    try {
+      const response=await fetch('/session'); if(!response.ok)throw new Error('Session unavailable');
+      const {plugins,session}=await response.json(); document.querySelector('#session').textContent=session;
+      const modes=plugins.length>1?[['compare','Compare both'],...plugins.map(p=>[p.id,p.title])]:plugins.map(p=>[p.id,p.title]);
+      function select(id){
+        main.classList.toggle('single',id!=='compare');
+        for(const panel of main.children)panel.hidden=id!=='compare'&&panel.dataset.id!==id;
+        for(const button of nav.children)button.setAttribute('aria-pressed',String(button.dataset.id===id));
+      }
+      for(const plugin of plugins){
+        const panel=document.createElement('section');panel.dataset.id=plugin.id;
+        const title=document.createElement('div');title.className='panel-title';
+        const label=document.createElement('strong');label.textContent=plugin.title;
+        const link=document.createElement('a');link.href=plugin.url;link.target='_blank';link.rel='noopener';link.textContent='Open separately';
+        title.append(label,link);const frame=document.createElement('iframe');frame.title=plugin.title+' preview';frame.src=plugin.url;
+        panel.append(title,frame);main.append(panel);
+      }
+      for(const [id,label] of modes){const button=document.createElement('button');button.dataset.id=id;button.textContent=label;button.onclick=()=>select(id);nav.append(button);}
+      select(modes[0][0]);
+    } catch(error){document.querySelector('#session').textContent=error.message;}
+  </script>
+</body>
+</html>

@@ -1,11 +1,15 @@
 import { inventoryDatasets } from './inventory';
+import { reactive, watchEffect } from 'vue';
 const snapshot = inventoryDatasets['route-attachment-snapshot.json'];
 const inventory = inventoryDatasets['publication-snapshot.json'];
 const listeners = inventoryDatasets['listener-snapshot.json'];
 import { portConfigurations, transportOf } from './port-presets';
 // These associations are inferred from observed port mappings. They are not
 // application-managed dependency links and do not authorize live changes.
-export const observedAttachments = snapshot.routes.map(route => ({ ...route,
+type ObservedAttachment = (typeof snapshot.routes)[number] & { configurationIds: string[] };
+export const observedAttachments: ObservedAttachment[] = reactive([]);
+watchEffect(() => {
+const next = snapshot.routes.map(route => ({ ...route,
   configurationIds: portConfigurations.filter(config => route.bindings.some(binding => {
     const transport = binding.mode === 'UDP' ? 'UDP' : 'TCP';
     const listener = listeners.entryPoints.find(listener => listener.name === binding.entryPoint && listener.protocol === transport);
@@ -15,6 +19,8 @@ export const observedAttachments = snapshot.routes.map(route => ({ ...route,
     return config.ports.some(port => port.mode === binding.mode && port.port === listener?.port);
   })).map(config => config.id)
 }));
+observedAttachments.splice(0, observedAttachments.length, ...next);
+});
 export const attachmentsFor = (id: string) => observedAttachments.filter(route => route.configurationIds.includes(id));
 export function serviceReferencesFor(id: string) {
   const config = portConfigurations.find(item => item.id === id);

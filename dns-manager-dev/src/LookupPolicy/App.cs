@@ -67,7 +67,7 @@ public sealed class App : IDnsApplication, IDnsAuthoritativeRequestHandler, IDns
             _server = server;
             Options = options;
             _source = new DnsClient(options.SourceServer) { Timeout = options.QueryTimeoutMilliseconds, Retries = 1 };
-            _public = new DnsClient(options.PublicServer) { Timeout = options.QueryTimeoutMilliseconds, Retries = 1 };
+            _public = new DnsClient(options.PublicServer) { Timeout = options.QueryTimeoutMilliseconds, Retries = 1, DnssecValidation = options.ValidatePublicDnssec };
             _cleanup = new Timer(_ => { _sourceCache.RemoveExpiredRecords(); _publicCache.RemoveExpiredRecords(); },
                 null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
         }
@@ -86,7 +86,7 @@ public sealed class App : IDnsApplication, IDnsAuthoritativeRequestHandler, IDns
                     answers.Insert(0, new DnsResourceRecord(question.Name, DnsResourceRecordType.CNAME,
                         DnsClass.IN, answers.Min(record => record.TTL), new DnsCNAMERecordData(result.Question[0].Name)));
                 }
-                // Synthesized aliases and raw public responses are not locally DNSSEC validated.
+                // Synthesized aliases are unsigned. Never assert AD on the combined response.
                 return new DnsDatagram(original.Identifier, true, original.OPCODE, false, false,
                     original.RecursionDesired, true, false, original.CheckingDisabled, result.RCODE,
                     original.Question, answers, result.Authority, result.Additional);
@@ -162,7 +162,9 @@ public sealed class App : IDnsApplication, IDnsAuthoritativeRequestHandler, IDns
             if (cached is not null) return cached;
             try
             {
-                var response = await client.RawResolveAsync(query, token);
+                var response = client.DnssecValidation
+                    ? await client.ResolveAsync(query.Question[0], token)
+                    : await client.RawResolveAsync(query, token);
                 if (response.RCODE is DnsResponseCode.NoError or DnsResponseCode.NxDomain)
                     cache.CacheResponse(response);
                 return response;

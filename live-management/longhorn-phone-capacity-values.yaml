@@ -1,0 +1,5 @@
+# Longhorn 1.12.1: preserve the existing release values and replica topology.
+# Sparse phone clones use about 2.4 GiB of each 32 GiB claim at creation.
+# Keep the existing 25% physical free-space guard and 30% disk reservation.
+defaultSettings:
+  storageOverProvisioningPercentage: 125

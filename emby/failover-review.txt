@@ -1,0 +1,77 @@
+Emby automatic worker recovery - APPLIED 2026-10-11 after explicit user approval
+
+User accepts interrupted playback followed by resuming at saved watch progress.
+Keep one active Emby instance. Emby does not support two servers sharing its
+database. Existing ReadWriteOncePod config PVC preserves the single writer.
+Config is replicated by Longhorn across three physical Proxmox servers.
+The existing NFS CSI media mount is available from all 16 tested workers.
+
+Change applied:
+  Longhorn setting node-down-pod-deletion-policy:
+  do-nothing -> delete-statefulset-pod
+
+This is a CLUSTER-WIDE Longhorn setting, not an Emby setting. It allows Longhorn
+to force-delete terminating StatefulSet pods on down nodes so Kubernetes can
+detach their volumes and start replacements elsewhere. Harbor database/Redis
+and other Longhorn-backed StatefulSets are also affected. It does not change
+Deployment pod deletion policy. User explicitly approved this broader scope.
+Verified affected Longhorn-backed StatefulSets: ai/open-webui,
+automation/pixel-10-pro-xl, emby/emby, harbor/harbor-database,
+harbor/harbor-redis and prod-realtime/prod-realtime-redis-node.
+Force deletion is not proof that an unreachable machine has stopped; a network
+partition requires particular care to prevent an old writer running concurrently.
+
+Expected behavior: several minutes of recovery after an abrupt worker loss,
+followed by access at https://emby.cormierconsulting.io with the same accounts,
+server identity and persisted watch progress. Active playback/transcodes stop.
+No promise of uninterrupted streams or recovery from every kind of partition.
+The NFS server 10.99.2.109 must remain available; its outage still affects media.
+Current healthy config replicas are on kubworker05/proxmox03,
+kubworker07/proxmox05 and kubworker14/proxmox08.
+
+Review without mutation (from workspace root):
+  kubectl patch settings.longhorn.io node-down-pod-deletion-policy -n longhorn-system --type=merge --patch-file emby/failover-policy-proposed.json --dry-run=server
+Server-side dry run passed on 2026-10-11. Re-reading the live setting confirmed
+it remained do-nothing before approval. Emby remained Ready and its volume healthy.
+
+Applied after explicit approval for the cluster-wide setting:
+  kubectl patch settings.longhorn.io node-down-pod-deletion-policy -n longhorn-system --type=merge --patch-file emby/failover-policy-proposed.json
+  kubectl get settings.longhorn.io node-down-pod-deletion-policy -n longhorn-system
+  kubectl get pod emby-0 -n emby -o wide
+  kubectl get volumes.longhorn.io pvc-16a822d7-4452-4fd5-a4cd-1aae4647e7f3 -n longhorn-system
+
+Post-change verification on 2026-10-11:
+  Live setting: delete-statefulset-pod.
+  Before mutation: 19 nodes Ready; no terminating StatefulSet pods.
+  Emby: Ready on kubworker02, zero container restarts during the change.
+  Longhorn config volume: healthy, three replicas.
+  Media mount and persistent system.xml: accessible from Emby pod.
+  Trusted HTTPS public-info API: Emby, 4.9.3.0, original server ID
+  149659aba28a460ea325b592a9ebb3d8.
+  All eight StatefulSets had their desired Ready replica counts.
+
+Rollback the policy:
+  kubectl patch settings.longhorn.io node-down-pod-deletion-policy -n longhorn-system --type=merge --patch-file emby/failover-policy-rollback.json
+Rollback changes future handling; it cannot undo pod deletions already performed.
+
+Existing verification: config relocation kubworker15 -> kubworker14 preserved
+data checksum; NAS access passed on all 16 workers. User subsequently requested
+a recovery test. Controlled Emby-only rolling restart moved the live server
+from kubworker02/proxmox01 to kubworker03/proxmox02 on 2026-10-11. Kubernetes
+recreated the pod and Longhorn reattached its existing config volume. Readiness,
+HTTPS identity/version, config marker checksum, library DB presence and an
+actual NAS media read as 100999:100990 all passed. Checks completed 87 seconds
+after initiating the move; this does not measure exact client playback downtime.
+The temporary Emby scheduling exclusion was then removed. Final rolling restart
+returned Emby to kubworker02; health/media checks passed, config volume was
+healthy with three replicas, and the test marker was removed. Evidence:
+  .local/emby/recovery-test-result.json
+No abrupt server failure test has been performed. The node-down force-deletion
+policy path was not exercised. Do not reboot/fence a physical server for testing
+without authorization because other workloads share those servers.
+
+Source retirement remains pending as recorded in README.txt; preserve backups.
+
+References:
+https://longhorn.io/docs/1.12.0/high-availability/node-failure/
+https://emby.media/community/topic/121438-emby-server-docker-swarm-nfs-volume-2-containers-not-working/

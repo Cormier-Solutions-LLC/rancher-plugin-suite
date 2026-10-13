@@ -1,0 +1,62 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "addressType": "IPv4",
+      "apiVersion": "discovery.k8s.io/v1",
+      "endpoints": [
+        {
+          "addresses": [
+            "10.99.5.3"
+          ],
+          "conditions": {
+            "ready": true
+          }
+        }
+      ],
+      "kind": "EndpointSlice",
+      "metadata": {
+        "name": "windows-admin-center-1",
+        "namespace": "windows-admin-center",
+        "labels": {
+          "kubernetes.io/service-name": "windows-admin-center"
+        }
+      },
+      "ports": [
+        {
+          "name": "https",
+          "port": 6600,
+          "protocol": "TCP"
+        }
+      ]
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "ServersTransport",
+      "metadata": {
+        "name": "windows-admin-center",
+        "namespace": "windows-admin-center"
+      },
+      "spec": {
+        "insecureSkipVerify": false,
+        "rootCAsSecrets": [
+          "windows-admin-center-trusted-root"
+        ],
+        "serverName": "desktop.cormierconsulting.com"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Secret",
+      "metadata": {
+        "name": "windows-admin-center-trusted-root",
+        "namespace": "windows-admin-center"
+      },
+      "type": "Opaque",
+      "data": {
+        "ca.crt": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURWakNDQWo2Z0F3SUJBZ0lRRUlRTjJ0MDVPTDVGandqVWlPbHRjekFOQmdrcWhraUc5dzBCQVFzRkFEQW5NU1V3SXdZRFZRUUQNCkRCeFhhVzVrYjNkelFXUnRhVzVEWlc1MFpYSlRaV3htVTJsbmJtVmtNQjRYRFRJMk1UQXdNakl5TlRreE1Gb1hEVEkyTVRJd01USXoNCk1Ea3dPVm93SnpFbE1DTUdBMVVFQXd3Y1YybHVaRzkzYzBGa2JXbHVRMlZ1ZEdWeVUyVnNabE5wWjI1bFpEQ0NBU0l3RFFZSktvWkkNCmh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBT3h0Zy9TSzQvemR4eHBKUzlDUm8vSXozMFNZSU5DTDhFMlcwcjkrWlpqYlk3MmQNCmZjZ2FJQVU1d28rMmZzVEszVER2RkJWVGdaQjAvOWhvcmxGL0FDTFI4dGlqYmxPaHhSaTE2NGhSR0NXSlg5WXFLTU9RZk90R1JmVnoNCk0yaUlKRjlDdjc0bkp0dVgwQ3VjRHBTSStLRExJLzFFd2JhS2F2ZFlGRTJjcmZOUHFVUTNGRXNEazI3WnhDMVZ3Y0hKdlZjbkVGZ0UNClFSeXRRVnRIZUNYOFdmZjZ0MmVIRXEyOFdWeEE2TjRUbnZ1SlpKMCtqVGFBWmdVS2F3alJNRFQydm4vZHRqcU15aURNWitxR1loS3INCkJ5VENMYTVxYkpLdzJRbEpHQXd0dDNVVS9lVkpLMjg4TWI2dENvaHVkOEJmSHAvcHF2Tnd2N00yYTJrbnBNZms4MFVDQXdFQUFhTisNCk1Id3dEZ1lEVlIwUEFRSC9CQVFEQWdXZ01DZ0dBMVVkRVFRaE1CK0NIVVJsYzJ0MGIzQXVZMjl5YldsbGNtTnZibk4xYkhScGJtY3UNClkyOXRNQk1HQTFVZEpRUU1NQW9HQ0NzR0FRVUZCd01CTUF3R0ExVWRFd0VCL3dRQ01BQXdIUVlEVlIwT0JCWUVGRWh6S2h6djlVcVINCmZSRVg5YXNoM0oxbE1uQXdNQTBHQ1NxR1NJYjNEUUVCQ3dVQUE0SUJBUURMaUVVaitISHZRSnRFWkFBOEs3ZDFxandmNmJTMnk1NFMNCjRSSlZhTFdwZUt6Z2R2empmQzVOU3d4QnJGbGtaT0EvaHk3TjBTeVgvTkVMMWRlTTlLSzA5MyswdmRzOTdLb1JNc0RTU0l3UHZQYnoNClgwMzNYLzh5dFhseldQaWk0eFA1QlVqNWlTS3dqcVc3OWZETnFxL1Nwc2hBaTZhcmVXVlBONCtpdVJyMXBmR1owR1dDR0g0Z2NQZEcNCnRORGxETDd5a2VDQ2xWaytwZWY1RmkrR1Uwb1J6NHN3Z0R6ME9TREhwaGdEbHZSRlJNV29uaWJ5aXRqcG0yTUdNd29zK2ZCZFRWR3cNCkR2UlB5MkRUdlpTbmJVbXZnOWE1cVJXNHBWeUhtSEVWZVgvTDZxR25Vc0NweEFra2p4VHlDc1pZREg5eFc2aS9pYzlTTnJXRVUrWEMNCkJIc0cKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo="
+      }
+    }
+  ]
+}

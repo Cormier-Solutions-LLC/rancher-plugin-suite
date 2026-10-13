@@ -1,0 +1,21 @@
+apiVersion: catalog.cattle.io/v1
+kind: UIPlugin
+metadata:
+  name: rancher-common-ui
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    common-ui.cormierconsulting.io/api-version: "1"
+  labels:
+    app.kubernetes.io/name: rancher-common-ui
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+spec:
+  plugin:
+    name: rancher-common-ui
+    version: {{ .Chart.AppVersion | quote }}
+    endpoint: {{ required "Set plugin.endpoint to the published common UI directory containing files.txt and plugin/" .Values.plugin.endpoint | quote }}
+    compressedEndpoint: {{ .Values.plugin.compressedEndpoint | quote }}
+    noCache: {{ .Values.plugin.noCache }}
+    noAuth: false
+    metadata:
+      {{- toYaml .Values.plugin.metadata | nindent 6 }}

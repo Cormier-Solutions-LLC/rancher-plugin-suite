@@ -1,0 +1,2 @@
+<script setup>defineProps({available:String,largest:String,runOut:String,runOutTitle:String,mock:Boolean});</script>
+<template><section class="snapshot-storage-row" aria-label="Snapshot Storage"><div class="storage-three"><div><strong>Available Drive Space <small v-if="mock">· Mock capacity</small></strong><span>{{available}}</span></div><div><strong>Largest Snapshot</strong><span>{{largest}}</span></div><div><strong>Estimated Run Out Of Space</strong><span :title="runOutTitle">{{runOut}}</span></div></div></section></template>

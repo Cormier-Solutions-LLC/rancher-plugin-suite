@@ -1,1 +1,1 @@
-import { reactive } from 'vue';export const displaySettings=reactive({previewMode:true});
+import { reactive } from 'vue';export const displaySettings=reactive({previewMode:false});

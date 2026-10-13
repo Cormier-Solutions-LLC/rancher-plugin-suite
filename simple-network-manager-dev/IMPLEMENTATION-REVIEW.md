@@ -83,3 +83,45 @@ selection steps and its comparison showed hidden values. Source Secret credentia
 are refreshed in native Rancher even when no current route references them; denied
 reads remove stale values and disclose missing credentials. Secret annotation
 values are redacted too, including embedded last-applied configuration.
+
+
+## Approved Standards Alignment - 2026-10-11
+
+This section supersedes earlier JSON/YAML-only and physical-drive forecast notes.
+The user approved native Rancher context/navigation, the standard/proposed snapshot
+format, and incomplete managed working drafts in Pending Rollouts. The shared
+Rancher standard and Network Manager standard record the accepted menu/count
+variation and snapshot/draft contract.
+
+New recovery captures use ZIP; credential-inclusive captures require a strong
+transient password and AES-256 encryption. Legacy JSON/YAML backups remain intact.
+Configuration coverage requires a recent matching capture; Secret notification
+coverage checks captured credential presence independently of age or rotation.
+Docker storage is bounded by a 1 GiB application quota. The UI reports effective
+capacity, complete ZIP sizes and unavailable estimates when their basis is unknown.
+
+Configuration tests passed, including draft identity, scope, successful completion,
+Secret presence coverage and bounded read cancellation. Merge and storage estimate
+tests passed. Shared preview service tests passed for ZIP/encryption, wrong-password
+rejection, merge, persistence across restart, cleanup and both plugin data sources.
+Preview and native extension builds passed; native build advisories concern bundle
+size. Docker preview was rebuilt while retaining its persistent snapshot volume.
+
+Browser verification confirmed that saving an incomplete Certificate preserves
+its values in a scoped Needs Completion row and blocks Apply. Resuming and validating
+it removes the incomplete duplicate. Refresh preserved unsaved form values. The
+header has equal-width 40 px labeled actions, matching font/icon sizes and a count
+to the right of Refresh. Partial selection exposes an indeterminate Select All.
+Filter labels align above controls, and the preview badge sits in the breadcrumb
+row. Panels remain within the 1280 x 720 viewport, with internal overflow on the
+short-view schedule page. Saving the capture schedule while cleanup retention was
+changed still triggered the leave-page prompt for those unsaved cleanup changes.
+
+Banner and schedule/storage reads are bounded and cancelled on unmount; late
+responses do not overwrite active state. Automatic refresh does not retry writes
+or rescan port configurations. Saved preference drafts are separate from managed
+rollout counts. Read-failure notices have a saved display toggle.
+
+Native installation, actual Rancher authorization/context acceptance, live Apply,
+controller/log collection and external AES recovery-tool compatibility remain
+unverified. See STANDARDS-ALIGNMENT-REVIEW.md for those integration boundaries.

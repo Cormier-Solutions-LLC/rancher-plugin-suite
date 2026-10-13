@@ -3,10 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=24" },
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "setup": "node scripts/setup.mjs",
     "preview": "node scripts/preview-suite.mjs",
-    "test:preview-data": "node --test preview-data/tests/*.test.mjs"
+    "review:ui": "node scripts/review-ui.mjs",
+    "test:ui-review": "node --test scripts/tests/ui-review.test.mjs",
+    "test:preview-data": "node --test preview-data/tests/*.test.mjs",
+    "build:common-ui": "npm --prefix rancher-common-ui run build",
+    "test:common-ui": "npm --prefix rancher-common-ui test",
+    "prepreview": "npm run build:common-ui"
   }
 }

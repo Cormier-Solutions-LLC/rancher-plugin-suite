@@ -1,13 +1,15 @@
 {
   "name": "simple-network-manager",
   "description": "Unified Traefik routing and certificate management inside Rancher",
-  "version": "0.1.0",
+  "version": "0.1.26",
   "private": false,
   "rancher": {
     "annotations": {
       "catalog.cattle.io/rancher-version": ">= 2.15.0 < 2.16.0",
       "catalog.cattle.io/ui-extensions-version": ">= 3.0.0 < 4.0.0",
-      "catalog.cattle.io/display-name": "Network Manager"
+      "catalog.cattle.io/display-name": "Network Manager",
+      "common-ui.cormierconsulting.io/name": "rancher-common-ui",
+      "common-ui.cormierconsulting.io/api-version": "1"
     }
   },
   "scripts": {},

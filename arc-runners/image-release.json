@@ -1,0 +1,27 @@
+{
+  "tag": "2026.10.11-1",
+  "image": "harbor.cormierconsulting.io/automation/arc-runner-linux@sha256:cacbd0adafb78ff675e72217e704f064664c04b9bb5fccc5887f17ab436fb835",
+  "baseImage": "ghcr.io/actions/actions-runner@sha256:e5496277be5d09bc968b3d64911b74e219ac4a3f2edce956a3ecf9271bea1ef4",
+  "status": "deployed and verified",
+  "helmRevision": 10,
+  "sourcePullRequest": "https://github.com/Cormier-Solutions-LLC/WebSockets-Kubernetes/pull/228",
+  "sourceCommit": "3fae244158bd9b3e061d751b01a85fad58a0b54f",
+  "prewarmedWorkers": 16,
+  "validation": {
+    "localSetupTests": 12,
+    "windowsNpmReuse": "passed",
+    "nativeAot": "compiled and executed",
+    "browsers": [
+      "chromium",
+      "firefox",
+      "webkit"
+    ],
+    "kubernetesDockerAndSharedWorkspace": "passed",
+    "githubActionsSetupRun": "https://github.com/Cormier-Solutions-LLC/WebSockets-Kubernetes/actions/runs/38162914009",
+    "systemAndNodeSetupSeconds": {
+      "before": 25,
+      "after": 4
+    }
+  },
+  "ciReusePullRequestStatus": "open; full CI also fails on main because of Harbor password references and Windows line-ending assertions"
+}

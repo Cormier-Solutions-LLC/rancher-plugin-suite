@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "pluginId": "network-manager",
-  "revision": 0,
+  "revision": 1,
   "updatedAt": "2026-10-11T14:08:48.762Z",
   "source": {
     "kind": "mock",
@@ -14494,6 +14494,1140 @@
         ]
       }
     },
-    "state": {}
+    "state": {
+      "portConfigurations": [
+        {
+          "id": "http",
+          "name": "HTTP",
+          "ports": [
+            {
+              "label": "HTTP",
+              "port": 80,
+              "mode": "HTTP"
+            }
+          ],
+          "source": "Predefined"
+        },
+        {
+          "id": "https",
+          "name": "HTTPS",
+          "ports": [
+            {
+              "label": "HTTPS",
+              "port": 443,
+              "mode": "HTTPS"
+            }
+          ],
+          "source": "Predefined"
+        },
+        {
+          "id": "web",
+          "name": "Web · HTTP + HTTPS",
+          "ports": [
+            {
+              "label": "HTTP",
+              "port": 80,
+              "mode": "HTTP"
+            },
+            {
+              "label": "HTTPS",
+              "port": 443,
+              "mode": "HTTPS"
+            }
+          ],
+          "source": "Predefined"
+        },
+        {
+          "id": "smb",
+          "name": "SMB",
+          "ports": [
+            {
+              "label": "SMB",
+              "port": 445,
+              "mode": "TCP"
+            }
+          ],
+          "source": "Predefined"
+        },
+        {
+          "id": "tls",
+          "name": "TLS",
+          "ports": [
+            {
+              "label": "TLS termination",
+              "port": 443,
+              "mode": "TLS"
+            }
+          ],
+          "source": "Predefined"
+        },
+        {
+          "id": "dns",
+          "name": "DNS · TCP + UDP",
+          "ports": [
+            {
+              "label": "DNS TCP",
+              "port": 53,
+              "mode": "TCP"
+            },
+            {
+              "label": "DNS UDP",
+              "port": 53,
+              "mode": "UDP"
+            }
+          ],
+          "source": "Predefined"
+        },
+        {
+          "id": "detected-ai-lmstudio",
+          "name": "lmstudio",
+          "namespace": "ai",
+          "service": "lmstudio",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "http",
+              "port": 1234,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-ai-ollama",
+          "name": "ollama",
+          "namespace": "ai",
+          "service": "ollama",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "http",
+              "port": 11434,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-ai-open-webui-redis",
+          "name": "open-webui-redis",
+          "namespace": "ai",
+          "service": "open-webui-redis",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "http",
+              "port": 6379,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-automation-browser-guest",
+          "name": "browser-guest",
+          "namespace": "automation",
+          "service": "browser-guest",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "mcp",
+              "port": 8080,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-automation-browser-guest-login",
+          "name": "browser-guest-login",
+          "namespace": "automation",
+          "service": "browser-guest-login",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "novnc",
+              "port": 6080,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-automation-mcp-gateway",
+          "name": "mcp-gateway",
+          "namespace": "automation",
+          "service": "mcp-gateway",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "mcp",
+              "port": 8080,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-automation-phone-queue-controller",
+          "name": "phone-queue-controller",
+          "namespace": "automation",
+          "service": "phone-queue-controller",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "mcp",
+              "port": 8080,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-automation-pixel-10-pro-xl",
+          "name": "pixel-10-pro-xl",
+          "namespace": "automation",
+          "service": "pixel-10-pro-xl",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "adb",
+              "port": 5556,
+              "mode": "TCP"
+            },
+            {
+              "label": "novnc",
+              "port": 6080,
+              "mode": "TCP"
+            },
+            {
+              "label": "grpc",
+              "port": 8554,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-cattle-fleet-system-monitoring-fleet-controller",
+          "name": "monitoring-fleet-controller",
+          "namespace": "cattle-fleet-system",
+          "service": "monitoring-fleet-controller",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "metrics",
+              "port": 8080,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-cattle-fleet-system-monitoring-gitjob",
+          "name": "monitoring-gitjob",
+          "namespace": "cattle-fleet-system",
+          "service": "monitoring-gitjob",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "metrics",
+              "port": 8081,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-cattle-monitoring-system-alertmanager-operated",
+          "name": "alertmanager-operated",
+          "namespace": "cattle-monitoring-system",
+          "service": "alertmanager-operated",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "http-web",
+              "port": 9093,
+              "mode": "TCP"
+            },
+            {
+              "label": "tcp-mesh",
+              "port": 9094,
+              "mode": "TCP"
+            },
+            {
+              "label": "udp-mesh",
+              "port": 9094,
+              "mode": "UDP"
+            }
+          ]
+        },
+        {
+          "id": "detected-cattle-monitoring-system-prometheus-operated",
+          "name": "prometheus-operated",
+          "namespace": "cattle-monitoring-system",
+          "service": "prometheus-operated",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "http-web",
+              "port": 9090,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-cattle-monitoring-system-rancher-monitoring-alertmanager",
+          "name": "rancher-monitoring-alertmanager",
+          "namespace": "cattle-monitoring-system",
+          "service": "rancher-monitoring-alertmanager",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "http-web",
+              "port": 9093,
+              "mode": "TCP"
+            },
+            {
+              "label": "reloader-web",
+              "port": 8080,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-cattle-monitoring-system-rancher-monitoring-kube-state-metrics",
+          "name": "rancher-monitoring-kube-state-metrics",
+          "namespace": "cattle-monitoring-system",
+          "service": "rancher-monitoring-kube-state-metrics",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "http",
+              "port": 8080,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-cattle-monitoring-system-rancher-monitoring-prometheus",
+          "name": "rancher-monitoring-prometheus",
+          "namespace": "cattle-monitoring-system",
+          "service": "rancher-monitoring-prometheus",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "http-web",
+              "port": 9090,
+              "mode": "TCP"
+            },
+            {
+              "label": "reloader-web",
+              "port": 8080,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-cattle-monitoring-system-rancher-monitoring-prometheus-node-exporter",
+          "name": "rancher-monitoring-prometheus-node-exporter",
+          "namespace": "cattle-monitoring-system",
+          "service": "rancher-monitoring-prometheus-node-exporter",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "http-metrics",
+              "port": 9796,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-cattle-monitoring-system-rancher-monitoring-windows-exporter",
+          "name": "rancher-monitoring-windows-exporter",
+          "namespace": "cattle-monitoring-system",
+          "service": "rancher-monitoring-windows-exporter",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "windows-metrics",
+              "port": 9796,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-cattle-system-imperative-api-extension",
+          "name": "imperative-api-extension",
+          "namespace": "cattle-system",
+          "service": "imperative-api-extension",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "TCP 6666",
+              "port": 6666,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-cdi-cdi-prometheus-metrics",
+          "name": "cdi-prometheus-metrics",
+          "namespace": "cdi",
+          "service": "cdi-prometheus-metrics",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "metrics",
+              "port": 8443,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-cert-manager-cert-manager",
+          "name": "cert-manager",
+          "namespace": "cert-manager",
+          "service": "cert-manager",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "http-metrics",
+              "port": 9402,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-cert-manager-cert-manager-cainjector",
+          "name": "cert-manager-cainjector",
+          "namespace": "cert-manager",
+          "service": "cert-manager-cainjector",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "http-metrics",
+              "port": 9402,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-cert-manager-cert-manager-webhook",
+          "name": "cert-manager-webhook",
+          "namespace": "cert-manager",
+          "service": "cert-manager-webhook",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "metrics",
+              "port": 9402,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-harbor-harbor-core",
+          "name": "harbor-core",
+          "namespace": "harbor",
+          "service": "harbor-core",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "http-metrics",
+              "port": 8001,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-harbor-harbor-database",
+          "name": "harbor-database",
+          "namespace": "harbor",
+          "service": "harbor-database",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "TCP 5432",
+              "port": 5432,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-harbor-harbor-exporter",
+          "name": "harbor-exporter",
+          "namespace": "harbor",
+          "service": "harbor-exporter",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "http-metrics",
+              "port": 8001,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-harbor-harbor-jobservice",
+          "name": "harbor-jobservice",
+          "namespace": "harbor",
+          "service": "harbor-jobservice",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "http-metrics",
+              "port": 8001,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-harbor-harbor-redis",
+          "name": "harbor-redis",
+          "namespace": "harbor",
+          "service": "harbor-redis",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "TCP 6379",
+              "port": 6379,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-harbor-harbor-registry",
+          "name": "harbor-registry",
+          "namespace": "harbor",
+          "service": "harbor-registry",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "http-registry",
+              "port": 5000,
+              "mode": "TCP"
+            },
+            {
+              "label": "http-controller",
+              "port": 8080,
+              "mode": "TCP"
+            },
+            {
+              "label": "http-metrics",
+              "port": 8001,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-home-assistant-home-assistant",
+          "name": "home-assistant",
+          "namespace": "home-assistant",
+          "service": "home-assistant",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "http",
+              "port": 8123,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-kube-system-rancher-monitoring-coredns",
+          "name": "rancher-monitoring-coredns",
+          "namespace": "kube-system",
+          "service": "rancher-monitoring-coredns",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "http-metrics",
+              "port": 9153,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-kube-system-rancher-monitoring-kubelet",
+          "name": "rancher-monitoring-kubelet",
+          "namespace": "kube-system",
+          "service": "rancher-monitoring-kubelet",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "https-metrics",
+              "port": 10250,
+              "mode": "TCP"
+            },
+            {
+              "label": "http-metrics",
+              "port": 10255,
+              "mode": "TCP"
+            },
+            {
+              "label": "cadvisor",
+              "port": 4194,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-kubevirt-virt-template-controller-manager-metrics-service",
+          "name": "virt-template-controller-manager-metrics-service",
+          "namespace": "kubevirt",
+          "service": "virt-template-controller-manager-metrics-service",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "http-metrics",
+              "port": 8443,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-longhorn-system-longhorn-admission-webhook",
+          "name": "longhorn-admission-webhook",
+          "namespace": "longhorn-system",
+          "service": "longhorn-admission-webhook",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "admission-webhook",
+              "port": 9502,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-longhorn-system-longhorn-backend",
+          "name": "longhorn-backend",
+          "namespace": "longhorn-system",
+          "service": "longhorn-backend",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "manager",
+              "port": 9500,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-longhorn-system-longhorn-recovery-backend",
+          "name": "longhorn-recovery-backend",
+          "namespace": "longhorn-system",
+          "service": "longhorn-recovery-backend",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "recovery-backend",
+              "port": 9503,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-omada-omada",
+          "name": "omada",
+          "namespace": "omada",
+          "service": "omada",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "firmware",
+              "port": 8043,
+              "mode": "TCP"
+            },
+            {
+              "label": "adoption",
+              "port": 29814,
+              "mode": "TCP"
+            },
+            {
+              "label": "device-info",
+              "port": 29815,
+              "mode": "TCP"
+            },
+            {
+              "label": "terminal",
+              "port": 29816,
+              "mode": "TCP"
+            },
+            {
+              "label": "discovery",
+              "port": 29810,
+              "mode": "UDP"
+            },
+            {
+              "label": "portal-http",
+              "port": 8088,
+              "mode": "TCP"
+            },
+            {
+              "label": "portal-https",
+              "port": 8843,
+              "mode": "TCP"
+            },
+            {
+              "label": "legacy-manage",
+              "port": 29811,
+              "mode": "TCP"
+            },
+            {
+              "label": "legacy-adopt",
+              "port": 29812,
+              "mode": "TCP"
+            },
+            {
+              "label": "legacy-upgrade",
+              "port": 29813,
+              "mode": "TCP"
+            },
+            {
+              "label": "monitor",
+              "port": 29817,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-plex-manager-plex-manager",
+          "name": "plex-manager",
+          "namespace": "plex-manager",
+          "service": "plex-manager",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "http",
+              "port": 8181,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-plex-server-plex-server",
+          "name": "plex-server",
+          "namespace": "plex-server",
+          "service": "plex-server",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "plex",
+              "port": 32400,
+              "mode": "TCP"
+            },
+            {
+              "label": "companion",
+              "port": 8324,
+              "mode": "TCP"
+            },
+            {
+              "label": "dlna-http",
+              "port": 32469,
+              "mode": "TCP"
+            },
+            {
+              "label": "dlna-ssdp",
+              "port": 1900,
+              "mode": "UDP"
+            },
+            {
+              "label": "gdm-1",
+              "port": 32410,
+              "mode": "UDP"
+            },
+            {
+              "label": "gdm-2",
+              "port": 32412,
+              "mode": "UDP"
+            },
+            {
+              "label": "gdm-3",
+              "port": 32413,
+              "mode": "UDP"
+            },
+            {
+              "label": "gdm-4",
+              "port": 32414,
+              "mode": "UDP"
+            }
+          ]
+        },
+        {
+          "id": "detected-prod-realtime-prod-realtime-redis",
+          "name": "prod-realtime-redis",
+          "namespace": "prod-realtime",
+          "service": "prod-realtime-redis",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "tcp-redis",
+              "port": 6379,
+              "mode": "TCP"
+            },
+            {
+              "label": "tcp-sentinel",
+              "port": 26379,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-prod-realtime-prod-realtime-redis-headless",
+          "name": "prod-realtime-redis-headless",
+          "namespace": "prod-realtime",
+          "service": "prod-realtime-redis-headless",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "tcp-redis",
+              "port": 6379,
+              "mode": "TCP"
+            },
+            {
+              "label": "tcp-sentinel",
+              "port": 26379,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-prod-realtime-prod-realtime-redis-master",
+          "name": "prod-realtime-redis-master",
+          "namespace": "prod-realtime",
+          "service": "prod-realtime-redis-master",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "tcp-redis",
+              "port": 6379,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-prod-realtime-prod-realtime-redis-metrics",
+          "name": "prod-realtime-redis-metrics",
+          "namespace": "prod-realtime",
+          "service": "prod-realtime-redis-metrics",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "http-metrics",
+              "port": 9121,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-synology-media-synology-media-nfs",
+          "name": "synology-media-nfs",
+          "namespace": "synology-media",
+          "service": "synology-media-nfs",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "nfs",
+              "port": 2049,
+              "mode": "TCP"
+            },
+            {
+              "label": "nfs-udp",
+              "port": 2049,
+              "mode": "UDP"
+            },
+            {
+              "label": "nfs-rpc",
+              "port": 111,
+              "mode": "TCP"
+            },
+            {
+              "label": "nfs-rpc-udp",
+              "port": 111,
+              "mode": "UDP"
+            },
+            {
+              "label": "nfs-mount",
+              "port": 892,
+              "mode": "TCP"
+            },
+            {
+              "label": "nfs-mount-udp",
+              "port": 892,
+              "mode": "UDP"
+            },
+            {
+              "label": "nfs-lock",
+              "port": 49033,
+              "mode": "TCP"
+            },
+            {
+              "label": "nfs-lock-udp",
+              "port": 48936,
+              "mode": "UDP"
+            },
+            {
+              "label": "nfs-stat",
+              "port": 55841,
+              "mode": "TCP"
+            },
+            {
+              "label": "nfs-stat-udp",
+              "port": 59005,
+              "mode": "UDP"
+            }
+          ]
+        },
+        {
+          "id": "detected-torrent-torrent",
+          "name": "torrent",
+          "namespace": "torrent",
+          "service": "torrent",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "webui",
+              "port": 8090,
+              "mode": "TCP"
+            },
+            {
+              "label": "peer-tcp",
+              "port": 9254,
+              "mode": "TCP"
+            },
+            {
+              "label": "peer-udp",
+              "port": 9254,
+              "mode": "UDP"
+            }
+          ]
+        },
+        {
+          "id": "detected-traefik-system-traefik",
+          "name": "traefik",
+          "namespace": "traefik-system",
+          "service": "traefik",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "nfs",
+              "port": 2049,
+              "mode": "TCP"
+            },
+            {
+              "label": "nfs-lock",
+              "port": 49033,
+              "mode": "TCP"
+            },
+            {
+              "label": "nfs-mount",
+              "port": 892,
+              "mode": "TCP"
+            },
+            {
+              "label": "nfs-rpc",
+              "port": 111,
+              "mode": "TCP"
+            },
+            {
+              "label": "nfs-stat",
+              "port": 55841,
+              "mode": "TCP"
+            },
+            {
+              "label": "omada-adoption",
+              "port": 29814,
+              "mode": "TCP"
+            },
+            {
+              "label": "omada-firmware",
+              "port": 8043,
+              "mode": "TCP"
+            },
+            {
+              "label": "omada-http",
+              "port": 8088,
+              "mode": "TCP"
+            },
+            {
+              "label": "omada-https",
+              "port": 8843,
+              "mode": "TCP"
+            },
+            {
+              "label": "omada-info",
+              "port": 29815,
+              "mode": "TCP"
+            },
+            {
+              "label": "omada-legacy1",
+              "port": 29811,
+              "mode": "TCP"
+            },
+            {
+              "label": "omada-legacy2",
+              "port": 29812,
+              "mode": "TCP"
+            },
+            {
+              "label": "omada-legacy3",
+              "port": 29813,
+              "mode": "TCP"
+            },
+            {
+              "label": "omada-monitor",
+              "port": 29817,
+              "mode": "TCP"
+            },
+            {
+              "label": "omada-terminal",
+              "port": 29816,
+              "mode": "TCP"
+            },
+            {
+              "label": "redis",
+              "port": 16379,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-traefik-system-traefik-manager",
+          "name": "traefik-manager",
+          "namespace": "traefik-system",
+          "service": "traefik-manager",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "http",
+              "port": 5000,
+              "mode": "TCP"
+            }
+          ]
+        },
+        {
+          "id": "detected-traefik-system-traefik-udp",
+          "name": "traefik-udp",
+          "namespace": "traefik-system",
+          "service": "traefik-udp",
+          "source": "Detected at inspection",
+          "ports": [
+            {
+              "label": "nfs-lock-udp",
+              "port": 48936,
+              "mode": "UDP"
+            },
+            {
+              "label": "nfs-mount-udp",
+              "port": 892,
+              "mode": "UDP"
+            },
+            {
+              "label": "nfs-rpc-udp",
+              "port": 111,
+              "mode": "UDP"
+            },
+            {
+              "label": "nfs-stat-udp",
+              "port": 59005,
+              "mode": "UDP"
+            },
+            {
+              "label": "nfs-udp",
+              "port": 2049,
+              "mode": "UDP"
+            },
+            {
+              "label": "omada-discovery",
+              "port": 29810,
+              "mode": "UDP"
+            }
+          ]
+        }
+      ],
+      "issuerProfiles": [
+        {
+          "name": "letsencrypt-prod",
+          "environment": "production",
+          "challenge": "dns01",
+          "source": "Observed at cluster inspection",
+          "manifest": {
+            "apiVersion": "cert-manager.io/v1",
+            "kind": "ClusterIssuer",
+            "metadata": {
+              "name": "letsencrypt-prod"
+            },
+            "spec": {
+              "acme": {
+                "email": "andrew@cormierconsulting.com",
+                "privateKeySecretRef": {
+                  "name": "letsencrypt-prod-account-key"
+                },
+                "server": "https://acme-v02.api.letsencrypt.org/directory",
+                "solvers": [
+                  {
+                    "dns01": {
+                      "webhook": {
+                        "config": {
+                          "apiKeySecretRef": {
+                            "key": "token",
+                            "name": "godaddy-api-key"
+                          },
+                          "production": true,
+                          "ttl": 600
+                        },
+                        "groupName": "acme.cormierconsulting.io",
+                        "solverName": "godaddy"
+                      }
+                    },
+                    "selector": {
+                      "dnsZones": [
+                        "cormierconsulting.io"
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "settings": {
+            "name": "letsencrypt-prod",
+            "email": "andrew@cormierconsulting.com",
+            "environment": "production",
+            "challenge": "dns01",
+            "zone": "cormierconsulting.io",
+            "groupName": "acme.cormierconsulting.io",
+            "solverName": "godaddy",
+            "secretName": "godaddy-api-key",
+            "secretKey": "token",
+            "ingressClass": "traefik",
+            "providerProduction": true,
+            "accountSecretName": "letsencrypt-prod-account-key"
+          }
+        }
+      ],
+      "credentialReferences": [
+        {
+          "name": "godaddy-api-key",
+          "namespace": "cert-manager",
+          "keys": [
+            "token"
+          ],
+          "source": "Observed at cluster inspection"
+        }
+      ],
+      "accountReferences": [
+        "letsencrypt-prod-account-key"
+      ],
+      "publications": [],
+      "configurationRollouts": [],
+      "connectionDrafts": [],
+      "pendingChanges": [],
+      "runningProcesses": [],
+      "configurationVersions": {},
+      "editorDrafts": [],
+      "formDrafts": [],
+      "displaySettings": {
+        "previewMode": true,
+        "snapshotBanner": true,
+        "inspectionInfo": true
+      },
+      "rancherOrigin": "",
+      "namespaceContext": [
+        "ns://kube-system"
+      ]
+    }
   }
 }

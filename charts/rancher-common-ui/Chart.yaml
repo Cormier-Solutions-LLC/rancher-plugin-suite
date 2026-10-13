@@ -1,0 +1,13 @@
+apiVersion: v2
+name: rancher-common-ui
+description: Independently released shared presentation runtime for Rancher manager extensions
+type: application
+version: 1.0.2
+appVersion: "1.0.2"
+annotations:
+  catalog.cattle.io/display-name: Common Manager UI
+  catalog.cattle.io/namespace: cattle-ui-plugin-system
+  catalog.cattle.io/scope: management
+  catalog.cattle.io/ui-component: plugins
+  catalog.cattle.io/rancher-version: ">= 2.15.0 < 2.16.0"
+  catalog.cattle.io/ui-extensions-version: ">= 3.0.0 < 4.0.0"

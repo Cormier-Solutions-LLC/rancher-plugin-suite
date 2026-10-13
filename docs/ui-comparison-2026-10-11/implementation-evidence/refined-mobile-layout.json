@@ -1,0 +1,120 @@
+[
+  {
+    "name": "network",
+    "badges": [
+      {
+        "bg": "rgb(38, 61, 86)",
+        "color": "rgb(169, 210, 255)",
+        "text": "1"
+      },
+      {
+        "bg": "rgb(38, 61, 86)",
+        "color": "rgb(169, 210, 255)",
+        "text": "1"
+      }
+    ],
+    "documentWidth": 375,
+    "panels": [
+      {
+        "classes": "schedule-panels rcui-schedule-layout",
+        "height": 884,
+        "overflow": "visible",
+        "scrollHeight": 884,
+        "scrollWidth": 343,
+        "width": 343
+      },
+      {
+        "classes": "snapshot-schedule",
+        "height": 279,
+        "overflow": "visible",
+        "scrollHeight": 279,
+        "scrollWidth": 341,
+        "width": 341
+      },
+      {
+        "classes": "schedule-actions",
+        "height": 38,
+        "overflow": "visible",
+        "scrollHeight": 38,
+        "scrollWidth": 309,
+        "width": 309
+      },
+      {
+        "classes": "snapshot-schedule",
+        "height": 279,
+        "overflow": "visible",
+        "scrollHeight": 279,
+        "scrollWidth": 341,
+        "width": 341
+      },
+      {
+        "classes": "schedule-actions",
+        "height": 38,
+        "overflow": "visible",
+        "scrollHeight": 38,
+        "scrollWidth": 309,
+        "width": 309
+      }
+    ],
+    "width": 390
+  },
+  {
+    "name": "dns",
+    "badges": [
+      {
+        "bg": "rgb(76, 40, 46)",
+        "color": "rgb(255, 179, 173)",
+        "text": "1"
+      },
+      {
+        "bg": "rgb(76, 40, 46)",
+        "color": "rgb(255, 179, 173)",
+        "text": "1"
+      }
+    ],
+    "documentWidth": 375,
+    "panels": [
+      {
+        "classes": "schedule-panels rcui-schedule-layout",
+        "height": 804,
+        "overflow": "visible",
+        "scrollHeight": 804,
+        "scrollWidth": 343,
+        "width": 343
+      },
+      {
+        "classes": "snapshot-schedule",
+        "height": 272,
+        "overflow": "visible",
+        "scrollHeight": 272,
+        "scrollWidth": 341,
+        "width": 341
+      },
+      {
+        "classes": "schedule-actions",
+        "height": 41,
+        "overflow": "visible",
+        "scrollHeight": 41,
+        "scrollWidth": 309,
+        "width": 309
+      },
+      {
+        "classes": "snapshot-schedule",
+        "height": 272,
+        "overflow": "visible",
+        "scrollHeight": 272,
+        "scrollWidth": 341,
+        "width": 341
+      },
+      {
+        "classes": "schedule-actions",
+        "height": 41,
+        "overflow": "visible",
+        "scrollHeight": 41,
+        "scrollWidth": 309,
+        "width": 309
+      }
+    ],
+    "width": 390
+  }
+]

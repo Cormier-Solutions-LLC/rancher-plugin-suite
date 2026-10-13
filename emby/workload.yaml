@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: emby
+  namespace: emby
+  labels: {app.kubernetes.io/name: emby, app.kubernetes.io/part-of: emby}
+spec:
+  serviceName: emby-headless
+  # Source export restored and verified before activation.
+  replicas: 1
+  selector:
+    matchLabels: {app.kubernetes.io/name: emby}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: emby, app.kubernetes.io/part-of: emby}
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 90
+      securityContext:
+        seccompProfile: {type: RuntimeDefault}
+        fsGroup: 100990
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: emby
+          image: emby/embyserver:4.9.3.0@sha256:338a17ad65a822f18d18574459046003a84d2fee82c2e234adf8645009238d0a
+          # Official image init drops to these IDs after its setup.
+          # LXC guest uid/gid 999:990 map to 100999:100990 on the NAS.
+          env:
+            - {name: UID, value: "100999"}
+            - {name: GID, value: "100990"}
+            - {name: GIDLIST, value: "100990"}
+            - {name: TZ, value: America/North_Dakota/Center}
+          ports:
+            - {name: http, containerPort: 8096}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+              add: [CHOWN, FOWNER, DAC_OVERRIDE, SETUID, SETGID, KILL]
+          resources:
+            requests: {cpu: "2", memory: 2Gi, ephemeral-storage: 1Gi}
+            limits: {cpu: "6", memory: 8Gi, ephemeral-storage: 24Gi}
+          startupProbe:
+            httpGet: {path: /emby/System/Info/Public, port: http}
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: {path: /emby/System/Info/Public, port: http}
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            tcpSocket: {port: http}
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 5
+          volumeMounts:
+            - {name: config, mountPath: /config}
+            # Preserve absolute paths already recorded in source configuration.
+            - {name: config, mountPath: /var/lib/emby}
+            - {name: media, mountPath: /mnt/remote-other, readOnly: true}
+            - {name: transcodes, mountPath: /config/transcoding-temp}
+            - {name: transcodes, mountPath: /var/lib/emby/transcoding-temp}
+      volumes:
+        - name: config
+          persistentVolumeClaim: {claimName: emby-config}
+        - name: media
+          persistentVolumeClaim: {claimName: emby-media, readOnly: true}
+        - name: transcodes
+          emptyDir: {sizeLimit: 20Gi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: emby-headless
+  namespace: emby
+spec:
+  clusterIP: None
+  selector: {app.kubernetes.io/name: emby}
+  ports:
+    - {name: http, port: 8096, targetPort: http}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: emby
+  namespace: emby
+spec:
+  selector: {app.kubernetes.io/name: emby}
+  ports:
+    - {name: http, port: 8096, targetPort: http}

@@ -1,0 +1,17 @@
+{{- if .Values.commonUI.verifyInstalled -}}
+{{- $ui := lookup "catalog.cattle.io/v1" "UIPlugin" .Values.commonUI.namespace .Values.commonUI.name -}}
+{{- if not $ui -}}
+{{- fail "Install the separate rancher-common-ui Helm release before this manager. Offline rendering only: --set commonUI.verifyInstalled=false (runtime enforcement remains enabled)." -}}
+{{- end -}}
+{{- $api := index (dig "metadata" "annotations" dict $ui) "common-ui.cormierconsulting.io/api-version" -}}
+{{- if ne (toString $api) "1" -}}
+{{- fail "The common UI plugin must declare API version 1." -}}
+{{- end -}}
+{{- $version := dig "spec" "plugin" "version" "" $ui -}}
+{{- if not (semverCompare .Values.commonUI.versionRange $version) -}}
+{{- fail (printf "Common UI %s is incompatible; require %s" $version .Values.commonUI.versionRange) -}}
+{{- end -}}
+{{- if eq (dig "status" "cacheState" "" $ui) "disabled" -}}
+{{- fail "Enable the rancher-common-ui UIPlugin before installing this manager." -}}
+{{- end -}}
+{{- end -}}

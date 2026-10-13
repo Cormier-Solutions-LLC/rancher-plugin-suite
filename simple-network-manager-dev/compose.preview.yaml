@@ -12,6 +12,9 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    environment:
+      SNAPSHOT_PREVIEW_MOCK_DATA: "true"
+      SNAPSHOT_STORAGE_LIMIT_BYTES: "1073741824"
     volumes:
       - snapshots:/var/lib/simple-network-manager/snapshots
 volumes:

@@ -4,8 +4,8 @@ export async function createPreviewDataClient(pluginId) {
   let document, pending = null, writing = null, failure = null;
   const listeners = new Set();
   const notify = () => { for (const listener of listeners) listener(client); };
-  async function request(method, body) {
-    const response = await fetch(endpoint, { method, headers: body ? { 'Content-Type': 'application/json', 'X-Preview-Data': '1' } : {}, body: body ? JSON.stringify(body) : undefined });
+  async function request(method, body, signal) {
+    const response = await fetch(endpoint, { method, signal, headers: body ? { 'Content-Type': 'application/json', 'X-Preview-Data': '1' } : {}, body: body ? JSON.stringify(body) : undefined });
     const value = await response.json();
     if (!response.ok) throw new Error(value.error || 'Project mock data request failed.');
     return value;
@@ -17,11 +17,12 @@ export async function createPreviewDataClient(pluginId) {
     get status() { return failure ? failure.message : pending || writing ? 'Saving mock data…' : 'Mock data saved in project'; },
     get error() { return failure; },
     subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
-    async reload({ discardPending = false } = {}) {
-      if (writing) await writing.catch(() => {});
+    async reload({ discardPending = false, signal } = {}) {
       if (discardPending) { pending = null; failure = null; }
-      else if (pending) await client.flush();
-      document = await request('GET'); failure = null; notify(); return client.document;
+      // A refresh is a read. Retain pending edits; never retry a failed write.
+      const next = await request('GET', undefined, signal); signal?.throwIfAborted();
+      if (!document || next.revision >= document.revision) document = next;
+      notify(); return client.document;
     },
     loadState() { return copy(pending?.state || document.data.state); },
     saveState(state) { pending = { ...copy(document.data), state: copy(state) }; notify(); void client.flush().catch(() => {}); return true; },

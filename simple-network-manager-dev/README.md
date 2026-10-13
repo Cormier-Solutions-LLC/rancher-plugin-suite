@@ -33,7 +33,11 @@ that sibling directory available when running `docker compose -f compose.preview
 Requires Node.js 24+. From this folder run `npm ci`, then `npm run preview` and open
 http://127.0.0.1:5173. Stop with Ctrl+C. No Docker, cluster, or backend setup is required;
 the local snapshot API starts automatically on 5183. From the repository root,
-`npm run setup` installs both plugins and `npm run preview` launches both together.
+`npm run setup` installs both plugins and `npm run preview` launches both together at
+http://127.0.0.1:5172 in one browser page, with side-by-side and full-width views.
+Root runs use prepopulated temporary editable data and snapshots under
+`../.local/preview-sessions/<session>/`. Preview labels and banners start disabled;
+the suite shell identifies the mock data source.
 
 Mock Data edits save to `../preview-data/data/network-manager.json`; configuration,
 drafts and settings persist there across reloads. The shared provider contract accepts
@@ -51,6 +55,27 @@ that destination's actual mount; forecasts beyond one year display ∞.
 The subsequent notes include historical implementation observations. This section
 describes current npm source persistence and supersedes earlier browser-session-only
 or plaintext JSON/YAML backup descriptions.
+
+## Approved standards alignment (2026-10-11)
+
+The three alignment decisions are resolved in [the review](STANDARDS-ALIGNMENT-REVIEW.md).
+Native navigation retains Rancher's renderer and right-side counts. The standalone
+preview supplies one global namespace picker; individual page bars no longer repeat
+it. Inventories precede the common operation/support pages. Incomplete managed forms
+appear in Pending Rollouts as Needs Completion and block Apply until validated.
+Their saved values can be resumed; display and scheduling preferences are separate.
+
+Editor Save/Cancel actions are in the shared heading, with equal adjacent labeled
+action widths. Refresh keeps forms and port configurations, bounds reads to 60 seconds,
+ignores cancelled/late responses, and retries failed reads without replaying writes.
+The delayed loading overlay and count spinner distinguish pending reads from failures.
+
+Secret notification coverage checks captured backup presence, including older captures;
+configuration coverage still checks fresh matching content. The mutation gate remains
+separate. Snapshot Storage is a collapsible row below both schedules. Configure
+`SNAPSHOT_STORAGE_LIMIT_BYTES` to bound writable capacity; unknown quotas are unavailable.
+Docker preview uses a 1 GiB application quota (adjust in compose for your volume).
+This prevents interpreting a Docker host's entire disk as dedicated snapshot capacity.
 
 ## Current scope
 

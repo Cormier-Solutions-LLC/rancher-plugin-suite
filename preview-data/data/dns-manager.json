@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "pluginId": "dns-manager",
-  "revision": 0,
-  "updatedAt": "2026-10-11T14:25:40.670Z",
+  "revision": 8,
+  "updatedAt": "2026-10-11T15:08:25.167Z",
   "source": {
     "kind": "mock",
     "label": "DNS design examples — sample data, not live DNS observations",
@@ -118,7 +118,7 @@
     },
     "state": {
       "version": 1,
-      "revision": 0,
+      "revision": 8,
       "page": "overview",
       "order": [
         "io",
@@ -128,7 +128,33 @@
       ],
       "drafts": [],
       "snapshots": [],
-      "logs": [],
+      "source": {
+        "name": "domain02",
+        "host": "domain02.cormierconsulting.com",
+        "address": "10.99.3.2",
+        "credential": "windows-dns-management"
+      },
+      "density": "Comfortable",
+      "preferences": {
+        "namespaceFilters": [],
+        "zonesExpanded": true,
+        "density": "Comfortable",
+        "rancherUrl": "",
+        "banners": {
+          "management": true,
+          "preview": true,
+          "backend": true
+        }
+      },
+      "logs": [
+        {
+          "id": "backend-unavailable",
+          "at": "2026-10-11T14:08:05.354Z",
+          "severity": "Error",
+          "component": "Browser UI",
+          "message": "Live management backend unavailable. DNS query serving status is unverified separately."
+        }
+      ],
       "refreshSeconds": 300
     }
   }

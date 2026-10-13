@@ -1,0 +1,2 @@
+<script setup>defineProps({title:String,subtitle:String});</script>
+<template><header class="rcui-heading"><div class="rcui-breadcrumb"><slot name="breadcrumb"/></div><div class="rcui-heading-row"><div><slot name="title"><h1>{{title}}<slot name="help"/></h1></slot><slot name="subtitle"><p v-if="subtitle">{{subtitle}}</p></slot></div><div class="rcui-heading-actions"><slot name="actions"/></div></div></header></template>

@@ -1,0 +1,10 @@
+import { fileURLToPath } from 'node:url';
+import { report } from '../docs/ui-comparison-2026-10-11/comparison.mjs';
+import { generateReview } from './generate-ui-review.mjs';
+import { createUiReviewServer } from './ui-review-server.mjs';
+const directory=fileURLToPath(new URL('../docs/ui-comparison-2026-10-11/',import.meta.url));
+await generateReview(directory,report);
+const server=createUiReviewServer({directory,report});
+server.on('error',error=>{console.error('UI review could not start on 127.0.0.1:5175: '+error.message);process.exitCode=1;});
+server.listen(5175,'127.0.0.1',()=>console.log('UI choice report: http://127.0.0.1:5175/\nSelections save to '+directory+'decisions.json\nClick Mark review complete, then tell Codex the report is ready. Stop with Ctrl+C.'));
+process.on('SIGINT',()=>server.close());process.on('SIGTERM',()=>server.close());

@@ -1,0 +1,16 @@
+# Pinned upstream source plus removal of stale UDP handlers on configuration replacement.
+# Build and isolated regression: scripts/build-traefik-compatible.ps1 -Publish
+image:
+  registry: harbor.cormierconsulting.io
+  repository: automation/traefik
+  tag: 3.7.12-udp2
+  digest: sha256:8dc1312f7d97f9eccd22096e870ef546b9235eec47e81f7dc81d8581cbbd84ea
+versionOverride: v3.7.12
+deployment:
+  minReadySeconds: 10
+startupProbe:
+  exec:
+    command: [/usr/local/bin/manager-ready]
+  periodSeconds: 2
+  timeoutSeconds: 3
+  failureThreshold: 60

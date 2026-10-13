@@ -17,6 +17,7 @@ COPY --from=build /app/simple-network-manager-dev/node_modules/@zip.js /app/node
 RUN mkdir -p /var/lib/simple-network-manager/snapshots && chown -R node:node /var/lib/simple-network-manager
 COPY --from=build /app/simple-network-manager-dev/dist-preview /app/public
 COPY container/server.mjs /app/container/server.mjs
+COPY --from=preview-data /schedule-secrets.mjs /preview-data/schedule-secrets.mjs
 COPY pkg/simple-network-manager/config/manifest-yaml.mjs /app/pkg/simple-network-manager/config/manifest-yaml.mjs
 COPY pkg/simple-network-manager/config/snapshot-coverage.mjs /app/pkg/simple-network-manager/config/snapshot-coverage.mjs
 COPY pkg/simple-network-manager/config/snapshot-items.mjs /app/pkg/simple-network-manager/config/snapshot-items.mjs

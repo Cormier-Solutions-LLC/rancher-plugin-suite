@@ -25,4 +25,7 @@ fs.mkdirSync(assets, { recursive: true });
 const bundles = fs.readdirSync(output).filter(file => file.startsWith(`${name}-${version}.umd.min`) && file.endsWith('.js'));
 for (const file of bundles) fs.copyFileSync(path.join(output, file), path.join(assets, file));
 fs.writeFileSync(path.join(output, 'files.txt'), bundles.map(file => `plugin/${file}`).join('\n') + '\n');
+fs.copyFileSync(path.join(pkg,'package.json'),path.join(output,'package.json'));
+fs.copyFileSync(path.join(pkg,'package.json'),path.join(assets,'package.json'));
+fs.appendFileSync(path.join(output,'files.txt'),'plugin/package.json\n');
 console.log('Versioned extension assets prepared; nothing was published or installed.');

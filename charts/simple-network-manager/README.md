@@ -18,3 +18,16 @@ Publishing and installation are separate follow-up steps.
 The extension uses Rancher's existing authenticated UI session. The chart grants
 no Kubernetes permissions. Live data access and mutations must enforce the active
 user's permissions when implemented.
+
+## Required common UI release
+
+Install and enable the separate [Common Manager UI](../../rancher-common-ui/README.md)
+release before this manager. The chart checks the management cluster's UIPlugin
+for API 1, a compatible stable 1.x version, and enabled state. The manager's browser
+initialization also requires the loaded common runtime; it has no private UI fallback.
+Common UI upgrades and rollbacks update only that release, followed by a Rancher
+browser reload. This manager chart registers only its own UIPlugin.
+
+For offline lint or `helm template`, use `--set commonUI.verifyInstalled=false`.
+Keep the default cluster prerequisite check for installation. The offline switch
+never disables the browser dependency gate.

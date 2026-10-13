@@ -31,6 +31,11 @@ Sources:
 - [DNS Manager design](DNS-MANAGER-DESIGN.md) and [local prototype notes](dns-manager-dev/README.md).
 - [Network Manager preview evidence](simple-network-manager-dev/IMPLEMENTATION-REVIEW.md).
 
+The [2026-10-11 Network Manager compliance audit](simple-network-manager-dev/docs/audit-2026-10-11/report.md)
+contains a pinned copy of this standard, a requirement-by-requirement assessment,
+visual evidence, reproducible regression tests, and a remediation plan. Its local
+preview results do not certify native installation or live execution.
+
 Shared requirements apply where the feature is relevant. A DNS plugin does not
 need certificate-issuance or routing forms simply because Network Manager has them.
 Plugin-specific pages and resource semantics belong in that plugin's own specification.
@@ -49,6 +54,13 @@ supersession before choosing one. Historical evidence remains historical.
 
 ## 2. Native integration and navigation
 
+Accepted shared UI review (2026-10-11, completed revision 94): use Network Manager's
+menu style and structure, including native right-aligned counts, for both managers.
+This supersedes the earlier fixed-left count proposal. See [Network Manager navigation](NETWORK-MANAGER-STANDARDS.md#navigation-and-inventory).
+Host menu rendering and its global namespace selector remain authoritative; a
+standalone approximation does not establish installed compatibility.
+
+
 - Register a native UI extension in the selected cluster's Explorer navigation.
 - Use an expandable manager group with the application's name. Its label opens
   Overview and reveals the group, including when another child is active; keep
@@ -62,9 +74,9 @@ supersession before choosing one. Historical evidence remains historical.
   sidebar and are reached through contextual actions.
 - Dynamic resource entries use stable identities, meaningful resource labels,
   and the active user's access, rather than positional indexes.
-- Use compact reactive count badges in a fixed left-hand column before menu labels.
-  Align this column across top-level and nested entries; reserve blank space when
-  there is no count. Disclosure arrows occupy a separate slot without shifting counts.
+- Use compact reactive count badges right-aligned after menu labels, following
+  Network Manager and the installed Rancher menu. Align counts across top-level
+  and nested entries. Disclosure arrows occupy a separate slot without shifting counts.
   Zone/domain entries show scoped record counts. An unavailable inventory is not zero.
 - Relevant page header, navigation, and Overview counts share the same scoped data;
   header counts sit immediately after Refresh. Example values are not fixed requirements.
@@ -81,7 +93,7 @@ supersession before choosing one. Historical evidence remains historical.
   requested count placement and loading indicators against native menu capabilities;
   a preview demonstration alone does not prove native navigation support.
 - Display counts only when they represent a relevant inventory or operation. Help and Settings
-  have no counts. Reuse compact left-column navigation badges for domain/zone record counts,
+  have no counts. Reuse compact right-aligned navigation badges for domain/zone record counts,
   header counts, and other relevant inventories.
 - Use the DNS breadcrumb pattern: clickable manager name returns to Overview, followed by the
   current page; add clickable ancestors for nested editors where relevant. The manager title
@@ -111,12 +123,12 @@ supersession before choosing one. Historical evidence remains historical.
 
 ## 3. Page shell, layout, and styling
 
-- The user's Network Manager screenshots define the shared layout, spacing, color,
-  and presentation reference for every plugin page: [inventory grid](docs/design-reference/network-manager-port-configurations.png)
-  and [Overview master/detail](docs/design-reference/network-manager-overview.png).
-  Use the grid pattern for inventories and the master/detail pattern where useful;
-  retain their common heading, status area, filters, panels, and aligned bottom edge.
-  Screenshot data/counts are examples, not requirements to reproduce those values.
+- The completed [UI review](docs/ui-comparison-2026-10-11/implementation.md)
+  defines shared appearance: DNS shell, headings, grids, forms, notifications,
+  settings, and help; Network navigation, action controls, filters, and review
+  flow. Use both Summary and Master/Detail overview/detail variants for their
+  respective information types. This supersedes earlier screenshot-only visual
+  references. Application-specific data, fields, and operations remain local.
 - Reuse one page shell across pages and across the standalone preview/native extension.
 - Show manager name and cluster context, a clear page heading, a compact Help control,
   page-level actions, refresh controls, and an item count where useful.
@@ -142,8 +154,8 @@ supersession before choosing one. Historical evidence remains historical.
   sized for the longest label; changing primary/danger/secondary styling must not
   change geometry. Icon-only groups use consistent square hit areas, and their
   icons and controls align with neighboring actions.
-- Match Network Manager's shared buttons and refresh controls exactly by reusing
-  its components and styles. Place Refresh Every, countdown, manual Refresh, and
+- Use the common plugin's Network-style action buttons and DNS-style refresh
+  presentation. Place Refresh Every, countdown, manual Refresh, and
   item count in the top-right heading action area, never in the filter/content row.
 - Position the item count immediately right of Refresh. Hover/focus help must
   render above navigation and avoid clipping; use a body overlay with bounded
@@ -155,7 +167,7 @@ supersession before choosing one. Historical evidence remains historical.
 - Keep the heading, status information, and filters outside the scrolling content area.
 - Fill the available viewport. Panels extend to the available bottom edge instead of
   stopping at an arbitrary content height.
-- The available viewport height is also the outer shell's maximum height. Account
+- At desktop widths, the available viewport height is the outer shell's maximum height. Account
   for Rancher's host chrome in native mode and the preview chrome in standalone
   mode; additional content must not expand the document into vertical page scrolling.
 - Use internal panel scrolling. In a master/detail view, align both panels to the same
@@ -166,11 +178,14 @@ supersession before choosing one. Historical evidence remains historical.
 - Use `min-height: 0` / `min-width: 0` behavior in flex/grid content so long inventories
   do not push the shell beyond the viewport. Keep scrollbar gutters stable where appropriate.
 - Adapt layouts at smaller widths without clipping actions, filters, or dialogs.
+  Narrow layouts may scroll vertically to keep stacked panels and forms reachable;
+  keep overflow inside wide tables. Schedule and cleanup panels and their action
+  groups expand or wrap without horizontal or vertical scrollbars; the page scrolls.
 - Use consistent card borders, rounded corners, spacing, input heights, and form alignment.
   Align controls even when labels wrap onto multiple lines.
 - Inherit Rancher's active theme, tokens, typography, and host viewport in embedded
-  pages; scope styles to the plugin. Standalone previews use the observed compact
-  Network Manager dark presentation as their fallback.
+  pages; scope styles to the plugin. Standalone previews use the accepted DNS
+  layout and light/dark palette with Network navigation and actions as their fallback.
 - Use thin dark scrollbars matching the panels. Preserve operating-system forced-color choices.
 - Keep collapsed sections visually connected with one divider between adjacent sections.
 - Use title case for button and status labels. Keep explanatory text concise and practical.
@@ -441,7 +456,7 @@ shared ZIP/encryption contract rather than define a second standard.
   declared dependencies. Include Secret manifests/values only with Include Secrets;
   otherwise retain references and disclose omitted credential coverage. Exclude
   application/PV data. List unavailable Secrets and the observation time.
-- Both Create Snapshot and the snapshot schedule's Run Now first open a modal
+- Create Snapshot, Run Now, Save Schedule, and Enable first open the same modal
   asking whether to Include Secrets (default off). Selecting Include Secrets shows Password and
   Confirm Password fields and a locally evaluated strength bar beneath the password
   field. Show a readable strength label and mismatch feedback, with accessible
@@ -454,8 +469,14 @@ shared ZIP/encryption contract rather than define a second standard.
   example backup.zip inside the outer ZIP) with a generic filename, because ordinary
   ZIP encryption leaves entry names/metadata visible. See [WinZip encryption format](https://www.winzip.com/en/support/aes-encryption/)
   and [ZIP directory visibility](https://kb.winzip.com/en/130859).
-- Passwords are transient capture/export inputs: do not place them in drafts,
+- Manual passwords are transient capture/export inputs: do not place them in drafts,
   browser storage, logs, or the archive index. Clear them on completion/cancellation.
+  Protected schedules persist passwords only in backend Kubernetes Secrets, with
+  immutable per-credential references retained by each protected archive so rotation
+  does not break older ZIPs. Encrypt saved schedule sources containing Secret values.
+  Browser state, schedule JSON, indexes and logs hold references only. The local preview
+  substitutes an encrypted private mock secret store; it must never silently replace
+  live Kubernetes Secret storage. Automatic recovery may resolve the saved reference.
   Never emit an unencrypted Secret-inclusive file when encryption fails. Verify
   that correct-password recovery succeeds and wrong/missing-password access fails
   before treating encrypted backup creation as successful.
@@ -587,12 +608,18 @@ shared ZIP/encryption contract rather than define a second standard.
   Largest Snapshot, and Estimated Run Out Of Space. No storage figures belong
   inside either schedule panel. Format examples (illustrative, never hardcoded):
   `Available Drive Space: 950.8 GB / 1.1 TB`;
-  `Largest Snapshot: 555.6 KB · Approximately 1,711,350 More Snapshots Fit`.
+  `Largest Snapshot: 555.6 KB`. Do not display an approximate snapshots-fit
+  message, a separate Snapshot Storage title, or the enabled/saved hosting-server
+  sentence. Keep schedule action buttons together and left-aligned when their
+  group wraps; retain actionable errors. Neither schedule panel nor its action group
+  may have a scrollbar; wrap controls and allow normal page scrolling.
 - Available storage means bytes writable by the service account at the configured
   destination: available filesystem space bounded by any smaller remaining PVC,
   dataset, volume, tenant, or application quota. Do not show parent drive capacity
   as backup capacity or double-count replicas. Required limits that cannot be
-  measured show Unavailable with a reason, never zero or a fabricated exhaustion date.
+  measured show Unavailable with a reason in live mode. Until capacity is available,
+  local previews populate a marked mock capacity; actual configured quota supersedes
+  the mock. Never silently present mock capacity as a live measurement.
 - Measure the actual mounted filesystem containing the resolved snapshot-save
   directory (including PVC/bind mounts/symlinks); report effective available bytes
   and that destination's total capacity. Do not substitute the host's root disk,
@@ -658,8 +685,10 @@ shared ZIP/encryption contract rather than define a second standard.
   on a single global hide switch. Apply preferences consistently across pages and
   persist them per browser; hiding a banner does not alter underlying status or
   bypass required validation, backup, or write controls.
-- Default Preview on for standalone test builds and off for native extension builds; saved browser
-  preferences override build defaults. Hidden notices do not turn sample data into live evidence.
+- Default Preview off for standalone test builds and native extension builds. An explicit
+  saved preference may enable preview labels and banners; fresh root-suite sessions start
+  with them off. This preference changes presentation only. Hidden notices do not turn
+  sample data into live evidence, disable mock data, or suppress real issue notifications.
 - Standalone resource links may use a configured Rancher origin, validated as an HTTP/HTTPS origin
   without embedded credentials. Native builds use the active Rancher context.
 - Provide the Rancher URL and other relevant connection/configuration settings on
@@ -687,6 +716,38 @@ shared ZIP/encryption contract rather than define a second standard.
 - The plugin manages configuration; managed routing/DNS must continue if its UI or management API fails.
 - Use versioned extension assets and a Helm chart registering `UIPlugin`. Publish the Rancher
   `files.txt` plus `plugin/` layout, not merely a standalone JavaScript URL.
+- All custom manager plugins, including Network Manager and DNS Manager, must
+  reference the common UI project, `rancher-common-ui`, for shared page shells,
+  layouts, controls, tables, dialogs, notifications, settings presentation, and
+  contextual help. Keep application-specific data, fields, operations, permissions,
+  and adapters in each manager. Shared visual choices are taken from the completed
+  [UI comparison report](docs/ui-comparison-2026-10-11/report.html); that review
+  selects presentation and does not redefine application-specific behavior.
+- Package the common UI project as its own Rancher UI plugin with separately
+  published versioned assets and a separately managed Helm release. Both managers
+  require that plugin to be installed, enabled, loaded, and API-compatible before
+  their interfaces initialize. Declare the runtime dependency and supported API
+  version range in each manager's package/installation contract and enforce it
+  during loading. Missing, disabled, failed, or incompatible dependencies must
+  produce an actionable installation/recovery message instead of starting a
+  partially functional manager or silently using a private fallback copy.
+- Common UI upgrades and rollbacks within the supported API range must take effect
+  without rebuilding or upgrading either manager's Helm release. A source import,
+  shared npm package, or Helm subchart that embeds a private UI copy in each manager
+  is insufficient by itself: both managers must consume the installed common
+  plugin at runtime. Document the load order, compatibility policy, cache/reload
+  behavior, and independent install/upgrade/rollback workflow. Verify both managers
+  against the same installed version, including missing/incompatible dependency
+  recovery. Blocking a manager interface must not interrupt managed routing/DNS.
+- The [common UI project](rancher-common-ui/README.md) implements this runtime
+  dependency with API 1 / stable 1.x compatibility. Both managers must keep their
+  declared requirement, consumer bridge, initialization gate, and Helm prerequisite
+  validation. Presentation controls/styles belong in the common plugin; manager
+  adapters may supply domain data, callbacks, labels, and fields, but must not ship
+  private fallback copies. Follow the documented separate-release install, upgrade,
+  rollback, and browser-reload procedure. Local artifact/runtime and Helm lookup
+  tests validate this contract; release acceptance still requires live Rancher
+  loading and independently upgraded common assets with unchanged manager releases.
 - Separate UI registration, asset hosting, management backend, and managed workloads. Clearly
   document which chart installs which resources; registration alone does not install those dependencies.
 - Reuse existing infrastructure rather than adding another ingress, database, or monitoring stack
@@ -710,6 +771,13 @@ shared ZIP/encryption contract rather than define a second standard.
 - Each plugin folder supports `npm run preview`; repository-root `npm run preview`
   launches all registered plugins together for cross-plugin consistency checks.
   Support choosing named plugins and stop only processes started by that run.
+  Present the selected plugins in one browser page, with side-by-side and full-width
+  views that retain each plugin's active state. Prepopulate one temporary project-owned
+  session datasource using the shared contract, with separate logical plugin records and
+  snapshot directories. Saves persist within that session without changing the seed
+  fixtures; retain session files after stopping. Start preview-only labels and banners
+  disabled, while identifying mock data in the suite shell. This display preference
+  must not disable mock data or real issue notifications.
 - Use one shared datasource contract for normalized inventory, saved state, refresh,
   capabilities, and reviewed writes. Project-owned JSON mock sources are editable
   and saveable through npm previews, including provenance/schema information.
@@ -717,6 +785,22 @@ shared ZIP/encryption contract rather than define a second standard.
   Native Rancher API adapters implement the same contract through authenticated
   reads and reviewed writes; changing providers must not require rewriting page UI.
   Credentials, passwords, and decrypted Secret values must never enter mock files.
+- Every feature and ability must have representative demo data pulled from its
+  authoritative source where available, scrubbed before persistence, and saved in
+  one project-owned global local demo database/data file shared by the plugin suite.
+  Include the states needed to exercise the feature, such as populated and empty
+  inventories, dependencies, drafts, warnings, errors, and operation results. Preserve
+  source identity, capture time, schema version, and the scrubbing rules; label
+  synthetic scenarios and never present them as live observations. Remove real
+  credentials, Secret values, private keys, personal information, and sensitive
+  identifiers; use safe replacements that retain referential consistency. Track
+  and synchronize the global demo file with Git LFS and include its tracked pointer
+  in the repository, so a normal checkout with LFS provides the prepopulated data.
+  Document LFS setup/pull and report missing LFS content clearly. Root and per-plugin
+  npm previews consume this same global source through the swappable datasource
+  contract; preview saves use editable local/session copies rather than overwrite
+  the distributed seed. A new feature is incomplete until its representative data,
+  scrub/validation checks, and UI tests are included.
 - Keep the standalone Rancher-like shell outside native integration; reuse the manager's
   Vue page components for the preview and native routes. Native pages use Rancher's own chrome.
 - Interface preview startup must not require cluster credentials, Windows connectivity,
@@ -756,7 +840,7 @@ implementation evidence rather than competing shared requirements.
 
 DNS Manager adopts the common pages and interaction rules in sections 2–10.
 Its fixed inventory pages are Overview, Sources, and Zones; zones are nested
-under the expandable Zones group, followed by the shared ending from section 2.
+directly beneath Zones, always visible without a separate collapse control, followed by the shared ending from section 2.
 Create/Edit Source and record editors are hidden contextual routes.
 
 Maintain zone identity/priority, source integrations, records, replication/expiry,
@@ -792,7 +876,14 @@ Use this as an acceptance checklist, not a claim that the current previews satis
 - [ ] Backend authorization and credential handling are verified; hidden notices do not change capabilities.
 - [ ] Managed service operation continues during UI/management failure.
 - [ ] Native release packaging and installation are verified separately from standalone preview/build.
+- [ ] The separately installed `rancher-common-ui` plugin supplies shared UI at runtime;
+  both managers enforce its supported API range and show actionable dependency failures.
+- [ ] A compatible common UI Helm upgrade/rollback updates both manager interfaces
+  without rebuilding or upgrading their releases; missing/incompatible dependency
+  recovery and continued managed-service operation are verified.
 - [ ] Repository-owned local interface preview starts and builds using the shared npm workflow.
+- [ ] Every feature has scrubbed representative scenarios in the repository's global
+  Git LFS demo database/data file; previews consume it through the shared provider.
 - [ ] `npm run preview` provides usable plugin UI with Docker stopped and without
   backend, cluster, container-build, or deployment prerequisites.
 
@@ -836,7 +927,7 @@ specification and validation notes.
 ### Interface preview
 
 The repository-owned Vue/Vite preview reuses the manager page component. It offers
-Overview, Sources, Zones with nested expandable zone navigation, record grids/editors,
+Overview, Sources, Zones with always-visible indented zone entries, record grids/editors,
 Pending Rollouts, Running Processes, Diagnostics, Settings, and Help. Snapshots is an
 historical placeholder in the initial preview; current requirements authorize
 its implementation through the shared snapshot adapter. Inventories, serials, replication, and serving
@@ -859,3 +950,26 @@ Browser storage contains only preview drafts/preferences/metadata, not live Secr
 Initial historical preview checks exercised a browser-only order/snapshot demonstration.
 The revised workflow stages ordering in Pending Rollouts and retains the applied menu
 order until backend Apply. Earlier demonstration evidence does not prove this live gate.
+
+
+### Follow-up UI choices (2026-10-11)
+
+These refinements supersede earlier presentation choices where they conflict.
+Both managers require the separately installed `rancher-common-ui` plugin and use
+its DNS-style manager/page breadcrumb and identical grid typography, colors,
+spacing, row rules, filters and containers. Preserve each Overview's existing
+layout and ordering while applying DNS colors and component styling. Network
+Overview has the namespace-scoped route count beside its menu item. Network
+collapsible detail sections have space around their panel boundaries.
+
+Navigation has a divider below Overview and above Pending Rollouts on every page.
+DNS zone entries remain visible directly beneath Zones; only the manager group
+uses its normal host collapse control. All count badges use Network's rounded
+badge palette. The top-right count exactly matches its active menu item's number,
+style and severity and does not become a filtered grid count. Do not repeat a
+count above the snapshot grid. Error takes precedence over warning: red for
+errors, yellow for warnings. Diagnostics counts only scoped warnings/errors from
+the last 24 hours, independent of table filters; red for any errors, yellow for
+warnings only and green when clear. Future, invalid and older events are excluded.
+Native navigation retains Rancher's renderer; common styles decorate only the
+manager-owned counts and divider positions.

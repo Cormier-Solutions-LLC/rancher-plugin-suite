@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: emby-share-check
+  namespace: emby
+spec:
+  selector:
+    matchLabels: {app.kubernetes.io/name: emby-share-check}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: emby-share-check}
+    spec:
+      automountServiceAccountToken: false
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - {key: node-role.kubernetes.io/control-plane, operator: DoesNotExist}
+                  - {key: kubernetes.io/os, operator: In, values: [linux]}
+      securityContext:
+        runAsUser: 100999
+        runAsGroup: 100990
+        runAsNonRoot: true
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: check
+          image: emby/embyserver:4.9.3.0@sha256:338a17ad65a822f18d18574459046003a84d2fee82c2e234adf8645009238d0a
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              test -r /mnt/remote-other
+              test -x /mnt/remote-other
+              test "$(cat /mnt/remote-other/.emby-k8s-migration-20261011/access-check)" = emby-transfer-check
+              media_file=$(find /mnt/remote-other -maxdepth 5 -type f \( -iname '*.mkv' -o -iname '*.mp4' -o -iname '*.avi' -o -iname '*.mp3' \) -print -quit)
+              test -n "$media_file"
+              head -c 1 "$media_file" >/dev/null
+              echo "PASS: NAS mounted; private staging check and media file readable as 100999:100990"
+              touch /tmp/share-check-passed
+              sleep 86400
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          resources:
+            requests: {cpu: 10m, memory: 32Mi}
+            limits: {cpu: 100m, memory: 64Mi}
+          readinessProbe:
+            exec: {command: [/bin/sh, -c, test -f /tmp/share-check-passed]}
+            periodSeconds: 5
+          volumeMounts:
+            - {name: media, mountPath: /mnt/remote-other, readOnly: true}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: media
+          persistentVolumeClaim: {claimName: emby-media, readOnly: true}
+        - name: tmp
+          emptyDir: {sizeLimit: 1Mi}

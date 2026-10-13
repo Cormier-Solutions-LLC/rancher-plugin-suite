@@ -1,0 +1,1101 @@
+npm notice run simple-network-manager-dev@0.1.0 test:ui:audit
+npm notice run node --test tests/ui/recorded-audit.test.mjs
+✔ browser-measurements.json: overview 1280px (3.1151ms)
+✔ browser-measurements.json: certificates 1280px (0.4512ms)
+✔ browser-measurements.json: issuer-profiles 1280px (0.2798ms)
+✖ browser-measurements.json: port-configurations 1280px (3.016ms)
+✔ browser-measurements.json: pending-rollouts 1280px (0.2272ms)
+✔ browser-measurements.json: running-processes 1280px (0.1916ms)
+✔ browser-measurements.json: history 1280px (0.3529ms)
+✔ browser-measurements.json: diagnostics 1280px (0.2419ms)
+✔ browser-measurements.json: settings 1280px (0.3827ms)
+✔ browser-measurements.json: help 1280px (0.2414ms)
+✔ responsive-measurements.json: overview 1920px (0.1968ms)
+✔ responsive-measurements.json: certificates 1920px (0.1378ms)
+✔ responsive-measurements.json: issuer-profiles 1920px (0.0846ms)
+✖ responsive-measurements.json: port-configurations 1920px (0.4225ms)
+✔ responsive-measurements.json: pending-rollouts 1920px (0.0808ms)
+✔ responsive-measurements.json: running-processes 1920px (0.0829ms)
+✔ responsive-measurements.json: history 1920px (0.1363ms)
+✔ responsive-measurements.json: diagnostics 1920px (0.2892ms)
+✔ responsive-measurements.json: settings 1920px (0.1392ms)
+✔ responsive-measurements.json: help 1920px (0.0761ms)
+✖ responsive-measurements.json: overview 800px (0.5293ms)
+✖ responsive-measurements.json: certificates 800px (0.3777ms)
+✖ responsive-measurements.json: issuer-profiles 800px (0.3628ms)
+✖ responsive-measurements.json: port-configurations 800px (0.3935ms)
+✖ responsive-measurements.json: pending-rollouts 800px (0.2453ms)
+✖ responsive-measurements.json: running-processes 800px (0.2077ms)
+✔ responsive-measurements.json: history 800px (0.1003ms)
+✔ responsive-measurements.json: diagnostics 800px (0.0806ms)
+✔ responsive-measurements.json: settings 800px (0.0701ms)
+✔ responsive-measurements.json: help 800px (0.0924ms)
+✖ responsive-measurements.json: overview 600px (0.2712ms)
+✖ responsive-measurements.json: certificates 600px (0.3404ms)
+✖ responsive-measurements.json: issuer-profiles 600px (0.2668ms)
+✖ responsive-measurements.json: port-configurations 600px (0.3082ms)
+✖ responsive-measurements.json: pending-rollouts 600px (0.2253ms)
+✖ responsive-measurements.json: running-processes 600px (0.1954ms)
+✖ responsive-measurements.json: history 600px (0.1919ms)
+✖ responsive-measurements.json: diagnostics 600px (0.2154ms)
+✖ responsive-measurements.json: settings 600px (0.2551ms)
+✖ responsive-measurements.json: help 600px (0.2028ms)
+✔ workflow-measurements.json: connection-editor 1280px (0.2143ms)
+✔ workflow-measurements.json: snapshot-coverage 1280px (0.0885ms)
+✔ workflow-measurements.json: merge-unlock 1280px (0.0782ms)
+✖ workflow-measurements.json: merge-priority 1280px (0.2828ms)
+✖ workflow-measurements.json: merge-0 1280px (0.1906ms)
+✖ workflow-measurements.json: merge-1 1280px (0.1881ms)
+✖ workflow-measurements.json: merge-2 1280px (0.1839ms)
+✖ workflow-measurements.json: merge-3 1280px (0.1815ms)
+✖ workflow-measurements.json: merge-4 1280px (0.2269ms)
+✖ workflow-measurements.json: merge-5 1280px (0.1612ms)
+✖ workflow-measurements.json: merge-6 1280px (0.1771ms)
+✖ workflow-measurements.json: snapshot-restore 1280px (0.183ms)
+✖ workflow-measurements.json: snapshot-restore-review 1280px (0.2689ms)
+✔ workflow-measurements.json: certificates-selected 1280px (0.1019ms)
+✖ workflow-measurements.json: certificate-form 1280px (0.2005ms)
+✔ workflow-measurements.json: issuer-form 1280px (0.1362ms)
+✖ workflow-measurements.json: port-form 1280px (0.3427ms)
+ℹ tests 57
+ℹ suites 0
+ℹ pass 27
+ℹ fail 30
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 358.8046
+
+✖ failing tests:
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ browser-measurements.json: port-configurations 1280px (3.016ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Rescan: 40px high, 12px font.',
+  +     id: 'UI-006',
+  +     page: 'port-configurations',
+  +     status: 'FAIL'
+  +   },
+  +   {
+  +     detail: 'Adjacent labeled actions have equal widths.',
+  +     id: 'UI-008',
+  +     page: 'port-configurations',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-006', page: 'port-configurations', status: 'FAIL', detail: 'Rescan: 40px high, 12px font.' }, { id: 'UI-008', page: 'port-configurations', status: 'FAIL', detail: 'Adjacent labeled actions have equal widths.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ responsive-measurements.json: port-configurations 1920px (0.4225ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Rescan: 40px high, 12px font.',
+  +     id: 'UI-006',
+  +     page: 'port-configurations',
+  +     status: 'FAIL'
+  +   },
+  +   {
+  +     detail: 'Adjacent labeled actions have equal widths.',
+  +     id: 'UI-008',
+  +     page: 'port-configurations',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-006', page: 'port-configurations', status: 'FAIL', detail: 'Rescan: 40px high, 12px font.' }, { id: 'UI-008', page: 'port-configurations', status: 'FAIL', detail: 'Adjacent labeled actions have equal widths.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ responsive-measurements.json: overview 800px (0.5293ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Inventory count follows Refresh.',
+  +     id: 'UI-017',
+  +     page: 'overview',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-017', page: 'overview', status: 'FAIL', detail: 'Inventory count follows Refresh.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ responsive-measurements.json: certificates 800px (0.3777ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Inventory count follows Refresh.',
+  +     id: 'UI-017',
+  +     page: 'certificates',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-017', page: 'certificates', status: 'FAIL', detail: 'Inventory count follows Refresh.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ responsive-measurements.json: issuer-profiles 800px (0.3628ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Inventory count follows Refresh.',
+  +     id: 'UI-017',
+  +     page: 'issuer-profiles',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-017', page: 'issuer-profiles', status: 'FAIL', detail: 'Inventory count follows Refresh.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ responsive-measurements.json: port-configurations 800px (0.3935ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Rescan: 40px high, 12px font.',
+  +     id: 'UI-006',
+  +     page: 'port-configurations',
+  +     status: 'FAIL'
+  +   },
+  +   {
+  +     detail: 'Adjacent labeled actions have equal widths.',
+  +     id: 'UI-008',
+  +     page: 'port-configurations',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-006', page: 'port-configurations', status: 'FAIL', detail: 'Rescan: 40px high, 12px font.' }, { id: 'UI-008', page: 'port-configurations', status: 'FAIL', detail: 'Adjacent labeled actions have equal widths.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ responsive-measurements.json: pending-rollouts 800px (0.2453ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Inventory count follows Refresh.',
+  +     id: 'UI-017',
+  +     page: 'pending-rollouts',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-017', page: 'pending-rollouts', status: 'FAIL', detail: 'Inventory count follows Refresh.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ responsive-measurements.json: running-processes 800px (0.2077ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Inventory count follows Refresh.',
+  +     id: 'UI-017',
+  +     page: 'running-processes',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-017', page: 'running-processes', status: 'FAIL', detail: 'Inventory count follows Refresh.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ responsive-measurements.json: overview 600px (0.2712ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Document 585x8340; viewport 600x800.',
+  +     id: 'UI-002',
+  +     page: 'overview',
+  +     status: 'FAIL'
+  +   },
+  +   {
+  +     detail: 'The manager shell remains inside the viewport.',
+  +     id: 'UI-003',
+  +     page: 'overview',
+  +     status: 'FAIL'
+  +   },
+  +   {
+  +     detail: 'Inventory count follows Refresh.',
+  +     id: 'UI-017',
+  +     page: 'overview',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-002', page: 'overview', status: 'FAIL', detail: 'Document 585x8340; viewport 600x800.' }, { id: 'UI-003', page: 'overview', status: 'FAIL', detail: 'The manager shell remains inside the viewport.' }, { id: 'UI-017', page: 'overview', status: 'FAIL', detail: 'Inventory count follows Refresh.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ responsive-measurements.json: certificates 600px (0.3404ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Document 585x3599; viewport 600x800.',
+  +     id: 'UI-002',
+  +     page: 'certificates',
+  +     status: 'FAIL'
+  +   },
+  +   {
+  +     detail: 'The manager shell remains inside the viewport.',
+  +     id: 'UI-003',
+  +     page: 'certificates',
+  +     status: 'FAIL'
+  +   },
+  +   {
+  +     detail: 'Inventory count follows Refresh.',
+  +     id: 'UI-017',
+  +     page: 'certificates',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-002', page: 'certificates', status: 'FAIL', detail: 'Document 585x3599; viewport 600x800.' }, { id: 'UI-003', page: 'certificates', status: 'FAIL', detail: 'The manager shell remains inside the viewport.' }, { id: 'UI-017', page: 'certificates', status: 'FAIL', detail: 'Inventory count follows Refresh.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ responsive-measurements.json: issuer-profiles 600px (0.2668ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Document 585x1356; viewport 600x800.',
+  +     id: 'UI-002',
+  +     page: 'issuer-profiles',
+  +     status: 'FAIL'
+  +   },
+  +   {
+  +     detail: 'The manager shell remains inside the viewport.',
+  +     id: 'UI-003',
+  +     page: 'issuer-profiles',
+  +     status: 'FAIL'
+  +   },
+  +   {
+  +     detail: 'Inventory count follows Refresh.',
+  +     id: 'UI-017',
+  +     page: 'issuer-profiles',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-002', page: 'issuer-profiles', status: 'FAIL', detail: 'Document 585x1356; viewport 600x800.' }, { id: 'UI-003', page: 'issuer-profiles', status: 'FAIL', detail: 'The manager shell remains inside the viewport.' }, { id: 'UI-017', page: 'issuer-profiles', status: 'FAIL', detail: 'Inventory count follows Refresh.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ responsive-measurements.json: port-configurations 600px (0.3082ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Document 585x7523; viewport 600x800.',
+  +     id: 'UI-002',
+  +     page: 'port-configurations',
+  +     status: 'FAIL'
+  +   },
+  +   {
+  +     detail: 'The manager shell remains inside the viewport.',
+  +     id: 'UI-003',
+  +     page: 'port-configurations',
+  +     status: 'FAIL'
+  +   },
+  +   {
+  +     detail: 'Rescan: 40px high, 12px font.',
+  +     id: 'UI-006',
+  +     page: 'port-configurations',
+  +     status: 'FAIL'
+  +   },
+  +   {
+  +     detail: 'Adjacent labeled actions have equal widths.',
+  +     id: 'UI-008',
+  +     page: 'port-configurations',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-002', page: 'port-configurations', status: 'FAIL', detail: 'Document 585x7523; viewport 600x800.' }, { id: 'UI-003', page: 'port-configurations', status: 'FAIL', detail: 'The manager shell remains inside the viewport.' }, { id: 'UI-006', page: 'port-configurations', status: 'FAIL', detail: 'Rescan: 40px high, 12px font.' }, { id: 'UI-008', page: 'port-configurations', status: 'FAIL', detail: 'Adjacent labeled actions have equal widths.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ responsive-measurements.json: pending-rollouts 600px (0.2253ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Document 585x1297; viewport 600x800.',
+  +     id: 'UI-002',
+  +     page: 'pending-rollouts',
+  +     status: 'FAIL'
+  +   },
+  +   {
+  +     detail: 'The manager shell remains inside the viewport.',
+  +     id: 'UI-003',
+  +     page: 'pending-rollouts',
+  +     status: 'FAIL'
+  +   },
+  +   {
+  +     detail: 'Inventory count follows Refresh.',
+  +     id: 'UI-017',
+  +     page: 'pending-rollouts',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-002', page: 'pending-rollouts', status: 'FAIL', detail: 'Document 585x1297; viewport 600x800.' }, { id: 'UI-003', page: 'pending-rollouts', status: 'FAIL', detail: 'The manager shell remains inside the viewport.' }, { id: 'UI-017', page: 'pending-rollouts', status: 'FAIL', detail: 'Inventory count follows Refresh.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ responsive-measurements.json: running-processes 600px (0.1954ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Document 585x1323; viewport 600x800.',
+  +     id: 'UI-002',
+  +     page: 'running-processes',
+  +     status: 'FAIL'
+  +   },
+  +   {
+  +     detail: 'The manager shell remains inside the viewport.',
+  +     id: 'UI-003',
+  +     page: 'running-processes',
+  +     status: 'FAIL'
+  +   },
+  +   {
+  +     detail: 'Inventory count follows Refresh.',
+  +     id: 'UI-017',
+  +     page: 'running-processes',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-002', page: 'running-processes', status: 'FAIL', detail: 'Document 585x1323; viewport 600x800.' }, { id: 'UI-003', page: 'running-processes', status: 'FAIL', detail: 'The manager shell remains inside the viewport.' }, { id: 'UI-017', page: 'running-processes', status: 'FAIL', detail: 'Inventory count follows Refresh.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ responsive-measurements.json: history 600px (0.1919ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Document 585x2029; viewport 600x800.',
+  +     id: 'UI-002',
+  +     page: 'history',
+  +     status: 'FAIL'
+  +   },
+  +   {
+  +     detail: 'The manager shell remains inside the viewport.',
+  +     id: 'UI-003',
+  +     page: 'history',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-002', page: 'history', status: 'FAIL', detail: 'Document 585x2029; viewport 600x800.' }, { id: 'UI-003', page: 'history', status: 'FAIL', detail: 'The manager shell remains inside the viewport.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ responsive-measurements.json: diagnostics 600px (0.2154ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Document 585x1892; viewport 600x800.',
+  +     id: 'UI-002',
+  +     page: 'diagnostics',
+  +     status: 'FAIL'
+  +   },
+  +   {
+  +     detail: 'The manager shell remains inside the viewport.',
+  +     id: 'UI-003',
+  +     page: 'diagnostics',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-002', page: 'diagnostics', status: 'FAIL', detail: 'Document 585x1892; viewport 600x800.' }, { id: 'UI-003', page: 'diagnostics', status: 'FAIL', detail: 'The manager shell remains inside the viewport.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ responsive-measurements.json: settings 600px (0.2551ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Document 585x1297; viewport 600x800.',
+  +     id: 'UI-002',
+  +     page: 'settings',
+  +     status: 'FAIL'
+  +   },
+  +   {
+  +     detail: 'The manager shell remains inside the viewport.',
+  +     id: 'UI-003',
+  +     page: 'settings',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-002', page: 'settings', status: 'FAIL', detail: 'Document 585x1297; viewport 600x800.' }, { id: 'UI-003', page: 'settings', status: 'FAIL', detail: 'The manager shell remains inside the viewport.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ responsive-measurements.json: help 600px (0.2028ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Document 585x2215; viewport 600x800.',
+  +     id: 'UI-002',
+  +     page: 'help',
+  +     status: 'FAIL'
+  +   },
+  +   {
+  +     detail: 'The manager shell remains inside the viewport.',
+  +     id: 'UI-003',
+  +     page: 'help',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-002', page: 'help', status: 'FAIL', detail: 'Document 585x2215; viewport 600x800.' }, { id: 'UI-003', page: 'help', status: 'FAIL', detail: 'The manager shell remains inside the viewport.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ workflow-measurements.json: merge-priority 1280px (0.2828ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Page-level actions outside the heading: Cancel.',
+  +     id: 'UI-016',
+  +     page: 'merge-priority',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-016', page: 'merge-priority', status: 'FAIL', detail: 'Page-level actions outside the heading: Cancel.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ workflow-measurements.json: merge-0 1280px (0.1906ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Page-level actions outside the heading: Cancel.',
+  +     id: 'UI-016',
+  +     page: 'merge-0',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-016', page: 'merge-0', status: 'FAIL', detail: 'Page-level actions outside the heading: Cancel.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ workflow-measurements.json: merge-1 1280px (0.1881ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Page-level actions outside the heading: Cancel.',
+  +     id: 'UI-016',
+  +     page: 'merge-1',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-016', page: 'merge-1', status: 'FAIL', detail: 'Page-level actions outside the heading: Cancel.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ workflow-measurements.json: merge-2 1280px (0.1839ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Page-level actions outside the heading: Cancel.',
+  +     id: 'UI-016',
+  +     page: 'merge-2',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-016', page: 'merge-2', status: 'FAIL', detail: 'Page-level actions outside the heading: Cancel.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ workflow-measurements.json: merge-3 1280px (0.1815ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Page-level actions outside the heading: Cancel.',
+  +     id: 'UI-016',
+  +     page: 'merge-3',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-016', page: 'merge-3', status: 'FAIL', detail: 'Page-level actions outside the heading: Cancel.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ workflow-measurements.json: merge-4 1280px (0.2269ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Page-level actions outside the heading: Cancel.',
+  +     id: 'UI-016',
+  +     page: 'merge-4',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-016', page: 'merge-4', status: 'FAIL', detail: 'Page-level actions outside the heading: Cancel.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ workflow-measurements.json: merge-5 1280px (0.1612ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Page-level actions outside the heading: Cancel.',
+  +     id: 'UI-016',
+  +     page: 'merge-5',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-016', page: 'merge-5', status: 'FAIL', detail: 'Page-level actions outside the heading: Cancel.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ workflow-measurements.json: merge-6 1280px (0.1771ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Page-level actions outside the heading: Cancel, Merge Snapshots.',
+  +     id: 'UI-016',
+  +     page: 'merge-6',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-016', page: 'merge-6', status: 'FAIL', detail: 'Page-level actions outside the heading: Cancel, Merge Snapshots.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ workflow-measurements.json: snapshot-restore 1280px (0.183ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Page-level actions outside the heading: Cancel.',
+  +     id: 'UI-016',
+  +     page: 'snapshot-restore',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-016', page: 'snapshot-restore', status: 'FAIL', detail: 'Page-level actions outside the heading: Cancel.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ workflow-measurements.json: snapshot-restore-review 1280px (0.2689ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Page-level actions outside the heading: Prepare Selected Restore, Cancel.',
+  +     id: 'UI-016',
+  +     page: 'snapshot-restore-review',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-016', page: 'snapshot-restore-review', status: 'FAIL', detail: 'Page-level actions outside the heading: Prepare Selected Restore, Cancel.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ workflow-measurements.json: certificate-form 1280px (0.2005ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'All title actions, refresh controls and count share one center line.',
+  +     id: 'UI-018',
+  +     page: 'certificate-form',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-018', page: 'certificate-form', status: 'FAIL', detail: 'All title actions, refresh controls and count share one center line.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\ui\recorded-audit.test.mjs:10:3
+✖ workflow-measurements.json: port-form 1280px (0.3427ms)
+  AssertionError [ERR_ASSERTION]: Rendered UI must satisfy the layout contract
+  + actual - expected
+
+  + [
+  +   {
+  +     detail: 'Rescan: 40px high, 12px font.',
+  +     id: 'UI-006',
+  +     page: 'port-form',
+  +     status: 'FAIL'
+  +   },
+  +   {
+  +     detail: 'Adjacent labeled actions have equal widths.',
+  +     id: 'UI-008',
+  +     page: 'port-form',
+  +     status: 'FAIL'
+  +   },
+  +   {
+  +     detail: 'All title actions, refresh controls and count share one center line.',
+  +     id: 'UI-018',
+  +     page: 'port-form',
+  +     status: 'FAIL'
+  +   }
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/simple-network-manager-dev/tests/ui/recorded-audit.test.mjs:12:11)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'UI-006', page: 'port-form', status: 'FAIL', detail: 'Rescan: 40px high, 12px font.' }, { id: 'UI-008', page: 'port-form', status: 'FAIL', detail: 'Adjacent labeled actions have equal widths.' }, { id: 'UI-018', page: 'port-form', status: 'FAIL', detail: 'All title actions, refresh controls and count share one center line.' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

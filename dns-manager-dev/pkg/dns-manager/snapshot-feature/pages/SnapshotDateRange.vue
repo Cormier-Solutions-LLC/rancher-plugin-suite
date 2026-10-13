@@ -1,13 +1,5 @@
-<script setup lang="ts">
-import CalendarDateInput from './CalendarDateInput.vue';
-import { nextTick, onMounted, onUnmounted, ref } from 'vue';
-const props = defineProps<{ from: string; to: string; timed: boolean }>();
-const emit = defineEmits<{ 'update:from': [value: string]; 'update:to': [value: string]; 'update:timed': [value: boolean] }>();
-const menu = ref<HTMLDetailsElement | null>(null); const endInput = ref<InstanceType<typeof CalendarDateInput> | null>(null);
-function dismiss(event: Event) { if (menu.value && event.target instanceof Node && !menu.value.contains(event.target)) menu.value.open = false; }
-onMounted(() => document.addEventListener('pointerdown', dismiss)); onUnmounted(() => document.removeEventListener('pointerdown', dismiss));
-function start(value: string) { emit('update:from', value); nextTick(() => endInput.value?.openCalendar()); }
-function setTimed(event: Event) { const timed = (event.target as HTMLInputElement).checked; emit('update:timed', timed); emit('update:from', timed ? props.from ? `${props.from.slice(0,10)}T00:00` : '' : props.from.slice(0,10)); emit('update:to', timed ? props.to ? `${props.to.slice(0,10)}T23:59` : '' : props.to.slice(0,10)); }
+<script>
+import * as Vue from 'vue';
+import { component } from '../../../../../rancher-common-ui/client/index.mjs';
+export default component('SnapshotDateRange',Vue,{});
 </script>
-<template><div class="date-range"><span>Date Range</span><details ref="menu" @keydown.esc="($event.currentTarget as HTMLDetailsElement).open = false"><summary>{{ from || to ? `${from || 'Start'} → ${to || 'End'}` : 'All Dates' }}</summary><div class="calendar"><label>From<CalendarDateInput name="From" :model-value="from" :timed="timed" @update:model-value="start" /></label><label>To<CalendarDateInput ref="endInput" name="To" :model-value="to" :timed="timed" @update:model-value="emit('update:to', $event)" /></label><label class="time-toggle"><input type="checkbox" :checked="timed" @change="setTimed">Include Times</label><button type="button" @click="emit('update:from',''); emit('update:to','')">Clear Range</button></div></details></div></template>
-<style scoped>.date-range { position:relative; font-size:12px; color:var(--muted,#a5b1c3); }.date-range > span { display:block; margin-bottom:8px; }details { margin:0; border:0; }summary { display:flex; align-items:center; font:inherit; color:var(--body-text,#dce3ed); box-sizing:border-box; height:42px; padding:10px; border:1px solid var(--border,#384352); border-radius:5px; background:var(--input-bg,#1c2430); cursor:pointer; }summary::before { content:'▸'; margin-right:5px; }details[open] summary::before { content:'▾'; }.calendar { position:absolute; right:0; z-index:30; top:100%; width:300px; max-height:min(470px,calc(100dvh - 380px)); overflow:auto; padding:16px; background:var(--box-bg,#242c38); border:1px solid #619bd9; border-radius:5px; box-shadow:0 8px 24px #0006; }label { display:flex; flex-direction:column; gap:7px; margin-bottom:12px; }input { padding:9px; color:inherit; background:var(--input-bg,#1c2430); border:1px solid var(--border,#384352); border-radius:4px; }label.time-toggle { flex-direction:row; align-items:center; }button { background:transparent; border:0; color:#a9d2ff; cursor:pointer; font:inherit; }</style>

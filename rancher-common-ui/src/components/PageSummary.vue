@@ -1,0 +1,4 @@
+<script setup>
+import { ref,onMounted } from 'vue';import HelpTip from './HelpTip.vue';
+defineProps({count:Number,label:String,help:String,tone:String,loading:Boolean,error:Boolean,helpTarget:String,countTarget:String});const emit=defineEmits(['open-help']);const mounted=ref(false);onMounted(()=>mounted.value=true);
+</script><template><Teleport v-if="mounted&&helpTarget" :to="helpTarget"><HelpTip :text="help" @open-help="emit('open-help',$event)"/></Teleport><Teleport v-if="mounted&&count!==undefined" :disabled="!countTarget" :to="countTarget||'body'"><span class="page-count" :class="error?'error':tone" :title="label" :aria-label="`${loading?'Loading; last known count: ':error?'Read unavailable; last known count: ':''}${count} ${label||'Items'}`"><span v-if="loading" class="count-spinner" aria-hidden="true"/><template v-else>{{count}}</template></span></Teleport></template>

@@ -1,0 +1,37 @@
+{
+  "before": {
+    "runId": "38162309759",
+    "url": "https://github.com/Cormier-Solutions-LLC/WebSockets-Kubernetes/actions/runs/38162309759/job/114537606787",
+    "conclusion": "success",
+    "runner": "cormier-runners-cxtlc-runner-xfpr2",
+    "stepsSeconds": {
+      "Set up job": 2.0,
+      "Run actions/checkout@v5": 2.0,
+      "Run ./.github/actions/setup-cormier-runner": 18.0,
+      "Run actions/setup-node@v7": 7.0,
+      "Verify workflow setup contracts": 1.0,
+      "Verify installed capabilities": 0.0,
+      "Post Run actions/setup-node@v7": 0.0,
+      "Post Run actions/checkout@v5": 1.0,
+      "Complete job": 0.0
+    }
+  },
+  "after": {
+    "runId": "38162914009",
+    "url": "https://github.com/Cormier-Solutions-LLC/WebSockets-Kubernetes/actions/runs/38162914009/job/114539406045",
+    "conclusion": "success",
+    "runner": "cormier-runners-xdhnc-runner-dnbn6",
+    "stepsSeconds": {
+      "Set up job": 3.0,
+      "Run actions/checkout@v5": 2.0,
+      "Run ./.github/actions/setup-cormier-runner": 1.0,
+      "Run actions/setup-node@v7": 3.0,
+      "Verify workflow setup contracts": 1.0,
+      "Verify installed capabilities": 0.0,
+      "Post Run actions/setup-node@v7": 0.0,
+      "Post Run actions/checkout@v5": 1.0,
+      "Complete job": 0.0
+    }
+  },
+  "note": "One observed run of the same setup workflow commit on each runner image; not a controlled performance guarantee."
+}

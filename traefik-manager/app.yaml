@@ -1,0 +1,229 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: traefik-manager
+  namespace: traefik-system
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: traefik-manager-bootstrap
+  namespace: traefik-system
+data:
+  seed.yml: |
+    domains: [cormierconsulting.io]
+    cert_resolver: none
+    traefik_api_url: http://traefik-manager-api.traefik-system.svc.cluster.local:8080
+    auth_enabled: true
+    setup_complete: true
+    must_change_password: true
+    backup_keep_count: 50
+    visible_tabs:
+      dashboard: true
+      routemap: true
+      kubernetes: true
+      http_provider: true
+      tls: true
+  initialize.py: |
+    from pathlib import Path
+    import bcrypt
+    from ruamel.yaml import YAML
+
+    root = Path('/app/config')
+    root.mkdir(parents=True, exist_ok=True)
+    (root / 'backups').mkdir(exist_ok=True)
+    (root / 'dynamic').mkdir(exist_ok=True)
+    dynamic = root / 'dynamic/dynamic.yml'
+    if not dynamic.exists():
+        dynamic.write_text('http:\n  routers: {}\n  services: {}\n  middlewares: {}\n')
+    settings = root / 'manager.yml'
+    if not settings.exists():
+        yaml = YAML()
+        data = yaml.load(Path('/seed/seed.yml'))
+        password = Path('/bootstrap/admin-password').read_text().strip()
+        data['password_hash'] = bcrypt.hashpw(password.encode(), bcrypt.gensalt(12)).decode()
+        data['traefik_api_user'] = 'traefik-manager'
+        data['traefik_api_password'] = Path('/bootstrap/api-password').read_text().strip()
+        with settings.open('w') as stream:
+            yaml.dump(data, stream)
+        settings.chmod(0o600)
+    users = root / '.api-users'
+    if not users.exists():
+        password = Path('/bootstrap/api-password').read_text().strip()
+        hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt(12)).decode()
+        users.write_text('traefik-manager:' + hashed + '\n')
+        users.chmod(0o600)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traefik-manager
+  namespace: traefik-system
+  labels:
+    app.kubernetes.io/name: traefik-manager
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: traefik-manager
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: traefik-manager
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/os: linux
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: initialize
+          image: ghcr.io/chr0nzz/traefik-manager:1.15.1@sha256:6356d1faf04d5130c4d38110146022bea1ac8d6d5a52d0cce4a26d5c2c1ef8c3
+          command: [python, /seed/initialize.py]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          volumeMounts:
+            - name: data
+              mountPath: /app/config
+            - name: seed
+              mountPath: /seed
+              readOnly: true
+            - name: bootstrap
+              mountPath: /bootstrap
+              readOnly: true
+      containers:
+        - name: manager
+          image: ghcr.io/chr0nzz/traefik-manager:1.15.1@sha256:6356d1faf04d5130c4d38110146022bea1ac8d6d5a52d0cce4a26d5c2c1ef8c3
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 5000
+          env:
+            - name: COOKIE_SECURE
+              value: 'true'
+            - name: AUTH_ENABLED
+              value: 'true'
+            - name: CONFIG_PATH
+              value: /app/config/dynamic/dynamic.yml
+            - name: BACKUP_DIR
+              value: /app/config/backups
+            - name: CERT_RESOLVER
+              value: none
+            - name: DOMAINS
+              value: cormierconsulting.io
+            - name: TZ
+              value: America/Chicago
+            - name: PROXY_FIX_HOPS
+              value: '1'
+          startupProbe:
+            httpGet:
+              path: /login
+              port: http
+            failureThreshold: 30
+            periodSeconds: 5
+            timeoutSeconds: 3
+          readinessProbe:
+            httpGet:
+              path: /login
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /login
+              port: http
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: '1'
+              memory: 512Mi
+          volumeMounts:
+            - name: data
+              mountPath: /app/config
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: traefik-manager
+        - name: seed
+          configMap:
+            name: traefik-manager-bootstrap
+        - name: bootstrap
+          secret:
+            secretName: traefik-manager-bootstrap
+            defaultMode: 0440
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik-manager
+  namespace: traefik-system
+spec:
+  selector:
+    app.kubernetes.io/name: traefik-manager
+  ports:
+    - name: http
+      port: 5000
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: traefik-manager
+  namespace: traefik-system
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: traefik-manager
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - protocol: TCP
+          port: 5000
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: traefik-manager-tls
+  namespace: traefik-system
+spec:
+  secretName: traefik-manager-tls
+  dnsNames: [traefik.cormierconsulting.io]
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer

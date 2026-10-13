@@ -1,0 +1,319 @@
+{
+  "date": "2026-10-11",
+  "ui": {
+    "total": 53,
+    "passed": 53,
+    "failed": 0
+  },
+  "knownGaps": {
+    "total": 17,
+    "passed": 0,
+    "failed": 17
+  },
+  "assertions": [
+    {
+      "name": "Real-browser alignment evidence (CUA, not JSDOM geometry) desktop evidence covers all 13 visible routes and preserves viewport and count alignment",
+      "status": "passed"
+    },
+    {
+      "name": "Real-browser alignment evidence (CUA, not JSDOM geometry) tablet evidence covers all 13 visible routes and preserves viewport and count alignment",
+      "status": "passed"
+    },
+    {
+      "name": "Real-browser alignment evidence (CUA, not JSDOM geometry) mobile evidence covers all 13 visible routes and preserves viewport and count alignment",
+      "status": "passed"
+    },
+    {
+      "name": "Real-browser alignment evidence (CUA, not JSDOM geometry) recorded mobile help dialog stays within the viewport",
+      "status": "passed"
+    },
+    {
+      "name": "Snapshot options and verification (§8) Include Secrets is off; enabling requires strong matching passwords with accessible feedback",
+      "status": "passed"
+    },
+    {
+      "name": "Snapshot options and verification (§8) Escape cancels and clears password inputs",
+      "status": "passed"
+    },
+    {
+      "name": "Snapshot options and verification (§8) capture without Secrets emits no password",
+      "status": "passed"
+    },
+    {
+      "name": "Snapshot options and verification (§8) merge tests actual backend verification, warns about wrong passwords and rechecks before continuing",
+      "status": "passed"
+    },
+    {
+      "name": "Snapshot options and verification (§8) editing a tested password invalidates Continue until retested",
+      "status": "passed"
+    },
+    {
+      "name": "Snapshot options and verification (§8) schedule and cleanup each show only their next date; storage is outside both in three columns",
+      "status": "passed"
+    },
+    {
+      "name": "Snapshot options and verification (§8) New Snapshot opens Snapshot Options before writing",
+      "status": "passed"
+    },
+    {
+      "name": "Snapshot options and verification (§8) schedule Run Now opens Snapshot Options before posting a capture",
+      "status": "passed"
+    },
+    {
+      "name": "Shared snapshot grid (§4, §8) numeric byte sorting does not use formatted size labels and preserves details with their row",
+      "status": "passed"
+    },
+    {
+      "name": "Shared page and navigation requirements (§2–3, §9) overview keeps heading, refresh, active navigation and contextual Help in the shared shell",
+      "status": "passed"
+    },
+    {
+      "name": "Shared page and navigation requirements (§2–3, §9) sources keeps heading, refresh, active navigation and contextual Help in the shared shell",
+      "status": "passed"
+    },
+    {
+      "name": "Shared page and navigation requirements (§2–3, §9) zones keeps heading, refresh, active navigation and contextual Help in the shared shell",
+      "status": "passed"
+    },
+    {
+      "name": "Shared page and navigation requirements (§2–3, §9) pending keeps heading, refresh, active navigation and contextual Help in the shared shell",
+      "status": "passed"
+    },
+    {
+      "name": "Shared page and navigation requirements (§2–3, §9) processes keeps heading, refresh, active navigation and contextual Help in the shared shell",
+      "status": "passed"
+    },
+    {
+      "name": "Shared page and navigation requirements (§2–3, §9) snapshots keeps heading, refresh, active navigation and contextual Help in the shared shell",
+      "status": "passed"
+    },
+    {
+      "name": "Shared page and navigation requirements (§2–3, §9) diagnostics keeps heading, refresh, active navigation and contextual Help in the shared shell",
+      "status": "passed"
+    },
+    {
+      "name": "Shared page and navigation requirements (§2–3, §9) settings keeps heading, refresh, active navigation and contextual Help in the shared shell",
+      "status": "passed"
+    },
+    {
+      "name": "Shared page and navigation requirements (§2–3, §9) help keeps heading, refresh, active navigation and contextual Help in the shared shell",
+      "status": "passed"
+    },
+    {
+      "name": "Shared page and navigation requirements (§2–3, §9) common pages end in the required order; editors stay out of sidebar",
+      "status": "passed"
+    },
+    {
+      "name": "Shared page and navigation requirements (§2–3, §9) source:new selects its parent without exposing another menu entry",
+      "status": "passed"
+    },
+    {
+      "name": "Shared page and navigation requirements (§2–3, §9) source:edit selects its parent without exposing another menu entry",
+      "status": "passed"
+    },
+    {
+      "name": "Shared page and navigation requirements (§2–3, §9) zone:new selects its parent without exposing another menu entry",
+      "status": "passed"
+    },
+    {
+      "name": "Shared page and navigation requirements (§2–3, §9) Preview starts off and warning panels open concrete remediation pages",
+      "status": "passed"
+    },
+    {
+      "name": "Shared page and navigation requirements (§2–3, §9) hiding the backend banner retains required-failure count descriptions",
+      "status": "passed"
+    },
+    {
+      "name": "Shared page and navigation requirements (§2–3, §9) contextual Help opens the matching guide and Help has no question-mark buttons",
+      "status": "passed"
+    },
+    {
+      "name": "Selection, sorting and rank editing (§4) sources hides Delete without selection and reveals it only for selected rows",
+      "status": "passed"
+    },
+    {
+      "name": "Selection, sorting and rank editing (§4) zones hides Delete without selection and reveals it only for selected rows",
+      "status": "passed"
+    },
+    {
+      "name": "Selection, sorting and rank editing (§4) zone:io hides Delete without selection and reveals it only for selected rows",
+      "status": "passed"
+    },
+    {
+      "name": "Selection, sorting and rank editing (§4) Reorder uses handles, dirty-only Save and Cancel without persisting the proposal",
+      "status": "passed"
+    },
+    {
+      "name": "Selection, sorting and rank editing (§4) saving a changed rank stages a reviewed draft and preserves applied sidebar order",
+      "status": "passed"
+    },
+    {
+      "name": "Selection, sorting and rank editing (§4) empty search retains headers; summary tables have no bulk-selection controls",
+      "status": "passed"
+    },
+    {
+      "name": "Selection, sorting and rank editing (§4) partial selection makes Select All indeterminate and sorting exposes aria-sort",
+      "status": "passed"
+    },
+    {
+      "name": "Forms, scope and refresh (§4, §6, §9) delayed reads show loading only after 300 ms and retain the editor through a 60-second timeout",
+      "status": "passed"
+    },
+    {
+      "name": "Forms, scope and refresh (§4, §6, §9) confirmed source disconnection retries at five seconds then restores five-minute refresh",
+      "status": "passed"
+    },
+    {
+      "name": "Forms, scope and refresh (§4, §6, §9) an abandoned delayed read is aborted when navigation changes",
+      "status": "passed"
+    },
+    {
+      "name": "Forms, scope and refresh (§4, §6, §9) Rancher origin rejects embedded credentials and URL paths",
+      "status": "passed"
+    },
+    {
+      "name": "Forms, scope and refresh (§4, §6, §9) new A record selection preserves customized name and value",
+      "status": "passed"
+    },
+    {
+      "name": "Forms, scope and refresh (§4, §6, §9) new AAAA record selection preserves customized name and value",
+      "status": "passed"
+    },
+    {
+      "name": "Forms, scope and refresh (§4, §6, §9) new CNAME record selection preserves customized name and value",
+      "status": "passed"
+    },
+    {
+      "name": "Forms, scope and refresh (§4, §6, §9) new PTR record selection preserves customized name and value",
+      "status": "passed"
+    },
+    {
+      "name": "Forms, scope and refresh (§4, §6, §9) new MX record selection preserves customized name and value",
+      "status": "passed"
+    },
+    {
+      "name": "Forms, scope and refresh (§4, §6, §9) new SRV record selection preserves customized name and value",
+      "status": "passed"
+    },
+    {
+      "name": "Forms, scope and refresh (§4, §6, §9) new TXT record selection preserves customized name and value",
+      "status": "passed"
+    },
+    {
+      "name": "Forms, scope and refresh (§4, §6, §9) new source is clean; existing source locks its identity",
+      "status": "passed"
+    },
+    {
+      "name": "Forms, scope and refresh (§4, §6, §9) Test Connection uses unsaved input, cannot claim verification and invalidates on editing",
+      "status": "passed"
+    },
+    {
+      "name": "Forms, scope and refresh (§4, §6, §9) navigation guards dirty forms, offers three choices and preserves input after Stay",
+      "status": "passed"
+    },
+    {
+      "name": "Forms, scope and refresh (§4, §6, §9) manual refresh retains the actual editor node and unsaved field value",
+      "status": "passed"
+    },
+    {
+      "name": "Forms, scope and refresh (§4, §6, §9) refresh choices include Off with a zero countdown and default five minutes",
+      "status": "passed"
+    },
+    {
+      "name": "Forms, scope and refresh (§4, §6, §9) diagnostics defaults to 24 hours, exposes all severities and keeps incident badge independent of search",
+      "status": "passed"
+    },
+    {
+      "name": "Unmet DNS standards acceptance requirements F01 / RPD-06-02 Create Zone displays the actual clean editor",
+      "status": "failed",
+      "failure": "TestingLibraryElementError: Unable to find a label with the text of: Zone Name\n\nIgnored nodes: comments, script, style\n\u001b[36m<div\u001b[39m\n  \u001b[33maria-label\u001b[39m=\u001b[32m\"DNS Manager interface preview\"\u001b[39m\n  \u001b[33mclass\u001b[39m=\u001b[32m\"dm-standalone\"\u001b[39m\n  \u001b[33mid\u001b[39m=\u001b[32m\"dns-manager-interface\"\u001b[39m\n  \u001b[33mstyle\u001b[39m=\u001b[32m\"--dm-row-height: 46px;\"\u001b[39m\n\u001b[36m>\u001b[39m\n  \u001b[36m<header\u001b[39m\n    \u001b[33mclass\u001b[39m=\u001b[32m\"dm-top\"\u001b[39m\n  \u001b[36m>\u001b[39m\n    \u001b[36m<span\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"dm-brand\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<svg\u001b[39m\n        \u001b[33maria-hidden\u001b[39m=\u001b[32m\"true\"\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"lucide lucide-network\"\u001b[39m\n        \u001b[33mda"
+    },
+    {
+      "name": "Unmet DNS standards acceptance requirements F02 / RPD-07-02 incomplete drafts explicitly say Needs Completion",
+      "status": "failed",
+      "failure": "AssertionError: expected 'sourcedemoManager ConfigurationDraft …' to contain 'Needs Completion'\n    at C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/tests/ui/gaps.spec.ts:15:58\n    at async file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+    },
+    {
+      "name": "Unmet DNS standards acceptance requirements F02 / RPD-06-09 Overview offers Resume for an incomplete working draft",
+      "status": "failed",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name `/Resume/i`\n\nHere are the accessible roles:\n\n  banner:\n\n  Name \"\":\n  \u001b[36m<header\u001b[39m\n    \u001b[33mclass\u001b[39m=\u001b[32m\"dm-top\"\u001b[39m\n  \u001b[36m/>\u001b[39m\n\n  --------------------------------------------------\n  group:\n\n  Name \"\":\n  \u001b[36m<details />\u001b[39m\n\n  --------------------------------------------------\n  textbox:\n\n  Name \"Search namespace choices\":\n  \u001b[36m<input\u001b[39m\n    \u001b[33maria-label\u001b[39m=\u001b[32m\"Search namespace choices\"\u001b[39m\n    \u001b[33mclass\u001b[39m=\u001b[32m\"dm-input\"\u001b[39m\n    \u001b[33mdata-namespace-search\u001b[39m=\u001b[32m\"\"\u001b[39m\n    \u001b[33mplaceholder\u001b[39m=\u001b[32m\"Search na"
+    },
+    {
+      "name": "Unmet DNS standards acceptance requirements F03 / RPD-09-04 successful observations update displayed inventory",
+      "status": "failed",
+      "failure": "AssertionError: expected 'domain02domain02.cormierconsulting.co…' to contain 'fresh.example.test'\n    at C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/tests/ui/gaps.spec.ts:22:184\n    at async file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+    },
+    {
+      "name": "Unmet DNS standards acceptance requirements F04 / RPD-04-05 record-type filter is searchable and multi-select",
+      "status": "failed",
+      "failure": "AssertionError: expected false to be true // Object.is equality\n    at C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/tests/ui/gaps.spec.ts:25:117\n    at async file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+    },
+    {
+      "name": "Unmet DNS standards acceptance requirements F05 / RPD-04-14 record-row activation opens read-only details",
+      "status": "failed",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"region\" and name `/Record Details/i`\n\nHere are the accessible roles:\n\n  banner:\n\n  Name \"\":\n  \u001b[36m<header\u001b[39m\n    \u001b[33mclass\u001b[39m=\u001b[32m\"dm-top\"\u001b[39m\n  \u001b[36m/>\u001b[39m\n\n  --------------------------------------------------\n  group:\n\n  Name \"\":\n  \u001b[36m<details />\u001b[39m\n\n  --------------------------------------------------\n  textbox:\n\n  Name \"Search namespace choices\":\n  \u001b[36m<input\u001b[39m\n    \u001b[33maria-label\u001b[39m=\u001b[32m\"Search namespace choices\"\u001b[39m\n    \u001b[33mclass\u001b[39m=\u001b[32m\"dm-input\"\u001b[39m\n    \u001b[33mdata-namespace-search\u001b[39m=\u001b[32m\"\"\u001b[39m\n    \u001b[33mplaceholder\u001b[39m=\u001b[32m\"S"
+    },
+    {
+      "name": "Unmet DNS standards acceptance requirements F06 / RPD-08-28 per-resource snapshot coverage is rendered",
+      "status": "failed",
+      "failure": "AssertionError: expected null not to be null\n    at C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/tests/ui/gaps.spec.ts:31:109\n    at async file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+    },
+    {
+      "name": "Unmet DNS standards acceptance requirements F07 / RPD-03-06 primary action SVGs are 18 pixels",
+      "status": "failed",
+      "failure": "AssertionError: expected '16' to be '18' // Object.is equality\n    at C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/tests/ui/gaps.spec.ts:34:126\n    at async file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+    },
+    {
+      "name": "Unmet DNS standards acceptance requirements F08 / RPD-09-10 Diagnostics badge describes its rolling window and severity counts",
+      "status": "failed",
+      "failure": "AssertionError: expected '1 items: Required management backend …' to match /24.*warn.*error/i\n    at C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/tests/ui/gaps.spec.ts:37:148\n    at async file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+    },
+    {
+      "name": "Unmet DNS standards acceptance requirements F09 / RPD-03-09 contextual Help opens on keyboard focus",
+      "status": "failed",
+      "failure": "TestingLibraryElementError: Unable to find an accessible element with the role \"dialog\"\n\nHere are the accessible roles:\n\n  banner:\n\n  Name \"\":\n  \u001b[36m<header\u001b[39m\n    \u001b[33mclass\u001b[39m=\u001b[32m\"dm-top\"\u001b[39m\n  \u001b[36m/>\u001b[39m\n\n  --------------------------------------------------\n  group:\n\n  Name \"\":\n  \u001b[36m<details />\u001b[39m\n\n  --------------------------------------------------\n  textbox:\n\n  Name \"Search namespace choices\":\n  \u001b[36m<input\u001b[39m\n    \u001b[33maria-label\u001b[39m=\u001b[32m\"Search namespace choices\"\u001b[39m\n    \u001b[33mclass\u001b[39m=\u001b[32m\"dm-input\"\u001b[39m\n    \u001b[33mdata-namespace-search\u001b[39m=\u001b[32m\"\"\u001b[39m\n    \u001b[33mplaceholder\u001b[39m=\u001b[32m\"Search namespaces\"\u001b[39m\n  \u001b[36"
+    },
+    {
+      "name": "Unmet DNS standards acceptance requirements F07 / RPD-04-01 desktop-snapshots numeric columns align right",
+      "status": "failed",
+      "failure": "AssertionError: expected false to be true // Object.is equality\n    at C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/tests/ui/gaps.spec.ts:43:107\n    at file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2869:63\n    at file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:1628:35\n    at file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:26\n    at file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/node_mo"
+    },
+    {
+      "name": "Unmet DNS standards acceptance requirements F07 / RPD-04-01 tablet-snapshots numeric columns align right",
+      "status": "failed",
+      "failure": "AssertionError: expected false to be true // Object.is equality\n    at C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/tests/ui/gaps.spec.ts:43:107\n    at file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2869:63\n    at file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:1628:35\n    at file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:26\n    at file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/node_mo"
+    },
+    {
+      "name": "Unmet DNS standards acceptance requirements F07 / RPD-04-01 mobile-snapshots numeric columns align right",
+      "status": "failed",
+      "failure": "AssertionError: expected false to be true // Object.is equality\n    at C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/tests/ui/gaps.spec.ts:43:107\n    at file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2869:63\n    at file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:1628:35\n    at file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:26\n    at file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/node_mo"
+    },
+    {
+      "name": "Unmet DNS standards acceptance requirements F11 / RPD-08-32 desktop schedule panels have usable height",
+      "status": "failed",
+      "failure": "AssertionError: expected false to be true // Object.is equality\n    at C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/tests/ui/gaps.spec.ts:46:125\n    at file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:1628:35\n    at file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:26\n    at file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:3321:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///C:/Users/acormier/Docu"
+    },
+    {
+      "name": "Unmet DNS standards acceptance requirements F09 / RPD-08-04 unlock modal initially focuses Password",
+      "status": "failed",
+      "failure": "AssertionError: expected <body><div data-v-app>…(1)</div></body> to be <input type=\"password\" …(2)></input> // Object.is equality\n    at C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/tests/ui/gaps.spec.ts:49:149\n    at async file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+    },
+    {
+      "name": "Unmet DNS standards acceptance requirements F12 / RPD-08-04 Cancel resets Include Secrets on a reused modal",
+      "status": "failed",
+      "failure": "AssertionError: expected true to be false // Object.is equality\n    at C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/tests/ui/gaps.spec.ts:52:385\n    at async file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+    },
+    {
+      "name": "Unmet DNS standards acceptance requirements F07 / RPD-08-11 New Snapshot shows a plus icon",
+      "status": "failed",
+      "failure": "AssertionError: expected null not to be null\n    at C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/tests/ui/gaps.spec.ts:55:143\n    at async file:///C:/Users/acormier/Documents/ChatGPT/Kubernetes/dns-manager-dev/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+    }
+  ],
+  "backend": {
+    "dns": 6,
+    "shared": 9,
+    "failures": 0
+  },
+  "previewBuild": "Passed",
+  "extensionBuild": "Passed"
+}

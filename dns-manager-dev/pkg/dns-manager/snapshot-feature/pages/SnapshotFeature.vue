@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import { ref,watch } from 'vue';
+import Coverage from './SnapshotCoverage.vue';
 import History from './RolloutHistory.vue';
 import MergeSnapshots from './MergeSnapshots.vue';
-import SnapshotGate from './SnapshotGate.vue';
-import PageActions from './PageActions.vue';
+
+
 import { configureSnapshotAdapter,captureScheduleSource } from '../data/snapshot-schedule';
 import { mergeRequested } from '../data/merge-session';
-const props=defineProps<{capture:()=>any;restore:(change:any)=>void;matches:(namespace?:string)=>boolean}>();
-configureSnapshotAdapter(props);
-const merging=ref(false),creating=ref(false);
-watch(mergeRequested,()=>{merging.value=true;creating.value=false});
+const props=defineProps<{capture:()=>any;restore:(change:any)=>void;matches:(namespace?:string)=>boolean;view?:string}>();
+configureSnapshotAdapter(props);const emit=defineEmits(['navigate']);
+const merging=ref(false);
+watch(mergeRequested,()=>{merging.value=true});
 </script>
-<template><div class="dm-snapshot-feature"><PageActions><button type="button" @click="creating=!creating">{{creating?'Close Capture':'New Snapshot'}}</button></PageActions><section v-if="creating" class="snapshot-capture"><SnapshotGate :data="captureScheduleSource()" :scope-key="JSON.stringify(captureScheduleSource())"/></section><MergeSnapshots v-if="merging" @navigate="merging=false"/><History v-else/></div></template>
+<template><div class="dm-snapshot-feature"><Coverage v-if="view==='coverage'" @navigate="emit('navigate',$event)"/><MergeSnapshots v-else-if="merging" @navigate="merging=false"/><History v-else/></div></template>
 <style>
 .dm-snapshot-feature{height:100%;min-height:0;display:flex;flex-direction:column;--body-text:var(--dm-text);--box-bg:var(--dm-panel);--input-bg:var(--dm-bg);--border:var(--dm-line);--muted:var(--dm-muted)}
 .dm-snapshot-feature .history{padding-top:0;border-top:0;margin-top:0}

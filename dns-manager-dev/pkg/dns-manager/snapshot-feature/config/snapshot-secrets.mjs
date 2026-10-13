@@ -23,8 +23,8 @@ export function redactSecrets(value) {
   if (value.kind === 'Secret') return { ...value, ...(value.metadata ? {metadata:{...value.metadata,annotations:Object.fromEntries(Object.keys(value.metadata.annotations || {}).map(key=>[key,'[Hidden]']))}} : {}), data:Object.fromEntries(Object.keys(value.data || {}).map(key=>[key,'[Hidden]'])), stringData:Object.fromEntries(Object.keys(value.stringData || {}).map(key=>[key,'[Hidden]'])) };
   return Object.fromEntries(Object.entries(value).map(([key,child])=>[key,redactSecrets(child)]));
 }
-export function secretBackupStatus(resources, issuerNamespace = 'cert-manager') {
+export function secretBackupStatus(resources, issuerNamespace = 'cert-manager', references = []) {
   const captured = new Set(resources.filter(resource => resource.kind === 'Secret' && (resource.data !== undefined || resource.stringData !== undefined)).map(resource => `${resource.metadata.namespace}/${resource.metadata.name}`));
-  const missing = secretReferences(resources,issuerNamespace).map(ref=>`${ref.namespace}/${ref.name}`).filter(id=>!captured.has(id));
+  const missing = [...secretReferences(resources,issuerNamespace),...(references||[])].map(ref=>`${ref.namespace}/${ref.name}`).filter(id=>!captured.has(id));
   return {complete:missing.length === 0,missing};
 }

@@ -1,6 +1,6 @@
 {
   "name": "simple-network-manager-dev",
-  "version": "0.1.0",
+  "version": "0.1.26",
   "engines": {
     "node": ">=24"
   },
@@ -24,7 +24,12 @@
     "build:preview": "vite build",
     "build:extension": "node scripts/build-extension.cjs",
     "test:configuration": "node scripts/test-config.mjs",
-    "test:snapshots": "node --test ../preview-data/tests/snapshot-server.test.mjs ../preview-data/tests/snapshot-unlock.test.mjs"
+    "test:snapshots": "node --test ../preview-data/tests/snapshot-server.test.mjs ../preview-data/tests/snapshot-unlock.test.mjs",
+    "test:ui:contracts": "node --test tests/ui/layout-contract.test.mjs",
+    "test:ui:audit": "node --test tests/ui/recorded-audit.test.mjs",
+    "test:audit:snapshots": "node --test tests/ui/snapshot-requirements.audit.test.mjs",
+    "prepreview": "node ../scripts/ensure-common-ui.mjs",
+    "prebuild:preview": "node ../scripts/ensure-common-ui.mjs"
   },
   "private": true,
   "devDependencies": {

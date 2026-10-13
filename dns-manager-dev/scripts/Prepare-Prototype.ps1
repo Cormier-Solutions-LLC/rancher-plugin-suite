@@ -3,7 +3,7 @@ $prototypeRoot = Split-Path $PSScriptRoot -Parent
 $workspaceRoot = Split-Path $prototypeRoot -Parent
 $libraryRoot = Join-Path $workspaceRoot '.local/dns-prototype/lib'
 $stateRoot = Join-Path $prototypeRoot '.state'
-$image = 'technitium/dns-server:15.6.0@sha256:1045db38fd2f2e4d9578f9168b7eb4862575469ed0ffc79e03f36bdc772a93b5'
+$image = 'technitium/dns-server:15.6.1@sha256:e5474007d142d509c7de0d855132e3f0469bd6d5d77abf23dff5dad4e2975d09'
 New-Item -ItemType Directory -Force -Path $libraryRoot, $stateRoot | Out-Null
 $passwordPath = Join-Path $stateRoot 'admin-password.txt'
 if (-not (Test-Path -LiteralPath $passwordPath)) {

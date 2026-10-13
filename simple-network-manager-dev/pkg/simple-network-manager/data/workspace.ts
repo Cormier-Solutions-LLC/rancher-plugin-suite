@@ -4,6 +4,7 @@ import { queueChange } from './pending-rollouts';
 import { reactive } from 'vue';
 import type { IssuerSettings } from '../config/issuer';
 import { existingIssuerSettings } from './issuer-snapshot';
+import {issuerProfileKey} from '../../../../live-management/issuer-profile-identity.mjs';
 export interface IssuerProfile {
   name: string;
   environment: string;
@@ -17,7 +18,7 @@ export const issuerProfiles = reactive<IssuerProfile[]>([
   { name: 'letsencrypt-prod', environment: 'production', challenge: 'dns01', source: 'Observed at cluster inspection', manifest: dependencies.resources.find(resource => resource.kind === 'ClusterIssuer' && resource.metadata.name === 'letsencrypt-prod'), settings: { ...existingIssuerSettings } }
 ]);
 export function rememberIssuer(profile: IssuerProfile) {
-  const index = issuerProfiles.findIndex(item => item.name === profile.name);
+  const index = issuerProfiles.findIndex(item => issuerProfileKey(item) === issuerProfileKey(profile));
   if (index >= 0) issuerProfiles[index] = profile;
   else issuerProfiles.push(profile);
   queueChange({ id: `issuer:${profile.name}`, category: 'TLS Issuer', name: profile.name, namespace: '', resources: profile.manifest ? [profile.manifest] : [], configuration: profile.settings });

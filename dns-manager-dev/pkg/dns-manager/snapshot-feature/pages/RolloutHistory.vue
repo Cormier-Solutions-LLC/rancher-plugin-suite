@@ -1,14 +1,24 @@
 <script setup lang="ts">
+import { managerApiUrl } from "../../../../../live-management/manager-api.mjs";
+const snapshotUrl=(url:string)=>managerApiUrl("dns-manager",url);
+import * as Vue from 'vue';import {component} from '../../../../../rancher-common-ui/client/index.mjs';const SnapshotLayout=component('SnapshotLayout',Vue);
 import { contextMatches } from '../data/namespace-context';
 import DataGrid from './DataGrid.vue';
-import PageSummary from './PageSummary.vue';
 import BulkActions from './BulkActions.vue';
 import SnapshotOperations from './SnapshotOperations.vue';
 import { formatSize } from '../config/file-size.mjs';
 import { deleteSnapshots } from '../data/stored-snapshots';
 import { displaySettings } from '../data/display-settings';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 
+
+import PageActions from './PageActions.vue';
+import CreateButton from './CreateButton.vue';
+import { askSnapshotOptions } from '../data/unlock-backup';
+import { runSchedule } from '../data/snapshot-schedule';
+const captureController=new AbortController();onBeforeUnmount(()=>captureController.abort());
+const capturing=ref(false),captureMessage=ref('');
+async function newSnapshot(){capturing.value=true;captureMessage.value='';let password='';try{const options=await askSnapshotOptions(false,captureController.signal);password=options.password;await runSchedule('',password,options.includeSecrets);await refreshSnapshots();captureMessage.value='Snapshot ZIP Saved.';}catch(e){captureMessage.value=e instanceof Error?e.message:'Snapshot capture failed.';}finally{password='';capturing.value=false;}}
 
 import SnapshotGate from './SnapshotGate.vue';
 import { storedSnapshots, refreshSnapshots, readSnapshot } from '../data/stored-snapshots';
@@ -67,7 +77,7 @@ watch(snapshotToReview, snapshot => {
   loaded.value = JSON.parse(JSON.stringify(snapshot)); snapshotToReview.value = null;
 }, { immediate: true });
 async function openStored(id: string) {
-  storedMessage.value = ''; storedReady.value = false; storedConfirmed.value = false; loaded.value = null;
+  storageError.value = ''; storedMessage.value = ''; storedReady.value = false; storedConfirmed.value = false; loaded.value = null;
   try { loaded.value = await readSnapshot(id); } catch (cause) { storageError.value = cause instanceof Error ? cause.message : 'Could not read snapshot.'; }
 }
 function storedGateReady(value: boolean) { storedReady.value = value; if (!value) storedConfirmed.value = false; }
@@ -81,18 +91,19 @@ function restoreSaved() {
 }
 </script>
 <template>
-  <section class="history" :class="{ 'snapshot-history': view === 'snapshots' }">
+  <SnapshotLayout class="history" :class="{ 'snapshot-history': view === 'snapshots' }">
     <template v-if="view === 'snapshots'">
-    <InventoryFilters v-model:search="historySearch" v-model:namespace="historyNamespace" v-model:grouped="historyGrouped" :namespaces="historyNamespaces" search-label="Find A Snapshot" placeholder="Manual, automatic, scope, namespace, or route…"><template #extra><SnapshotDateRange v-model:from="dateFrom" v-model:to="dateTo" v-model:timed="dateTimed" /></template></InventoryFilters><div class="snapshot-records"><PageSummary :count="visibleSnapshots.length" label="Snapshots" help="Stored ZIP backups include a dated index and independently readable DNS configuration and recovery manifests. Select items to prepare restoration drafts, merge snapshots with conflict review, or remove originals after saving a merged copy."/><BulkActions :items="visibleSnapshots.map(r=>({id:r.id,name:`${r.generation || 'Manual'} · ${r.scope?.label || r.name}`}))" v-model:selected="checked" :execute="deleteSnapshots" verb="Delete selected stored snapshot files from the hosting server after saving a recovery copy."/><p v-if="!dateRangeValid" class="error">Choose an end date at or after the start date.</p>
+<PageActions><CreateButton label="New Snapshot" :disabled="capturing" @create="newSnapshot"/></PageActions><p v-if="captureMessage" role="status">{{captureMessage}}</p>
+    <InventoryFilters v-model:search="historySearch" v-model:namespace="historyNamespace" v-model:grouped="historyGrouped" :namespaces="historyNamespaces" search-label="Find A Snapshot" placeholder="Manual, automatic, scope, namespace, or route…"><template #extra><SnapshotDateRange v-model:from="dateFrom" v-model:to="dateTo" v-model:timed="dateTimed" /></template></InventoryFilters><div class="snapshot-records"><BulkActions :items="visibleSnapshots.map(r=>({id:r.id,name:`${r.generation || 'Manual'} · ${r.scope?.label || r.name}`}))" v-model:selected="checked" :execute="deleteSnapshots" verb="Delete selected stored snapshot files from the hosting server after saving a recovery copy."/><p v-if="!dateRangeValid" class="error">Choose an end date at or after the start date.</p>
 
     <div v-if="historyContext" class="filter-note">Showing {{ historyContext.snapshotId ? 'Selected Snapshot For' : 'Records For' }} {{ historyContext.namespace }} / {{ historyContext.name }} <button type="button" class="text-button" @click="historyContext = null">Clear filter</button></div>
     
     <p v-if="storageError" class="error" role="alert">{{ storageError }}</p>
 
-    <DataGrid :default-sort-column="3" :default-sort-descending="true"><thead><tr><th class="selection-cell"><input v-model="allChecked" type="checkbox" aria-label="Select All Snapshots"></th><th>Generation</th><th>Scope</th><th>Created</th><th data-align="right">Configuration Items</th><th data-align="right" title="Complete ZIP file size; legacy JSON/YAML pairs show combined bytes">Size</th><th class="actions-column">Actions</th></tr></thead><tbody><template v-for="group in snapshotGroups" :key="group.namespace"><tr v-if="historyGrouped" class="namespace-group"><th colspan="7">{{ group.namespace || 'Global' }}</th></tr><tr v-for="record in group.records" :key="record.id"><td class="selection-cell"><input v-model="checked" :value="record.id" type="checkbox" :aria-label="`Select ${record.generation || 'Manual'} ${record.name} snapshot`"></td><td>{{ record.generation || 'Manual' }}<small>Source: {{ new Date(record.sourceUpdatedAt || record.createdAt).toLocaleString() }}</small></td><td>{{ record.scope?.label || record.name }}<small :title="snapshotNamespaces(record).map(namespace => namespace || 'Global').join(', ')">{{ snapshotNamespaces(record).length > 3 ? `${snapshotNamespaces(record).length} Namespaces` : snapshotNamespaces(record).map(namespace => namespace || 'Global').join(', ') }}</small></td><td :data-sort="Date.parse(record.createdAt)">{{ new Date(record.createdAt).toLocaleString() }}</td><td>{{ record.coverage?.length ?? 0 }}</td><td :data-sort="record.sizeBytes ?? -1" :title="record.archiveFormat==='zip' ? 'Complete ZIP size' : 'Legacy JSON + YAML combined size'">{{ formatSize(record.sizeBytes) }}</td><td><div class="snapshot-actions"><a v-if="record.archiveFormat==='zip'" class="icon-action" :href="`/api/snapshots/${record.id}/backup.zip`" download="dns-manager-backup.zip" title="Download Backup ZIP" aria-label="Download Backup ZIP"><ActionIcon icon="download"/></a><a v-else class="icon-action" :href="`/api/snapshots/${record.id}`" download="legacy-dns-backup.json" title="Download Legacy Index" aria-label="Download Legacy Index"><ActionIcon icon="details"/></a><button type="button" class="icon-action" title="Review and restore snapshot" :aria-label="`Review and restore ${record.name} snapshot`" @click="openStored(record.id)"><ActionIcon icon="history" /></button></div></td></tr></template></tbody></DataGrid>
+    <DataGrid :default-sort-column="3" :default-sort-descending="true"><thead><tr><th class="selection-cell"><input v-model="allChecked" type="checkbox" aria-label="Select All Snapshots"></th><th>Generation</th><th>Scope</th><th>Created</th><th data-align="right">Configuration Items</th><th data-align="right" title="Complete ZIP file size; legacy JSON/YAML pairs show combined bytes">Size</th><th class="actions-column">Actions</th></tr></thead><tbody><template v-for="group in snapshotGroups" :key="group.namespace"><tr v-if="historyGrouped" class="namespace-group"><th colspan="7">{{ group.namespace || 'Global' }}</th></tr><tr v-for="record in group.records" :key="record.id"><td class="selection-cell"><input v-model="checked" :value="record.id" type="checkbox" :aria-label="`Select ${record.generation || 'Manual'} ${record.name} snapshot`"></td><td>{{ record.generation || 'Manual' }}<small>Source: {{ new Date(record.sourceUpdatedAt || record.createdAt).toLocaleString() }}</small></td><td>{{ record.scope?.label || record.name }}<small :title="snapshotNamespaces(record).map(namespace => namespace || 'Global').join(', ')">{{ snapshotNamespaces(record).length > 3 ? `${snapshotNamespaces(record).length} Namespaces` : snapshotNamespaces(record).map(namespace => namespace || 'Global').join(', ') }}</small></td><td :data-sort="Date.parse(record.createdAt)">{{ new Date(record.createdAt).toLocaleString() }}</td><td>{{ record.coverage?.length ?? 0 }}</td><td :data-sort="record.sizeBytes ?? -1" :title="record.archiveFormat==='zip' ? 'Complete ZIP size' : 'Legacy JSON + YAML combined size'">{{ formatSize(record.sizeBytes) }}</td><td><div class="snapshot-actions"><a v-if="record.archiveFormat==='zip'" class="icon-action" :href="snapshotUrl(`/api/snapshots/${record.id}/backup.zip`)" download="dns-manager-backup.zip" title="Download Backup ZIP" aria-label="Download Backup ZIP"><ActionIcon icon="download"/></a><a v-else class="icon-action" :href="snapshotUrl(`/api/snapshots/${record.id}`)" download="legacy-dns-backup.json" title="Download Legacy Index" aria-label="Download Legacy Index"><ActionIcon icon="details"/></a><button type="button" class="icon-action" title="Review and restore snapshot" :aria-label="`Review and restore ${record.name} snapshot`" @click="openStored(record.id)"><ActionIcon icon="history" /></button></div></td></tr></template></tbody></DataGrid>
     <SnapshotOperations :snapshot="loaded" v-model:selected-ids="checked" @close="loaded=null"/><p v-if="storedMessage" role="status">{{ storedMessage }}</p></div><SnapshotSchedule />
     </template>
-  </section>
+  </SnapshotLayout>
 </template>
 <style scoped>
 .history { margin-top: 28px; padding-top: 26px; border-top: 1px solid var(--border, #384352); }h2 { font-size: 21px; margin: 0; }h3 { font-size: 16px; margin-top: 0; }p { font-size: 12px; color: var(--muted, #a5b1c3); line-height: 1.7; }table { width: 100%; border-collapse: collapse; font-size: 12px; }th, td { border-bottom: 1px solid var(--border, #384352); padding: 12px 8px; text-align: left; }.restoration { padding: 22px; margin-top: 22px; background: var(--input-bg, #1c2430); border: 1px solid #619bd9; border-radius: 6px; overflow-x: auto; }button { background: #326fb4; border: 0; padding: 10px 16px; border-radius: 5px; color: white; cursor: pointer; font: inherit; }button:disabled { opacity: .55; cursor: not-allowed; }.text-button { background: transparent; color: #91c3fc; }.confirmation { display: flex; align-items: center; gap: 10px; margin-top: 20px; font-size: 12px; }.actions { display: flex; gap: 12px; margin-top: 20px; }.error { color: #ffb3ad; }summary { color: #91c3fc; font-size: 12px; cursor: pointer; margin-top: 18px; }pre { font-size: 11px; line-height: 1.6; max-height: 300px; overflow: auto; }button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid #73b5ff; outline-offset: 3px; }

@@ -1,0 +1,7 @@
+# Traefik chart 41.4.0; reuse all existing release values.
+# Applies to the chart's TCP and UDP Services sharing VIP 10.99.15.50.
+service:
+  spec:
+    externalTrafficPolicy: Local
+    # Clear the reused release's legacy field; retain the existing MetalLB VIP annotation.
+    loadBalancerIP: null

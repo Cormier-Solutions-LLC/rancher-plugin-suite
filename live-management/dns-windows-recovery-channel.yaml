@@ -1,0 +1,100 @@
+# Bootstrap-only resources. Install with UID-pinned receipts; never re-apply
+# this file over an active queue. The legacy token is independent of the bridge.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dns-windows-recovery-agent
+  namespace: dns-system
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dns-windows-recovery-agent-credential
+  namespace: dns-system
+  annotations:
+    kubernetes.io/service-account.name: dns-windows-recovery-agent
+type: kubernetes.io/service-account-token
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dns-windows-recovery-request
+  namespace: dns-system
+type: Opaque
+data:
+  request.jwe: ""
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dns-windows-recovery-receipt
+  namespace: dns-system
+data:
+  receipt.json: ""
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: dns-windows-recovery-agent
+  namespace: dns-system
+rules:
+  - apiGroups: [""]
+    resources: [secrets]
+    resourceNames: [dns-windows-recovery-request, dns-windows-bridge-credential]
+    verbs: [get]
+  - apiGroups: [""]
+    resources: [serviceaccounts]
+    resourceNames: [dns-windows-bridge, dns-windows-recovery-agent]
+    verbs: [get]
+  - apiGroups: [""]
+    resources: [configmaps]
+    resourceNames: [dns-windows-queue, dns-windows-observations, dns-windows-recovery-receipt]
+    verbs: [get]
+  - apiGroups: [""]
+    resources: [configmaps]
+    resourceNames: [dns-windows-recovery-receipt]
+    verbs: [update]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: dns-windows-recovery-agent
+  namespace: dns-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: dns-windows-recovery-agent
+subjects:
+  - kind: ServiceAccount
+    name: dns-windows-recovery-agent
+    namespace: dns-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: dns-windows-recovery-publisher
+  namespace: dns-system
+rules:
+  - apiGroups: [""]
+    resources: [secrets]
+    resourceNames: [dns-windows-recovery-request]
+    verbs: [get, update]
+  - apiGroups: [""]
+    resources: [configmaps]
+    resourceNames: [dns-windows-recovery-receipt]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: dns-windows-recovery-publisher
+  namespace: dns-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: dns-windows-recovery-publisher
+subjects:
+  - kind: ServiceAccount
+    name: dns-manager-snapshots
+    namespace: manager-system

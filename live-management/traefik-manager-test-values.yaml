@@ -1,0 +1,15 @@
+# Reserved acceptance listeners. No existing listener, route or address changes.
+# Remove these two values after native Rancher TCP/UDP acceptance is complete.
+ports:
+  manager-test-tcp:
+    port: 15001
+    exposedPort: 15001
+    protocol: TCP
+    expose:
+      default: true
+  manager-test-udp:
+    port: 15002
+    exposedPort: 15002
+    protocol: UDP
+    expose:
+      default: true

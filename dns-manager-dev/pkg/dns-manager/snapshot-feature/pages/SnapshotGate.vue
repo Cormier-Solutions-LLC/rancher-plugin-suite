@@ -8,7 +8,7 @@ import SnapshotComparison from './SnapshotComparison.vue';
 import { encodeBackup, decodeBackup, withoutSecretValues } from '../config/backup-zip.mjs';
 import { askBackupPassword, askSnapshotOptions } from '../data/unlock-backup';
 import { snapshotToReview, historyContext } from '../data/history-context';
-const props = defineProps<{ scopeKey: string; data: object }>();
+const props = defineProps<{ scopeKey: string; data: object; requireServerCopy?: boolean; allowSecretCapture?: boolean }>();
 const emit = defineEmits<{ (event: 'ready', value: boolean): void; (event: 'history'): void }>();
 const choice = ref('');
 const existingTime = ref('');
@@ -33,16 +33,18 @@ let backupPassword = '';
 const captureController = new AbortController();
 function clearDownload() { if (backupUrl.value) URL.revokeObjectURL(backupUrl.value); backupUrl.value = ''; }
 const now = ref(Date.now());
+const currentGateTime = () => Math.max(Date.now(), storedId.value ? createdTime.value : 0);
 const gateId = `snapshot-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 let timer: ReturnType<typeof setInterval> | undefined;
-onMounted(() => { timer = setInterval(() => { now.value = Date.now(); }, 30000); refreshSnapshots().catch(() => { /* Upload and new download copies remain available. */ }); });
+onMounted(() => { timer = setInterval(() => { now.value = currentGateTime(); }, 30000); refreshSnapshots().catch(() => { /* Upload and new download copies remain available. */ }); });
 onUnmounted(() => { captureController.abort(); backupPassword = ''; if (timer) clearInterval(timer); clearDownload(); });
 const download = computed(() => `data:application/json;charset=utf-8,${encodeURIComponent(snapshot.value)}`);
 const yamlDownload = computed(() => `data:application/yaml;charset=utf-8,${encodeURIComponent(snapshot.value ? manifestYaml(JSON.parse(snapshot.value).current) : '')}`);
 const requirement = computed(() => choice.value === 'yes'
   ? { createdAt: Date.parse(existingTime.value), scopeMatches: !!existingReference.value && existingScope.value === props.scopeKey && !loadingExisting.value, acknowledged: coversServices.value }
   : { createdAt: createdTime.value, scopeMatches: capturedScope.value === props.scopeKey && (!!storedId.value || downloadStarted.value), acknowledged: !!storedId.value || savedCopy.value });
-const ready = computed(() => snapshotRequirementMet(requirement.value, now.value));
+const serverCopy = () => storedId.value || (choice.value === 'yes' && existingReference.value !== '__upload__' ? existingReference.value : '');
+const ready = computed(() => snapshotRequirementMet(requirement.value, now.value) && (!props.requireServerCopy || !!serverCopy()));
 watch(ready, value => emit('ready', value), { immediate: true });
 watch(() => props.scopeKey, () => {
   choice.value = ''; existingTime.value = ''; existingReference.value = ''; coversServices.value = false;
@@ -58,6 +60,7 @@ async function chooseExisting(id: string) {
   if (!id || id === '__upload__') { loadingExisting.value = false; return; }
   loadingExisting.value = true;
   try {
+    if(props.allowSecretCapture===false && storedSnapshots.value.find(record=>record.id===id)?.encrypted)throw new Error('Choose an unencrypted configuration snapshot for Windows apply. Credential values are excluded from this pre-change copy.');
     const saved = await readSnapshot(id);
     if (request !== existingRequest || scope !== props.scopeKey) return;
     validateSnapshotIndex(saved);
@@ -99,24 +102,25 @@ async function createSnapshot() {
   downloadStarted.value = false; savedCopy.value = false;
   saving.value = true;
   try {
-    const options = await askSnapshotOptions(false, captureController.signal);
+    const options = props.allowSecretCapture === false ? {includeSecrets:false,password:''} : await askSnapshotOptions(false, captureController.signal);
     includeSecrets.value = options.includeSecrets; backupPassword = options.password;
     current = includeSecrets.value ? await captureRelevantSecrets(current) : withoutSecretValues(current);
-    if (includeSecrets.value && current.secretBackup?.missing?.length) throw new Error('Secret capture is incomplete: '+current.secretBackup.missing.join(', '));
+    if(current.secretBackup?.requested&&!saveOnHost.value)throw new Error('Installed DNS credentials require a server copy. Select Save on the hosting server.');
+    if (includeSecrets.value && !current.secretBackup?.requested && current.secretBackup?.missing?.length) throw new Error('Secret capture is incomplete: '+current.secretBackup.missing.join(', '));
     if (includeSecrets.value && !backupPassword) throw new Error('Confirm a strong backup password before capture.');
     const result = saveOnHost.value ? await storeSnapshot(current, scope, backupPassword) : { format: 'DNS Manager configuration snapshot', schemaVersion: 1, createdAt: new Date().toISOString(), scopeKey: scope, includesSecretValues: current.routeManifests?.some((resource:any)=>resource.kind==='Secret'&&(resource.data!==undefined||resource.stringData!==undefined)) || false, includesApplicationData: false, current };
     if (props.scopeKey !== scope) { error.value = 'The review changed during capture. Create a snapshot for the updated review.'; return; }
-    now.value = Date.now(); createdTime.value = Date.parse(result.createdAt); capturedScope.value = scope;
+    createdTime.value = Date.parse(result.createdAt); capturedScope.value = scope;
     const bytes = await encodeBackup(result, backupPassword);
     await decodeBackup(bytes, backupPassword);
     clearDownload(); backupUrl.value = URL.createObjectURL(new Blob([bytes as BlobPart], { type: 'application/zip' }));
     // Display only capture metadata; decrypted Secret payloads are never rendered here.
-    snapshot.value = JSON.stringify({id:result.id,current:{secretBackup:result.current.secretBackup}}); storedId.value = result.id || '';
+    snapshot.value = JSON.stringify({id:result.id,current:{secretBackup:result.current.secretBackup}}); storedId.value = result.id || ''; now.value = currentGateTime();
   } catch (cause) { error.value = cause instanceof Error ? cause.message : 'Snapshot could not be saved.'; }
   finally { saving.value = false; backupPassword = ''; includeSecrets.value = false; }
 }
-function checkNow() { now.value = Date.now(); return snapshotRequirementMet(requirement.value, now.value); }
-defineExpose({ checkNow, snapshotId: () => storedId.value || (choice.value === 'yes' && existingReference.value !== '__upload__' ? existingReference.value : '') });
+function checkNow() { now.value = currentGateTime(); return snapshotRequirementMet(requirement.value, now.value) && (!props.requireServerCopy || !!serverCopy()); }
+defineExpose({ checkNow, snapshotId: serverCopy });
 </script>
 <template>
   <section class="snapshot-gate" :aria-labelledby="gateId">

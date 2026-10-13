@@ -1,4 +1,10 @@
-const normalize = (value: any): any => Array.isArray(value) ? value.map(normalize) : value && typeof value === 'object' ? Object.fromEntries(Object.keys(value).sort().map(key => [key, normalize(value[key])])) : value;
+import {normalizeDnsConfiguration} from './dns-record-order.mjs';
+const normalize = (value: any): any => {
+  if(Array.isArray(value))return value.map(normalize);
+  if(!value||typeof value!=='object')return value;
+  const config=normalizeDnsConfiguration(value);
+  return Object.fromEntries(Object.keys(config).sort().map(key=>[key,normalize(config[key])]));
+};
 export const snapshotStateKey = (value: any) => JSON.stringify(normalize(value));
 function entries(state: any) {
   const rows = new Map<string, any>();

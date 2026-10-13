@@ -1,0 +1,26 @@
+import fs from 'node:fs';import assert from 'node:assert/strict';import {randomBytes,randomUUID} from 'node:crypto';
+import {createLiveNetworkSource} from '../live-management/rancher-network.mjs';import {resourcePath} from '../live-management/kubernetes-apply.mjs';import {restorationManifest} from '../simple-network-manager-dev/pkg/simple-network-manager/config/restoration-manifest.mjs';
+const base='http://127.0.0.1:15888',api=base+'/api/v1/namespaces/manager-system/services/http:network-manager-snapshots:8080/proxy',name='manager-fresh-'+randomUUID().slice(0,8),ns='manager-acceptance',results=[];
+const source=createLiveNetworkSource('local',(url,init)=>fetch(base+url.replace('/k8s/clusters/local',''),{...init,signal:AbortSignal.timeout(15000)}),'user-jccb4');
+async function call(path,init){const r=await fetch(base+path,{...init,signal:AbortSignal.timeout(15000)});assert.ok(r.ok,'Kubernetes '+r.status);return r.json();}
+const request=(path,body,method='POST')=>fetch(api+path,{method,headers:{'Content-Type':'application/json',Origin:'https://rancher.cormierconsulting.io'},body:JSON.stringify(body),signal:AbortSignal.timeout(15000)});
+async function get(path){const r=await fetch(api+path,{signal:AbortSignal.timeout(15000)});assert.equal(r.status,200);return r.json();}
+async function apply(resources,operation='Apply'){await source.reload();return source.stageChanges([{name:'Fresh scheduled network acceptance',configuration:{operation},resources}]);}
+const original=await call('/apis/traefik.io/v1alpha1/namespaces/'+ns+'/ingressroutes/manager-acceptance-http-80'),own=restorationManifest(original);own.metadata.name=name;own.spec.routes[0].match='Host(`'+name+'.cormierconsulting.io`)';
+const current={configuration:{id:'old-scope',name:'Saved old inspection'},routeManifests:[original],snapshotScope:{label:'Live fresh network acceptance',namespace:ns,source:'Authenticated Kubernetes inventory and saved manager configuration'},pendingChanges:[{id:'unapplied',resources:[]}]};
+const prior=await get('/api/snapshot-schedule');assert.equal(prior.enabled,false);assert.ok(!prior.hasSource||['Isolated manager acceptance','Live fresh network acceptance'].includes(prior.scope?.label),'Do not replace a user capture scope.');const password='Test-only-'+randomBytes(24).toString('base64url')+'!';let enabled=false,created=false;
+try{
+ let r=await request('/api/snapshot-schedule',{enabled:true,interval:1,unit:'minutes',includeSecrets:true,password,current},'PUT');assert.equal(r.status,200,await r.text());enabled=true;const started=new Date().toISOString();
+ await apply([own]);created=true;
+ let automatic;const deadline=Date.now()+95000;while(Date.now()<deadline){automatic=(await get('/api/snapshots')).snapshots.find(s=>s.generation==='Automatic'&&s.createdAt>=started);if(automatic)break;await new Promise(r=>setTimeout(r,2000));}
+ assert.ok(automatic,'Unattended fresh network capture did not run.');assert.equal(automatic.encrypted,true);r=await request('/api/snapshots/'+automatic.id+'/unlock',{password});assert.equal(r.status,200);const captured=(await r.json()).current;
+ assert.ok(captured.routeManifests.some(r=>r.kind==='IngressRoute'&&r.metadata.name===name),'New route was absent from unattended snapshot.');assert.ok(captured.routeManifests.every(r=>!r.metadata.namespace||r.metadata.namespace===ns));assert.deepEqual(captured.pendingChanges,[]);assert.notEqual(captured.configuration?.name,current.configuration.name);
+ results.push({check:'Protected unattended capture discovers a route created after scope save, refreshes saved configuration, enforces namespace and excludes unapplied proposals',passed:true,archive:automatic.id});console.log('Fresh scheduled network capture discovered later route and refreshed configuration.');
+ r=await request('/api/snapshot-schedule/run',{current,password});assert.equal(r.status,201);
+ const forbidden={...current,routeManifests:[{apiVersion:'v1',kind:'Secret',metadata:{name:'cached-credential',namespace:ns},data:{token:Buffer.from('synthetic-cached-value').toString('base64')}}]};r=await request('/api/snapshot-source',{current:forbidden},'PUT');assert.equal(r.status,503);assert.equal((await get('/api/snapshot-schedule')).lastRun,automatic.createdAt);
+ results.push({check:'Fresh Run now succeeds; stale captured credentials are rejected without changing the schedule',passed:true});console.log('Network Run now and stale credential rejection passed.');
+}finally{
+ if(enabled){const r=await request('/api/snapshot-schedule',{enabled:false,interval:prior.interval,unit:prior.unit,includeSecrets:false},'PUT');assert.equal(r.status,200);}
+ if(created){const latest=await call(resourcePath(own)),r=await request('/api/snapshots',{current:{configuration:{id:name,name:'Before removing owned fresh-capture route'},routeManifests:[latest],snapshotScope:{namespace:ns,label:'Fresh network fixture cleanup'}},scopeKey:name});assert.equal(r.status,201);await apply([latest],'Delete');results.push({check:'Owned route removed through validated adapter after durable backup; test schedule disabled',passed:true});}
+ fs.writeFileSync('.local/manager-installation/network-fresh-snapshot-live-tests.json',JSON.stringify({name,results},null,2));
+}

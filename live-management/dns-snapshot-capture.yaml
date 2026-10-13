@@ -1,0 +1,24 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: dns-snapshot-capture
+  namespace: dns-system
+rules:
+  - apiGroups: [""]
+    resources: [configmaps]
+    resourceNames: [dns-windows-observations, dns-manager-observations]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: dns-snapshot-capture
+  namespace: dns-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: dns-snapshot-capture
+subjects:
+  - kind: ServiceAccount
+    name: dns-manager-snapshots
+    namespace: manager-system

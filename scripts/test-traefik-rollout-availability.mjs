@@ -1,0 +1,10 @@
+import fs from 'node:fs';import https from 'node:https';import {execFileSync} from 'node:child_process';
+const kubectl='C:/Program Files/Docker/Docker/resources/bin/kubectl.exe';
+const configuration=JSON.parse(execFileSync(kubectl,['config','view','--raw','--minify','-o','json'],{encoding:'utf8'}));
+const cluster=configuration.clusters[0].cluster,user=configuration.users[0].user;
+if(!user['client-certificate-data']||!user['client-key-data'])throw new Error('An existing certificate credential is required for this private acceptance monitor');
+const credential={ca:Buffer.from(cluster['certificate-authority-data'],'base64'),cert:Buffer.from(user['client-certificate-data'],'base64'),key:Buffer.from(user['client-key-data'],'base64')};
+const samples=[];const deadline=Date.now()+Number(process.argv[2]||180000);
+async function check(kind,options){const start=Date.now();return new Promise(resolve=>{const request=https.get({host:'10.99.15.50',rejectUnauthorized:true,timeout:4000,...options},response=>{response.resume();resolve({kind,at:new Date(start).toISOString(),status:response.statusCode,durationMs:Date.now()-start});});request.on('timeout',()=>request.destroy(new Error('timeout')));request.on('error',error=>resolve({kind,at:new Date(start).toISOString(),error:error.code||'request failed',durationMs:Date.now()-start}));});}
+while(Date.now()<deadline){samples.push(await check('Kubernetes API',{port:6443,path:'/readyz',servername:'kubernetes.cormierconsulting.io',...credential}));samples.push(await check('HTTPS publication',{port:443,path:'/',servername:'manager-acceptance.cormierconsulting.io',headers:{Host:'manager-acceptance.cormierconsulting.io'}}));await new Promise(r=>setTimeout(r,300));}
+const failures=samples.filter(s=>s.status!==200);fs.writeFileSync('.local/manager-installation/traefik-rollout-availability.json',JSON.stringify({samples: samples.length,failures,observations:samples},null,2));console.log(JSON.stringify({samples:samples.length,failures:failures.length}));if(failures.length)process.exitCode=1;

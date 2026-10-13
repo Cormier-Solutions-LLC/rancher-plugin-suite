@@ -1,0 +1,13 @@
+import fs from 'node:fs';import assert from 'node:assert/strict';
+const file='.local/manager-installation/dns-credential-binding-access-16-owned.json',base='http://127.0.0.1:15889',path='/apis/rbac.authorization.k8s.io/v1/namespaces/dns-system/roles/dns-snapshot-credentials';
+assert.ok(!fs.existsSync(file),'Reconcile the original access intent rather than repeat it.');
+const call=async(p,init={})=>{const r=await fetch(base+p,{...init,signal:AbortSignal.timeout(15000)});assert.ok(r.ok,'API '+r.status);return r.json();};
+const before=await call(path),rule={apiGroups:[''],resources:['serviceaccounts'],resourceNames:['dns-windows-bridge'],verbs:['get']};
+assert.deepEqual(before.rules,[{apiGroups:[''],resources:['secrets'],resourceNames:['dns-manager-engine-admin','dns-windows-bridge-credential'],verbs:['get']}]);
+const ledger={intentAt:new Date().toISOString(),before:structuredClone(before),status:'Prepared'},save=()=>fs.writeFileSync(file,JSON.stringify(ledger,null,2));save();
+const expected=[...before.rules,rule];before.rules=expected;
+await call(path+'?dryRun=All',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(before)});
+ledger.status='Submitting';save();await call(path,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(before)});
+const after=await call(path);assert.equal(after.metadata.uid,ledger.before.metadata.uid);assert.deepEqual(after.rules,expected);
+ledger.status='Verified';ledger.passed=true;ledger.finishedAt=new Date().toISOString();save();
+console.log('Capture access now permits get of the one installed bridge ServiceAccount; existing named Secret reads preserved, with no writes or list access.');

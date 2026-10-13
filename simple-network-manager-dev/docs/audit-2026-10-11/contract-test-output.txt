@@ -1,0 +1,20 @@
+npm notice run simple-network-manager-dev@0.1.0 test:ui:contracts
+npm notice run node --test tests/ui/layout-contract.test.mjs
+✔ accepts an aligned shell (3.1433ms)
+✔ detects document and header clipping (0.328ms)
+✔ detects action typography/icon drift (0.2041ms)
+✔ detects inconsistent button widths (0.1993ms)
+✔ detects numeric/header alignment errors (0.4202ms)
+✔ detects header actions in the body (0.1998ms)
+✔ detects a wrapping filter row (0.2276ms)
+✔ detects action groups split across title rows (0.2757ms)
+✔ detects count preceding refresh (0.3095ms)
+✔ allows responsive filter stacking while still detecting outer overflow (0.4378ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 225.6939

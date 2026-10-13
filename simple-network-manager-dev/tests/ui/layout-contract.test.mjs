@@ -1,0 +1,16 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {checkLayout} from './layout-contract.mjs';
+const rect={left:0,top:10,right:900,bottom:50,width:100,height:40};
+const good=()=>({heading:{rect},main:{...rect,bottom:700,right:1000},viewport:{width:1280,height:720},document:{width:1280,height:720},actions:rect,labeledActions:[{text:'New Item',rect,font:'14px',svg:[{width:18,height:18}]}],filters:[],tables:[],routeCheckboxes:0,panels:[],helpButtons:[{}],outsideHeaderActions:[]});
+const fails=m=>checkLayout(m).filter(x=>x.status==='FAIL').map(x=>x.id);
+test('accepts an aligned shell',()=>assert.deepEqual(fails(good()),[]));
+test('detects document and header clipping',()=>{const m=good();m.document.height=900;m.actions.right=1300;assert.ok(fails(m).includes('UI-002'));assert.ok(fails(m).includes('UI-005'));});
+test('detects action typography/icon drift',()=>{const m=good();m.labeledActions[0].font='12px';m.labeledActions[0].svg=[];assert.ok(fails(m).includes('UI-006'));assert.ok(fails(m).includes('UI-007'));});
+test('detects inconsistent button widths',()=>{const m=good();m.labeledActions.push({...m.labeledActions[0],rect:{...rect,width:140}});assert.ok(fails(m).includes('UI-008'));});
+test('detects numeric/header alignment errors',()=>{const m=good();m.tables=[{headers:[{text:'Size',align:'right'}],rows:[[{text:'24 KB',align:'left'}]]}];assert.ok(fails(m).includes('UI-010'));assert.ok(fails(m).includes('UI-011'));});
+test('detects header actions in the body',()=>{const m=good();m.outsideHeaderActions=[{text:'Prepare Restore'}];assert.ok(fails(m).includes('UI-016'));});
+test('detects a wrapping filter row',()=>{const m=good();m.filters=[{rect:{bottom:100}},{rect:{bottom:150}}];assert.ok(fails(m).includes('UI-009'));});
+test('detects action groups split across title rows',()=>{const m=good();m.headerControls=[{rect},{rect:{...rect,top:60,bottom:100}}];assert.ok(fails(m).includes('UI-018'));});
+test('detects count preceding refresh',()=>{const m=good();m.refresh={rect:{...rect,right:800}};m.count={rect:{...rect,left:700}};assert.ok(fails(m).includes('UI-017'));});
+test('allows responsive filter stacking while still detecting outer overflow',()=>{const m=good();m.viewport.width=600;m.document.width=600;m.document.height=900;m.filters=[{rect:{bottom:100}},{rect:{bottom:150}}];const ids=checkLayout(m,{filterRow:false}).filter(x=>x.status==='FAIL').map(x=>x.id);assert.ok(ids.includes('UI-002'));assert.ok(!ids.includes('UI-009'));});

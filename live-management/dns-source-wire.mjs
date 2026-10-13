@@ -1,0 +1,33 @@
+import net from 'node:net';import dgram from 'node:dgram';import {randomInt} from 'node:crypto';
+import {dnsSourceAddress,dnsSourceDomain} from './dns-source-settings.mjs';
+export {dnsSourceAddress,dnsSourceDomain} from './dns-source-settings.mjs';
+const fail=code=>Object.assign(new Error('The DNS source probe was not confirmed.'),{code});
+export function dnsProbeQuestion(domain,type,id=randomInt(65536)){
+ domain=dnsSourceDomain(domain,{allowUnderscore:true});if(![6,252].includes(type)||!Number.isInteger(id)||id<0||id>65535)throw fail('SOURCE_INVALID_QUERY');const header=Buffer.alloc(12);header.writeUInt16BE(id);header.writeUInt16BE(1,4);const suffix=Buffer.alloc(5);suffix.writeUInt16BE(type,1);suffix.writeUInt16BE(1,3);return {id,domain,type,bytes:Buffer.concat([header,...domain.split('.').map(l=>Buffer.concat([Buffer.from([l.length]),Buffer.from(l)])),suffix])};
+}
+function nameAt(bytes,start){let at=start,next,labels=[],visited=new Set();for(let hops=0;hops<128;hops++){
+ if(at>=bytes.length||visited.has(at))throw fail('SOURCE_INVALID_DNS');visited.add(at);const size=bytes[at++];if(!size){next??=at;return {name:labels.join('.').toLowerCase(),next};}
+ if((size&192)===192){if(at>=bytes.length)throw fail('SOURCE_INVALID_DNS');const pointer=((size&63)<<8)|bytes[at++];if(pointer>=bytes.length)throw fail('SOURCE_INVALID_DNS');next??=at;at=pointer;continue;}
+ if(size>63||at+size>bytes.length)throw fail('SOURCE_INVALID_DNS');labels.push(bytes.subarray(at,at+size).toString('latin1'));at+=size;if(labels.join('.').length>253)throw fail('SOURCE_INVALID_DNS');
+ }throw fail('SOURCE_INVALID_DNS');}
+export function parseDnsProbeResponse(bytes,question,{first=true}={}){
+ if(bytes.length<12||bytes.readUInt16BE(0)!==question.id)throw fail('SOURCE_INVALID_DNS');const flags=bytes.readUInt16BE(2),qd=bytes.readUInt16BE(4),an=bytes.readUInt16BE(6),ns=bytes.readUInt16BE(8),ar=bytes.readUInt16BE(10),rcode=flags&15;
+ if(!(flags&32768)||(flags&30720)||(flags&512)||qd>1||(first||rcode||question.type!==252)&&qd!==1||question.type===252&&ns!==0)throw fail('SOURCE_INVALID_DNS');
+ let at=12;if(qd){const read=nameAt(bytes,at);at=read.next;if(at+4>bytes.length||read.name!==question.domain||bytes.readUInt16BE(at)!==question.type||bytes.readUInt16BE(at+2)!==1)throw fail('SOURCE_INVALID_DNS');at+=4;}
+ const records=[];if(an+ns+ar>10000)throw fail('SOURCE_LIMIT');for(let i=0;i<an+ns+ar;i++){
+  const read=nameAt(bytes,at);at=read.next;if(at+10>bytes.length)throw fail('SOURCE_INVALID_DNS');const type=bytes.readUInt16BE(at),cls=bytes.readUInt16BE(at+2),ttl=bytes.readUInt32BE(at+4),size=bytes.readUInt16BE(at+8);at+=10;const end=at+size;if(end>bytes.length)throw fail('SOURCE_INVALID_DNS');
+  if(i<an){if(cls!==1)throw fail('SOURCE_INVALID_DNS');let soa;if(type===6){const m=nameAt(bytes,at),r=nameAt(bytes,m.next);if(r.next+20!==end)throw fail('SOURCE_INVALID_DNS');soa={mname:m.name,rname:r.name,serial:bytes.readUInt32BE(r.next),refresh:bytes.readUInt32BE(r.next+4),retry:bytes.readUInt32BE(r.next+8),expire:bytes.readUInt32BE(r.next+12),minimum:bytes.readUInt32BE(r.next+16),ttl};}records.push({name:read.name,type,...(soa?{soa}:{})});}at=end;
+ }
+ if(at!==bytes.length)throw fail('SOURCE_INVALID_DNS');return {rcode,authoritative:!!(flags&1024),records};
+}
+export async function dnsUdpSoa(address,domain,{timeoutMs=4000,createSocket=dgram.createSocket}={}){
+ const question=dnsProbeQuestion(domain,6),socket=createSocket(net.isIP(address)===6?'udp6':'udp4');return new Promise((resolve,reject)=>{let done=false;const timer=setTimeout(()=>finish(fail('SOURCE_TIMEOUT')),timeoutMs);const finish=(error,result)=>{if(done)return;done=true;clearTimeout(timer);try{socket.close();}catch{}error?reject(error):resolve(result);};socket.on('error',()=>finish(fail('SOURCE_UNREACHABLE')));socket.on('message',(bytes,peer)=>{if(peer.port!==53||peer.address!==address)return;try{const response=parseDnsProbeResponse(bytes,question);if(response.rcode)throw fail(response.rcode===5?'SOURCE_REFUSED':'SOURCE_DNS_ERROR');const soa=response.records.filter(r=>r.type===6&&r.name===question.domain);if(!response.authoritative||soa.length!==1)throw fail('SOURCE_NOT_AUTHORITATIVE');finish(null,{serial:soa[0].soa.serial,authoritative:true});}catch(error){finish(error);}});socket.send(question.bytes,53,address,error=>{if(error)finish(fail('SOURCE_UNREACHABLE'));});});
+}
+export async function dnsTcpAxfr(address,domain,{timeoutMs=6000,connect=net.createConnection,maxBytes=4194304,maxRecords=20000}={}){
+ const question=dnsProbeQuestion(domain,252),socket=connect({host:address,port:53}),started=Date.now();return new Promise((resolve,reject)=>{let done=false,pending=Buffer.alloc(0),bytesSeen=0,frames=0,count=0,initial,apexNs=false;const timer=setTimeout(()=>finish(fail('SOURCE_TIMEOUT')),timeoutMs);
+ const finish=(error,result)=>{if(done)return;done=true;clearTimeout(timer);socket.destroy();error?reject(error):resolve(result);};socket.on('error',()=>finish(fail('SOURCE_UNREACHABLE')));socket.on('end',()=>finish(fail('SOURCE_INCOMPLETE_TRANSFER')));socket.on('close',()=>{if(!done)finish(fail('SOURCE_INCOMPLETE_TRANSFER'));});socket.on('connect',()=>{const length=Buffer.alloc(2);length.writeUInt16BE(question.bytes.length);socket.write(Buffer.concat([length,question.bytes]));});
+ socket.on('data',chunk=>{if(done)return;try{bytesSeen+=chunk.length;if(bytesSeen>maxBytes)throw fail('SOURCE_LIMIT');pending=Buffer.concat([pending,chunk]);while(pending.length>=2){const size=pending.readUInt16BE(0);if(size<12)throw fail('SOURCE_INVALID_DNS');if(pending.length<size+2)break;const response=parseDnsProbeResponse(pending.subarray(2,size+2),question,{first:frames===0});pending=pending.subarray(size+2);frames++;if(response.rcode)throw fail(response.rcode===5?'SOURCE_REFUSED':'SOURCE_DNS_ERROR');if(!response.records.length)throw fail('SOURCE_INCOMPLETE_TRANSFER');
+   for(let i=0;i<response.records.length;i++){const record=response.records[i];if(++count>maxRecords)throw fail('SOURCE_LIMIT');if(record.name!==question.domain&&!record.name.endsWith('.'+question.domain))throw fail('SOURCE_FOREIGN_ZONE');if(!initial){if(record.type!==6||record.name!==question.domain)throw fail('SOURCE_INCOMPLETE_TRANSFER');initial=record.soa;continue;}if(record.type===2&&record.name===question.domain)apexNs=true;if(record.type===6){if(record.name!==question.domain||JSON.stringify(record.soa)!==JSON.stringify(initial)||i!==response.records.length-1||pending.length||!apexNs)throw fail('SOURCE_INCOMPLETE_TRANSFER');return finish(null,{serial:initial.serial,complete:true,records:count-1,frames,bytes:bytesSeen,elapsedMs:Date.now()-started});}}
+  }}catch(error){finish(error);}});
+ });
+}

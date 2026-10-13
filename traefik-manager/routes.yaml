@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik-manager-api
+  namespace: traefik-system
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/instance: traefik-traefik-system
+    app.kubernetes.io/name: traefik
+  ports:
+    - name: api
+      port: 8080
+      targetPort: traefik
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: traefik-manager-api-auth
+  namespace: traefik-system
+spec:
+  basicAuth:
+    secret: traefik-manager-api-auth
+    removeHeader: true
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: traefik-manager-api
+  namespace: traefik-system
+spec:
+  entryPoints: [traefik]
+  routes:
+    - kind: Rule
+      match: PathPrefix(`/api`)
+      middlewares:
+        - name: traefik-manager-api-auth
+      services:
+        - name: api@internal
+          kind: TraefikService
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: traefik-manager
+  namespace: traefik-system
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: 'true'
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: traefik.cormierconsulting.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: traefik-manager
+                port:
+                  name: http
+  tls:
+    - hosts: [traefik.cormierconsulting.io]
+      secretName: traefik-manager-tls

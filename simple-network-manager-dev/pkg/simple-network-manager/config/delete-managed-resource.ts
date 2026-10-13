@@ -1,0 +1,7 @@
+export function managedResourceDeletion(resource: any, pending: any[], source?: any, preview = false) {
+  if (!resource || resource.apiVersion !== 'cert-manager.io/v1' || !['Certificate','Issuer','ClusterIssuer'].includes(resource.kind) || !resource.metadata?.name || resource.kind !== 'ClusterIssuer' && !resource.metadata.namespace) throw new Error('Select an observed Certificate or issuer.');
+  const identity = source?.reviewedResourceIdentity?.(resource);
+  if (!preview && (!identity?.uid || !identity.resourceVersion)) throw new Error('Refresh the managed resource before preparing deletion.');
+  if (pending.some(change => change.resources?.some((item: any) => item.apiVersion === resource.apiVersion && item.kind === resource.kind && item.metadata?.name === resource.metadata.name && item.metadata?.namespace === resource.metadata.namespace))) throw new Error('Review or discard the existing proposal for this resource first.');
+  return { id:`delete:${resource.kind}:${resource.metadata.namespace || ''}/${resource.metadata.name}`,category:`Delete ${resource.kind}`,name:resource.metadata.name,namespace:resource.metadata.namespace || '',resources:[{apiVersion:resource.apiVersion,kind:resource.kind,metadata:{name:resource.metadata.name,...(resource.metadata.namespace ? {namespace:resource.metadata.namespace} : {}),...(identity || {})}}],configuration:{operation:'Delete',secretPreserved:true} };
+}

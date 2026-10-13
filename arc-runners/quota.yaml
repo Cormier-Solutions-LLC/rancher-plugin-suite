@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: arc-runner-capacity
+  namespace: arc-runners
+spec:
+  hard:
+    pods: '16'
+    requests.cpu: '16'
+    requests.memory: 32Gi
+    limits.memory: 256Gi
+  scopeSelector:
+    matchExpressions:
+      - scopeName: PriorityClass
+        operator: In
+        values: [arc-runners-low]

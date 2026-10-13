@@ -1,0 +1,13 @@
+// Passive proof for the native namespaced issuer inventory and blocked deletion.
+import fs from 'node:fs';import assert from 'node:assert/strict';
+import {createLiveNetworkSource} from '../live-management/rancher-network.mjs';
+const phase=process.argv[2],root='.local/manager-installation',base='http://127.0.0.1:15888',api='/api/v1/namespaces/manager-system/services/http:network-manager-snapshots:8080/proxy',file=root+'/native-namespaced-issuers-before.json';assert.ok(['before','after'].includes(phase));
+async function read(path){const r=await fetch(base+path,{signal:AbortSignal.timeout(15000)});assert.equal(r.status,200);return r.json();}
+const lists=await Promise.all(['/apis/cert-manager.io/v1/clusterissuers','/apis/cert-manager.io/v1/issuers','/apis/cert-manager.io/v1/certificates'].map(read));
+const resources=lists.flatMap(l=>l.items.map(r=>({kind:l.kind.replace(/List$/,''),name:r.metadata.name,namespace:r.metadata.namespace||'',uid:r.metadata.uid,spec:r.spec}))).sort((a,b)=>(a.kind+'/'+a.namespace+'/'+a.name).localeCompare(b.kind+'/'+b.namespace+'/'+b.name));
+const cm=await read('/api/v1/namespaces/cattle-ui-plugin-system/configmaps/network-manager-state-user-jccb4'),state=JSON.parse(cm.data['state.json']);assert.equal(state.pendingChanges.length,0);
+const source=createLiveNetworkSource('local',(url,init)=>fetch(base+url.replace('/k8s/clusters/local',''),init),'user-jccb4'),profiles=(await source.reload()).data.state.issuerProfiles;
+for(const name of ['godaddy-webhook-ca','godaddy-webhook-selfsign'])assert.ok(profiles.some(p=>p.name===name&&p.manifest.kind==='Issuer'&&p.manifest.metadata.namespace==='cert-manager'));
+const snapshots=(await read(api+'/api/snapshots')).snapshots;
+if(phase==='before'){assert.ok(!fs.existsSync(file),'Baseline already exists; inspect before any replay.');fs.writeFileSync(file,JSON.stringify({resources,snapshotIds:snapshots.map(s=>s.id)},null,2));console.log('Namespaced issuers are imported from live inventory; resource and snapshot baseline recorded.');}
+else{const before=JSON.parse(fs.readFileSync(file));assert.deepEqual(resources,before.resources);const fresh=snapshots.filter(s=>!before.snapshotIds.includes(s.id));assert.equal(fresh.length,1);for(const name of ['godaddy-webhook-ca','godaddy-webhook-selfsign'])assert.ok(fresh[0].coverage.some(c=>c.id===`issuer-profile/Issuer/cert-manager/${name}`));const report={observedAt:new Date().toISOString(),resourcesPreserved:resources.length,pendingProposals:0,namespacedIssuerCoverage:true,snapshotId:fresh[0].id,passed:true};fs.writeFileSync(root+'/native-namespaced-issuers-tests.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));}

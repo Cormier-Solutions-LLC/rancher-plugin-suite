@@ -1,15 +1,21 @@
 import { watch } from 'vue';
-import { navigationCounts } from './data/navigation-counts';
+import { connectNamespaceContext } from './data/namespace-context';
+import { navigationCounts, navigationTones } from './data/navigation-counts';
+import { bindNavigation } from '../../../rancher-common-ui/client/index.mjs';
 import { IPlugin } from '@shell/core/types';
 import { GROUP, PAGES, ROOT_PAGES, routeName } from './navigation';
 
 export function init(plugin: IPlugin, store: any) {
+  connectNamespaceContext(store);
+  const badges=bindNavigation('simple-network-manager',()=>navigationTones.value);
+  const stopTones=watch(navigationTones,()=>badges.update());
+  plugin.addUninstallHook?.(()=>{stopTones();badges.destroy();});
   const { basicType, virtualType, weightGroup, setGroupDefaultType } = plugin.DSL(store, 'explorer');
   watch(navigationCounts, counts => {
     PAGES.forEach((page, index) => {
-      // The navigation renderer supports count, although the DSL options omit it.
+      // Counts use Rancher's renderer with shared styling scoped to this manager.
       const navItem = {
-      name: `snm-${page.name}`, label: page.label, count: counts[page.name],
+      name: `snm-${page.name}`, label: page.label, count: counts[page.name] ?? null,
       namespaced: false, weight: PAGES.length - index,
       route: { name: routeName(page.name), params: { product: 'explorer' } }
       };
@@ -23,4 +29,5 @@ export function init(plugin: IPlugin, store: any) {
   setGroupDefaultType(GROUP, 'snm-overview');
   // Weight is a placement hint; verify against installed Rancher products.
   weightGroup(GROUP, 0.5, true);
+  store.commit('type-map/labelGroup',{group:GROUP,label:'Network Manager'});
 }

@@ -1,0 +1,5 @@
+# Harbor chart 1.19.2 / application 2.15.2. Retain existing release settings.
+# Preserve core tokenKey/tokenCert and registry htpasswdString when upgrading;
+# scripts/prepare-harbor-scanner-values.mjs obtains those existing values privately.
+trivy:
+  enabled: true

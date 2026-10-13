@@ -1,0 +1,14 @@
+✔ Rancher adapter shares normalized source contract and cannot write inventory as mock JSON (2.339ms)
+✔ DNS source rejects missing record collections and stale order identities (1.4972ms)
+✔ storage forecasts show infinity only beyond one calendar year; unknown is not infinity (32.4259ms)
+✔ save survives a new store, preserves source provenance, and rejects stale revisions (45.6847ms)
+✔ invalid documents and concurrent saves cannot replace valid source (34.4671ms)
+✔ HTTP writes reject cross-origin and malformed bodies; client queues edits without loss (240.2918ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 767.2805

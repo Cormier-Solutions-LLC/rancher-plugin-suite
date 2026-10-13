@@ -5,10 +5,11 @@ import { portConfigurations, configurationVersions, transportOf, type PortConfig
 import { buildMultiPublication } from './multi-publication';
 import { validatePortLinks } from './port-links';
 import { connectionDrafts, saveConnectionDraft } from '../data/connection-edits';
+import { restorationManifest } from './restoration-manifest.mjs';
 const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 const key = (value: { namespace: string; name: string }) => `${value.namespace}/${value.name}`;
 function routeRestorationDrafts(current: any) {
-  const manifests = copy(current.routeManifests || []);
+  const manifests = copy(current.routeManifests || []).map(restorationManifest);
   const validResource = (resource: any) => resource && ['Ingress', 'IngressRoute', 'IngressRouteTCP', 'IngressRouteUDP', 'Certificate', 'Middleware'].includes(resource.kind) && typeof resource.apiVersion === 'string' && typeof resource.metadata?.name === 'string' && typeof resource.metadata?.namespace === 'string' && resource.spec && typeof resource.spec === 'object';
   if (!Array.isArray(manifests) || manifests.some(resource => !validResource(resource))) throw new Error('Saved routing manifest is incomplete or unsupported.');
   return manifests.filter((resource: any) => ['Ingress', 'IngressRoute', 'IngressRouteTCP', 'IngressRouteUDP'].includes(resource.kind)).map((route: any) => {
@@ -16,7 +17,7 @@ function routeRestorationDrafts(current: any) {
     const saved = (current.editedConnections || []).find((draft: any) => draft.sourceId === sourceId);
     if (saved) {
       if (saved.namespace !== route.metadata.namespace || !Array.isArray(saved.resources) || !saved.resources.length || saved.resources.some((resource: any) => !validResource(resource))) throw new Error('Saved connection draft has invalid routing manifests.');
-      return copy(saved);
+      return {...copy(saved),resources:saved.resources.map(restorationManifest)};
     }
     const certificates = manifests.filter((resource: any) => resource.kind === 'Certificate' && resource.metadata.namespace === route.metadata.namespace && (route.spec.tls?.secretName === resource.spec.secretName || route.spec.tls?.some?.((tls: any) => tls.secretName === resource.spec.secretName)));
     return { sourceId, name: route.metadata.name, namespace: route.metadata.namespace, resources: copy([...certificates, route]) };

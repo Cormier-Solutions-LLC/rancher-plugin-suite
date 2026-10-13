@@ -1,0 +1,76 @@
+# Static volumes for the existing /volume1/Storage export on the replacement NAS.
+# Preserve the live NFSv3 settings and retain the storage on resource removal.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: plex-server-media-nfs-v2
+spec:
+  capacity:
+    storage: 100Ti
+  accessModes: [ReadWriteMany]
+  volumeMode: Filesystem
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  claimRef:
+    namespace: plex-server
+    name: plex-server-media-v2
+  mountOptions: [nfsvers=3]
+  csi:
+    driver: nfs.csi.k8s.io
+    volumeHandle: plex-server-media-nfs-v2
+    volumeAttributes:
+      server: "10.99.1.203"
+      share: /volume1/Storage
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: plex-server-media-v2
+  namespace: plex-server
+spec:
+  accessModes: [ReadWriteMany]
+  volumeMode: Filesystem
+  storageClassName: ""
+  volumeName: plex-server-media-nfs-v2
+  resources:
+    requests:
+      storage: 100Ti
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: media-storage-torrent-v2
+  labels:
+    cormierconsulting.io/server: synology
+    cormierconsulting.io/storage: media
+spec:
+  capacity:
+    storage: 1Pi
+  accessModes: [ReadWriteMany]
+  volumeMode: Filesystem
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  claimRef:
+    namespace: torrent
+    name: media-storage-v2
+  mountOptions: [nfsvers=3]
+  csi:
+    driver: nfs.csi.k8s.io
+    volumeHandle: media-storage-torrent-v2
+    volumeAttributes:
+      server: "10.99.1.203"
+      share: /volume1/Storage
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: media-storage-v2
+  namespace: torrent
+spec:
+  accessModes: [ReadWriteMany]
+  volumeMode: Filesystem
+  storageClassName: ""
+  volumeName: media-storage-torrent-v2
+  resources:
+    requests:
+      storage: 1Pi

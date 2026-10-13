@@ -8,7 +8,7 @@ export function askBackupPassword(): Promise<string> {
   });
 }
 
-export function askSnapshotOptions(requireSecrets = false, signal?: AbortSignal): Promise<{includeSecrets:boolean,password:string}> {
+export function askSnapshotOptions(requireSecrets = false, signal?: AbortSignal, schedule=false): Promise<{includeSecrets:boolean,password:string}> {
   return new Promise((resolve, reject) => {
     if (signal?.aborted) return reject(new Error('Snapshot cancelled.'));
     const node = document.createElement('div'); document.body.appendChild(node);
@@ -18,7 +18,7 @@ export function askSnapshotOptions(requireSecrets = false, signal?: AbortSignal)
       app.unmount(); node.remove(); value ? resolve(value) : reject(new Error('Snapshot cancelled.'));
     };
     const cancel = () => done();
-    const app = createApp(BackupPassword, {open:true,capture:true,requireSecrets,onConfirm:done,onCancel:cancel});
+    const app = createApp(BackupPassword, {open:true,capture:true,schedule,requireSecrets,onConfirm:done,onCancel:cancel});
     signal?.addEventListener('abort',cancel,{once:true}); app.mount(node);
   });
 }

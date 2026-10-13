@@ -9,6 +9,8 @@ import { runningProcesses } from '../simple-network-manager-dev/pkg/simple-netwo
 import { displaySettings } from '../simple-network-manager-dev/pkg/simple-network-manager/data/display-settings';
 import { rancherOrigin } from '../simple-network-manager-dev/pkg/simple-network-manager/data/resource-links';
 import { namespaceContext } from '../simple-network-manager-dev/pkg/simple-network-manager/data/namespace-context';
+import { refreshMessage } from '../simple-network-manager-dev/pkg/simple-network-manager/data/page-refresh';
+import {reconcileIssuerWorkspace} from '../live-management/reconcile-issuer-workspace.mjs';
 
 export function connectNetworkState(source: any) {
   const arrays: Record<string, any[]> = { portConfigurations, issuerProfiles, credentialReferences,
@@ -25,6 +27,14 @@ export function connectNetworkState(source: any) {
     formDrafts: formDrafts.value, displaySettings, rancherOrigin: rancherOrigin.value,
     namespaceContext: namespaceContext.value });
   // Synchronous watch queues the complete saved state before the next user action.
-  const stop = watch(state, value => source.saveState(value), { deep: true, flush: 'sync' });
-  return { stop, canEdit: () => !editorDirty.value };
+  let refreshingIssuerState=false;
+  const stop = watch(state, value => { if(!refreshingIssuerState)source.saveState(value).catch((error:Error)=>{refreshMessage.value=`Draft persistence failed: ${error.message}`;}); }, { deep: true, flush: 'sync' });
+  async function refreshObservedIssuers(loaded:any){
+    const current=JSON.parse(JSON.stringify({issuerProfiles,credentialReferences,accountReferences})),next=reconcileIssuerWorkspace(current,loaded);
+    if(JSON.stringify(current)===JSON.stringify(next))return;
+    refreshingIssuerState=true;
+    try{issuerProfiles.splice(0,issuerProfiles.length,...next.issuerProfiles);credentialReferences.splice(0,credentialReferences.length,...next.credentialReferences);accountReferences.splice(0,accountReferences.length,...next.accountReferences);}finally{refreshingIssuerState=false;}
+    await source.saveState(state());
+  }
+  return { stop, refreshObservedIssuers, canEdit: () => !editorDirty.value };
 }

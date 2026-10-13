@@ -1,0 +1,55 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: network-snapshot-capture
+rules:
+  - apiGroups: [""]
+    resources: [services]
+    verbs: [get, list]
+  - apiGroups: [networking.k8s.io]
+    resources: [ingresses]
+    verbs: [get, list]
+  - apiGroups: [cert-manager.io]
+    resources: [certificates, issuers, clusterissuers]
+    verbs: [get, list]
+  - apiGroups: [traefik.io]
+    resources: [ingressroutes, ingressroutetcps, ingressrouteudps, middlewares, serverstransports]
+    verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: network-snapshot-capture
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: network-snapshot-capture
+subjects:
+  - kind: ServiceAccount
+    name: network-manager-snapshots
+    namespace: manager-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: network-snapshot-configuration-owner
+  namespace: cattle-ui-plugin-system
+rules:
+  - apiGroups: [""]
+    resources: [configmaps]
+    resourceNames: [network-manager-state-user-jccb4]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: network-snapshot-configuration-owner
+  namespace: cattle-ui-plugin-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: network-snapshot-configuration-owner
+subjects:
+  - kind: ServiceAccount
+    name: network-manager-snapshots
+    namespace: manager-system

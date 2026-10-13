@@ -11,18 +11,18 @@ Passwords and decrypted Secret values are never saved in project fixtures.
 
 The instructions below also cover previously saved legacy JSON/YAML backups.
 
-This runbook describes the existing JSON/YAML preview recovery format. Current
+The following historical instructions describe legacy JSON/YAML recovery. Current
 shared requirements, including ZIP export and optional encrypted Secret capture,
 are maintained in the [Snapshots standard](../RANCHER-PLUGIN-DESIGN.md#8-snapshots-schedules-restoration-and-recovery).
 These legacy recovery instructions are implementation evidence, not an exception
-to that contract; encryption implementation/verification remains separate.
+to that contract. Current encrypted ZIP round-trip and password rejection are tested.
 
 
-Each new stored snapshot has a JSON index and a separate multi-document YAML
+Each legacy stored snapshot has a JSON index and a separate multi-document YAML
 file under `/var/lib/simple-network-manager/snapshots`. The YAML can be read
 without Network Manager. Snapshots also offers both downloads.
 
-The current design preview exports inspected route and Certificate specifications
+Both formats preserve inspected route and Certificate specifications
 and local drafts, plus known Services, Middleware, TLS options, IngressClass and
 issuer specifications needed by those routes. The JSON index also keeps application
 port configurations, issuer profiles and pending proposals. Keep both files to

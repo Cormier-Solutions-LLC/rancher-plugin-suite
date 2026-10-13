@@ -1,0 +1,7 @@
+ports:
+  kubernetes:
+    port: 6443
+    exposedPort: 6443
+    protocol: TCP
+    expose:
+      default: true

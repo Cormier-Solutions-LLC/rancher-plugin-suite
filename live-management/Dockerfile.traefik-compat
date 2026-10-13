@@ -1,0 +1,9 @@
+FROM golang:1.26.8-alpine@sha256:8ac98ca534ac3f51e1f420a1dd2c15e74c75cfa0f23f3ad27eb5d7236c349a0c AS build
+WORKDIR /src
+COPY . .
+ENV CGO_ENABLED=0 GOMAXPROCS=2
+RUN go build -p 2 -trimpath -ldflags "-s -w -X github.com/traefik/traefik/v3/pkg/version.Version=3.7.12-udp2 -X github.com/traefik/traefik/v3/pkg/version.Codename=cheddar" -o /traefik ./cmd/traefik \
+ && go build -trimpath -ldflags "-s -w" -o /manager-ready manager-ready.go
+FROM traefik:v3.7.12@sha256:9c2a54d87f76f5c2f5f2682c68394af92fb12c0a2686798d6462a3f84bd78eaf
+COPY --from=build /traefik /usr/local/bin/traefik
+COPY --from=build /manager-ready /usr/local/bin/manager-ready

@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+ <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+ <ItemGroup>
+  <Reference Update="TechnitiumLibrary"><Private>true</Private></Reference>
+  <Reference Update="TechnitiumLibrary.Net"><Private>true</Private></Reference>
+  <Reference Update="TechnitiumLibrary.IO"><Private>true</Private></Reference>
+ </ItemGroup>
+</Project>

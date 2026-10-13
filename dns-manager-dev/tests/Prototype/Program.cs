@@ -67,7 +67,7 @@ try
         zip.CreateEntryFromFile(Path.ChangeExtension(assembly, ".deps.json"), "Cormier.Dns.LookupPolicy.deps.json");
         using var writer = new StreamWriter(zip.CreateEntry("dnsApp.config").Open());
         await writer.WriteAsync(JsonSerializer.Serialize(new PolicyOptions { Enabled = true,
-            SourceServer = "172.30.239.10", PublicServer = "172.30.239.20" }));
+            SourceServer = "172.30.239.10", PublicServer = "172.30.239.20", ValidatePublicDnssec = false }));
     }
     foreach (var replica in replicas)
     {

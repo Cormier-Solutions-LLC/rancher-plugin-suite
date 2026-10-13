@@ -1,0 +1,13 @@
+npm notice run simple-network-manager-dev@0.1.0 test:snapshots
+npm notice run node --test ../preview-data/tests/snapshot-server.test.mjs ../preview-data/tests/snapshot-unlock.test.mjs
+✔ dns-manager-dev: encrypted recovery, verification, merge, mounted storage, restart and cleanup (1806.5255ms)
+✔ simple-network-manager-dev: encrypted recovery, verification, merge, mounted storage, restart and cleanup (1471.2696ms)
+✔ only verified protected snapshots are merged; unencrypted sources remain eligible (2.7916ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3531.3385

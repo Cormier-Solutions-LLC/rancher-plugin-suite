@@ -1,3 +1,6 @@
+
+import {managerFetch} from '../../../../../live-management/manager-api.mjs';
+const fetch=(url:string, options?:RequestInit)=>managerFetch('dns-manager',url,options);
 import { ref } from 'vue';
 import { askBackupPassword } from './unlock-backup';
 export interface SnapshotRecord { archiveFormat?:string; encrypted?:boolean; sizeBytes?: number; jsonBytes?: number; yamlBytes?: number; coverage?: { id: string; digest: string }[]; id: string; createdAt: string; name: string; publications: number; services: number; routeIds: string[]; manifests: number; namespaces?: string[]; generation?: 'Manual' | 'Automatic'; scope?: { label: string; namespace?: string }; sourceUpdatedAt?: string }
@@ -7,9 +10,10 @@ export async function refreshSnapshots() {
   if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) throw new Error('Snapshot storage is unavailable. Start the optional local backup service or use a downloaded ZIP.');
   storedSnapshots.value = (await response.json()).snapshots.sort((a:SnapshotRecord,b:SnapshotRecord) => Date.parse(b.createdAt)-Date.parse(a.createdAt));
 }
-export async function readSnapshot(id: string) {
+export async function readSnapshot(id: string, {interactive=true}: {interactive?:boolean} = {}) {
   const response = await fetch(`/api/snapshots/${encodeURIComponent(id)}`);
   if (response.status === 422) {
+    if(!interactive)throw new Error('Encrypted saved version requires explicit unlock from Snapshots.');
     let password = await askBackupPassword();
     try {
       const unlocked = await fetch(`/api/snapshots/${encodeURIComponent(id)}/unlock`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password}) });
@@ -21,7 +25,7 @@ export async function readSnapshot(id: string) {
   return response.json();
 }
 export async function storeSnapshot(current: object, scopeKey: string, password = '') {
-  const response = await fetch('/api/snapshots', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ current, scopeKey, password }) });
+  const response = await fetch('/api/snapshots', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ current, scopeKey, password,includeSecrets:!!(current as any).secretBackup?.requested }) });
   if (!response.ok) throw new Error('Snapshot was not saved. Check the hosting server and persistent storage, or choose download only.');
   const snapshot = await response.json();
   // A successful write remains successful if the subsequent listing fails.

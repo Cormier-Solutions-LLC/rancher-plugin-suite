@@ -1,0 +1,5 @@
+# Merge into the existing prod-realtime-redis Helm values for Redis chart 23.1.1.
+# Allows both discovery attempts plus retry delays to fit inside the current
+# 60-attempt Sentinel postStart hook when no ready Sentinel endpoint exists.
+sentinel:
+  getMasterTimeout: 10

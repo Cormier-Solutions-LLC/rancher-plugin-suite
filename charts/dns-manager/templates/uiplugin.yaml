@@ -3,7 +3,12 @@ kind: UIPlugin
 metadata:
   name: dns-manager
   namespace: {{ .Release.Namespace }}
+  annotations:
+    common-ui.cormierconsulting.io/name: rancher-common-ui
+    common-ui.cormierconsulting.io/api-version: "1"
+    common-ui.cormierconsulting.io/version-range: ">=1.0.0 <2.0.0"
   labels:
+    common-ui.cormierconsulting.io/required: "true"
     app.kubernetes.io/name: dns-manager
     app.kubernetes.io/instance: {{ .Release.Name | quote }}
     app.kubernetes.io/managed-by: {{ .Release.Service | quote }}

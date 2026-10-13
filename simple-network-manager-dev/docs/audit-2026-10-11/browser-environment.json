@@ -1,0 +1,13 @@
+{
+  "scriptSources": [
+    "http://127.0.0.1:8091/assets/index-qu4l4Ud1.js"
+  ],
+  "stylesheetSources": [
+    "http://127.0.0.1:8091/assets/Preview-Bts-XdNV.css"
+  ],
+  "viewport": {
+    "height": 720,
+    "width": 1280
+  },
+  "url": "http://127.0.0.1:8091/"
+}

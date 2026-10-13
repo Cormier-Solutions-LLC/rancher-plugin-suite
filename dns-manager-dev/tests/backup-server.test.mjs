@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtemp, readFile, readdir, stat, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, stat, rm, mkdir, writeFile } from 'node:fs/promises';
 import { resolve, sep } from 'node:path';
 import net from 'node:net';
 import { decodeBackup } from '../pkg/dns-manager/snapshot-feature/config/backup-zip.mjs';
@@ -21,6 +21,12 @@ test('backup server persists ZIP, merges items, enforces quota, and unlocks encr
   const current={configuration:{id:'source/test',name:'Test Source',kind:'DnsSource',dns:{host:'fixture.invalid'}},relatedConfigurations:[{id:'zone/test',name:'fixture.invalid',kind:'DnsZone',namespace:'dns-system',dns:{sourceId:'source/test',records:[]}}],routeManifests:[],snapshotScope:{label:'Fixture Configuration'}};
   try{
     await start();
+    const recoveryId='00000000-0000-4000-8000-000000000001';
+    assert.equal((await api(`credential-recovery/${recoveryId}/status`)).status,405);
+    assert.equal((await api(`credential-recovery/${recoveryId}/status`,{})).status,403);
+    assert.equal((await api('credential-recovery/prepare',{id:recoveryId,snapshotId:recoveryId,names:['dns-manager-engine-admin'],password:'Synthetic-backup-2026!42'})).status,403);
+    assert.equal((await api(`credential-recovery/${recoveryId}/status`,{host:'foreign.invalid'})).status,400);
+    assert.ok(!(await readdir(directory)).includes('credential-recovery'));
     const first=await api('snapshots',{current,scopeKey:'fixture'});assert.equal(first.status,201);
     const zip=await fetch(`${origin}/api/snapshots/${first.data.id}/backup.zip`);assert.equal(zip.headers.get('content-type'),'application/zip');
     const bytes=new Uint8Array(await zip.arrayBuffer());assert.deepEqual((await decodeBackup(bytes)).current.configuration,current.configuration);
@@ -37,6 +43,8 @@ test('backup server persists ZIP, merges items, enforces quota, and unlocks encr
     assert.equal((await api('snapshots/'+protectedFile.data.id+'/unlock',{password})).data.current.routeManifests[0].stringData.key,secret.stringData.key);
     for(const name of await readdir(directory)){const stored=await readFile(resolve(directory,name));assert.ok(!stored.includes(Buffer.from(secret.stringData.key)),name+' disclosed a Secret');}
     const storage=(await api('snapshot-storage')).data;assert.ok(storage.availableBytes<=1048576);if(storage.totalBytes!==undefined)assert.ok(storage.totalBytes<=1048576);assert.ok(storage.largestSnapshotBytes>0);
+    await mkdir(resolve(directory,'credential-recovery'));await writeFile(resolve(directory,'credential-recovery','fixture-journal.json'),Buffer.alloc(8192));
+    assert.equal((await api('snapshot-storage')).data.usedBytes,storage.usedBytes+8192);
     const count=(await api('snapshots')).data.snapshots.length;
     const used=(await Promise.all((await readdir(directory)).map(name=>stat(resolve(directory,name))))).reduce((sum,file)=>sum+file.size,0);
     await stop();await start(used+100);

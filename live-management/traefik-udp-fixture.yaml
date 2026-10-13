@@ -1,0 +1,28 @@
+services:
+  fixture:
+    image: node:24.20.0-alpine@sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf
+    command: [node, /app/server.cjs]
+    volumes:
+      - ./traefik-udp-fixture.cjs:/app/server.cjs:ro
+      - ../.local/traefik-udp-fixture:/state
+  upstream:
+    image: traefik:v3.7.12@sha256:9c2a54d87f76f5c2f5f2682c68394af92fb12c0a2686798d6462a3f84bd78eaf
+    command: &proxy-arguments
+      - --entrypoints.web.address=:18080/tcp
+      - --entrypoints.echo-tcp.address=:15001/tcp
+      - --entrypoints.echo-udp.address=:15002/udp
+      - --providers.http.endpoint=http://fixture:8080/configuration
+      - --providers.http.pollinterval=500ms
+      - --providers.providersthrottleduration=100ms
+      - --log.level=ERROR
+    ports:
+      - 127.0.0.1:25001:15001/tcp
+      - 127.0.0.1:25002:15002/udp
+      - 127.0.0.1:25004:18080/tcp
+  candidate:
+    image: harbor.cormierconsulting.io/automation/traefik:3.7.12-udp2
+    command: *proxy-arguments
+    ports:
+      - 127.0.0.1:25005:15001/tcp
+      - 127.0.0.1:25006:15002/udp
+      - 127.0.0.1:25008:18080/tcp

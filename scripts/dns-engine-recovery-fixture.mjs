@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';import {readFile,writeFile} from 'node:fs/promises';import {join} from 'node:path';import {randomUUID} from 'node:crypto';
+import {dnsEngineApi} from './dns-engine-api.mjs';import {dnsEngineRecovery} from './dns-engine-recovery.mjs';
+const directory='/fixture',input=JSON.parse(await readFile(join(directory,'test-input.json'),'utf8')),phase=process.argv[2],{id,before,target,names}=input;
+const baseForReplica=replica=>'http://'+names[replica]+':5380/api/',plain=dnsEngineApi({baseForReplica}),mountedFile=join(directory,'mounted-password');
+const secret=value=>({kind:'Secret',type:'Opaque',metadata:{name:'dns-manager-engine-admin',namespace:'dns-system'},data:{'admin-password':Buffer.from(value).toString('base64')}});
+const request={id,before:secret(before),target:secret(target)};
+async function ready(value){for(const replica of [0,1,2]){let accepted=false;for(let n=0;n<40;n++){try{await plain.verifyPassword(replica,value);accepted=true;break;}catch{await new Promise(r=>setTimeout(r,500));}}assert.equal(accepted,true,'Isolated engine authentication');}}
+let changes=[],drop=true,logins=[],reloadVerified=false;
+const fetchImpl=async(url,options)=>{const replica=names.findIndex(name=>url.startsWith('http://'+name+':'));if(url.endsWith('user/login'))logins.push({replica,restored:options.body.get('pass')===target});const response=await fetch(url,options);if(url.endsWith('user/changePassword')){changes.push(replica);if(replica===1&&drop){drop=false;await response.text();throw Error('Injected loss after accepted password change');}}return response;};
+const api=dnsEngineApi({baseForReplica,fetchImpl,readPassword:()=>readFile(mountedFile,'utf8')});
+const confirmController=async()=>{const reload=!reloadVerified,start=logins.length;await writeFile(mountedFile,target);for(const replica of [0,1,2])await api.api(replica,'zones/list');if(reload){const fresh=logins.slice(start);assert.equal(fresh.length,3);assert.ok(fresh.every(l=>l.restored));assert.deepEqual(fresh.map(l=>l.replica),[0,1,2]);reloadVerified=true;}return {confirmed:true};};
+const options={directory,api,confirmController},checks=[];let recovery=dnsEngineRecovery(options);
+if(phase==='change'){
+ await ready(before);await writeFile(mountedFile,before);for(const replica of [0,1,2])await api.api(replica,'zones/list');checks.push('Three initial admin sessions');
+ await recovery.prepare(request);assert.equal(changes.length,0);await assert.rejects(recovery.commit(request));assert.deepEqual(changes,[0,1]);recovery=dnsEngineRecovery(options);assert.equal((await recovery.reconcile(request)).status,'ReadyToContinue');assert.equal((await recovery.commit(request)).status,'Applied');assert.deepEqual(changes,[0,1,2]);assert.equal((await recovery.verify(request)).confirmed,true);checks.push('Accepted reply loss reconciled; every engine changed exactly once','Mounted password reload establishes three fresh admin sessions');
+ const receipt=await readFile(join(directory,'engine-recovery-'+id+'.json'),'utf8');assert.ok(!receipt.includes(before));assert.ok(!receipt.includes(target));assert.ok(!receipt.includes('token'));checks.push('Durable receipts contain no credentials or sessions');
+}else if(phase==='restarted'){
+ await ready(target);for(const replica of [0,1,2])await assert.rejects(plain.verifyPassword(replica,before),e=>e.code==='ENGINE_AUTH_REJECTED');checks.push('Actual engine restart preserves restored password and rejects previous password');
+ await recovery.commit(request);assert.equal((await recovery.verify(request)).confirmed,true);const unchanged={...request,id:randomUUID(),before:secret(target)};await recovery.prepare(unchanged);await recovery.commit(unchanged);const missing={...request,id:randomUUID(),before:null};await recovery.prepare(missing);await recovery.commit(missing);assert.equal(changes.length,0);checks.push('New client process resumes durable Applied receipt','Repeated, unchanged and missing-Secret cases make no engine password changes');
+}else throw Error('Invalid fixture phase');
+const report={phase,passed:true,checks,actualEnginePasswordChanges:changes.length,reloadVerified,finishedAt:new Date().toISOString()};await writeFile(join(directory,phase+'-report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report));

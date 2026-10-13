@@ -1,0 +1,86 @@
+{
+  "date": "2026-10-11",
+  "standardSha256": "0ef93f67eee12e86f2de9d5853bbbf9dcc5b7ad54ddf9f5a0a5c068bf3f41b5f",
+  "files": [
+    {
+      "path": "RANCHER-PLUGIN-DESIGN.md",
+      "sha256": "0ef93f67eee12e86f2de9d5853bbbf9dcc5b7ad54ddf9f5a0a5c068bf3f41b5f"
+    },
+    {
+      "path": "dns-manager-dev/pkg/dns-manager/navigation.js",
+      "sha256": "c2d314e9d1f2b3129d35536af128b555f06427fcfeb351eedda1c69670a0538a"
+    },
+    {
+      "path": "dns-manager-dev/pkg/dns-manager/product.js",
+      "sha256": "04048322c82651de4c565d3f4cc0a0e6ba35d568318e009a4dc211446b5f235f"
+    },
+    {
+      "path": "dns-manager-dev/pkg/dns-manager/routing.js",
+      "sha256": "afa24a6cdcd67db12cb5549d9a09a175860ff630a90c1fcc3796036bac42d6bd"
+    },
+    {
+      "path": "dns-manager-dev/tests/ui/standards.spec.ts",
+      "sha256": "2638be189e16a601fa66b21a400178130533f869d513df5a6c86e3362a569714"
+    },
+    {
+      "path": "dns-manager-dev/pkg/dns-manager/pages/Dashboard.vue",
+      "sha256": "54ca015c41fb9f7fd345d6196eb71951d3345ef96ca840e37d93dd34f8013019"
+    },
+    {
+      "path": "dns-manager-dev/pkg/dns-manager/ui/dns-manager.js",
+      "sha256": "5ab2e841a17c2530f6b9756a42ed7bce483408b72951fe59f686f790befefc2f"
+    },
+    {
+      "path": "dns-manager-dev/pkg/dns-manager/snapshot-feature/pages/DataGrid.vue",
+      "sha256": "5ddb2de79ce23927644badc1871f92080a5d8d446a988e7bf52a46e1331414d0"
+    },
+    {
+      "path": "dns-manager-dev/tests/ui/snapshots.spec.ts",
+      "sha256": "908bf04767cfc02bfa48096259b0b994cc4822a3b00b1d575b6d8346f11935c4"
+    },
+    {
+      "path": "dns-manager-dev/pkg/dns-manager/snapshot-feature/pages/SnapshotFeature.vue",
+      "sha256": "f461ed5050c4691aefa5d97de529b0e4f86d0d3172037535bd588cb8325b7c62"
+    },
+    {
+      "path": "dns-manager-dev/tests/backup.test.mjs",
+      "sha256": "8dccac0ce223669d738a3cf8b659cbe16ad5cb097567db0ad124da748df04e66"
+    },
+    {
+      "path": "dns-manager-dev/tests/backup-server.test.mjs",
+      "sha256": "ca28e760c022fe45e54d6d38bf75eb78f417a570bebbd814bb6a1727b47cde77"
+    },
+    {
+      "path": "preview-data/tests/snapshot-server.test.mjs",
+      "sha256": "9c8d509cbb2d1ebe1ff2138e787ec981067ad7efd84e954d4c133bf4d7d7d359"
+    },
+    {
+      "path": "preview-data/tests/snapshot-unlock.test.mjs",
+      "sha256": "a520d9b826f183992140cd012f8b2ffb243af20fb5edbeb29b4fe8fcc2cc5743"
+    },
+    {
+      "path": "dns-manager-dev/pkg/dns-manager/ui/request-state.js",
+      "sha256": "933e6eaeb4065ab2ed2703eee383a51ab4bcf2a0504f94eddf044516169b0e76"
+    },
+    {
+      "path": "dns-manager-dev/README.md",
+      "sha256": "40bded9f690166c555d1d280a133a43904cc01f6169686d1138173b1a84af62b"
+    },
+    {
+      "path": "charts/dns-manager/README.md",
+      "sha256": "bbce32470dc776c38fe6499ba913d54a1bc21c135380f77a0bece7bf394e0913"
+    },
+    {
+      "path": "preview-data/data-source.mjs",
+      "sha256": "81a875000da304d0af19d0e74aa0072810b8350fb03053e7c3844690760848ef"
+    },
+    {
+      "path": "preview-data/vite-plugin.mjs",
+      "sha256": "3746cb9829ff2d8caae30f12509436ca551a08c8426608b29d02f638f95b14c2"
+    },
+    {
+      "path": "scripts/preview-suite.mjs",
+      "sha256": "dd854a7286219ec43845b69c513514b94e7dfca940d29a6499b0566f7cfc6004"
+    }
+  ]
+}
