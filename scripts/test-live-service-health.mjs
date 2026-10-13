@@ -1,4 +1,5 @@
 import fs from 'node:fs';import {execFile} from 'node:child_process';import {promisify} from 'node:util';
+import {inspectApplicationHealth} from './lib/service-health.mjs';
 const run=promisify(execFile),root='.local/manager-installation';
 const ingresses=JSON.parse(fs.readFileSync(`${root}/live-ingresses.json`));
 const custom=JSON.parse(fs.readFileSync(`${root}/live-ingressroutes.json`));
@@ -9,9 +10,19 @@ for(let i=0;i<endpoints.length;i+=4) {
  await Promise.all(endpoints.slice(i,i+4).map(async ({host,scheme})=>{
   try {
    const port=scheme==='https'?443:80;
-   const {stdout}=await run('curl.exe',['--silent','--show-error','--max-time','15','--resolve',`${host}:${port}:10.99.15.50`,'--output','NUL','--write-out','%{json}',`${scheme}://${host}${paths[host] || '/'}`]);
-   const metrics=JSON.parse(stdout);const status=Number(metrics.http_code);
-   results.push({host,scheme,path:paths[host] || '/',status,tlsVerified:scheme==='https'?metrics.ssl_verify_result===0:null,reachable:status>0&&status<500,seconds:metrics.time_total,note:[401,403].includes(status)?'Authenticated endpoint rejects anonymous access':status===405?'Endpoint rejects unsupported GET; functional request remains untested':status===404?'No root document; endpoint-specific verification remains required':''});
+   const inspectBody=host==='harbor.cormierconsulting.io';
+   const marker='__CURL_METRICS__';
+   const args=['--silent','--show-error','--max-time','15','--resolve',`${host}:${port}:10.99.15.50`];
+   if(inspectBody) args.push('--write-out',`\n${marker}%{json}`);
+   else args.push('--output','NUL','--write-out','%{json}');
+   args.push(`${scheme}://${host}${paths[host] || '/'}`);
+   const {stdout}=await run('curl.exe',args);
+   const markerAt=inspectBody?stdout.lastIndexOf(`\n${marker}`):-1;
+   const body=inspectBody&&markerAt>=0?stdout.slice(0,markerAt):'';
+   const metrics=JSON.parse(inspectBody?stdout.slice(markerAt+marker.length+1):stdout);const status=Number(metrics.http_code);
+   const {applicationHealthy,applicationStatus,unhealthyComponents}=inspectApplicationHealth(host,body);
+   const reachable=status>0&&status<500&&applicationHealthy;
+   results.push({host,scheme,path:paths[host] || '/',status,tlsVerified:scheme==='https'?metrics.ssl_verify_result===0:null,reachable,seconds:metrics.time_total,...(inspectBody?{applicationStatus,unhealthyComponents}:{}),note:inspectBody&&applicationStatus!=='healthy'?`Harbor reports ${applicationStatus}: ${unhealthyComponents.join(', ')}`:[401,403].includes(status)?'Authenticated endpoint rejects anonymous access':status===405?'Endpoint rejects unsupported GET; functional request remains untested':status===404?'No root document; endpoint-specific verification remains required':''});
   }catch(error){results.push({host,scheme,reachable:false,error:error.stderr || error.message});}
  }));
 }

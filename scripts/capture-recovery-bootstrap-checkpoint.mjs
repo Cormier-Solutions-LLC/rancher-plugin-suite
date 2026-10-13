@@ -8,6 +8,10 @@ const root = '.local/manager-installation';
 const base = 'http://127.0.0.1:15889';
 const hash = value => createHash('sha256').update(typeof value === 'string' ? value : JSON.stringify(value)).digest('hex');
 const load = name => readFile(`${root}/${name}`, 'utf8').then(JSON.parse);
+const loadOptional = async name => {
+  try { return await load(name); }
+  catch (error) { if (error.code === 'ENOENT') return null; throw error; }
+};
 async function get(path) {
   const response = await fetch(base + path, { signal: AbortSignal.timeout(15000) });
   assert.equal(response.status, 200, path);
@@ -116,6 +120,7 @@ const catalog = JSON.parse(catalogObject.data['sources.json']);
 const registry = JSON.parse(registryObject.data['bindings.json']);
 const state = JSON.parse(stateObject.data['state.json']);
 const queueJobs = JSON.parse(queue.data['jobs.json']);
+const physicalReboot = await loadOptional('proxmox09-failure-owned.json');
 
 assert.equal(controller.metadata.uid, proof.deploymentUid);
 assert.equal(controller.metadata.generation, 9);
@@ -171,6 +176,13 @@ assert.equal(runtime.status.readyReplicas, 1);
 assert.equal(runtime.spec.template.spec.securityContext.fsGroupChangePolicy, 'OnRootMismatch');
 assert.equal(dns.snapshots.length, 82);
 assert.equal(network.snapshots.length, 108);
+if (physicalReboot) {
+  assert.ok(physicalReboot.passed);
+  assert.ok(physicalReboot.sawBothTargetsUnavailable);
+  assert.equal(physicalReboot.minReadyNodes, 17);
+  assert.equal(physicalReboot.criticalFailures.kubernetesApi, 0);
+  assert.equal(physicalReboot.criticalFailures.sharedDns, 0);
+}
 
 const baseline = await get(`${proxy}dns-manager-snapshots:8080/proxy/api/snapshots/9b68e6c3-e739-4050-8ec4-e7e25dcbebdb`);
 const baselineRecords = Object.fromEntries(baseline.current.relatedConfigurations.filter(item => item.kind === 'DnsZone').map(item => [item.dns.zone.name, item.dns.records]));
@@ -246,8 +258,22 @@ const report = {
     recoveryChannelEmpty: credentialAcceptance.after.queueEmpty
   },
   accidentalRegressionCleanup: cleanup,
+  physicalFailureDomain: physicalReboot ? {
+    gracefulHostRebootObserved: true,
+    operation: physicalReboot.operation,
+    startedAt: physicalReboot.startedAt,
+    finishedAt: physicalReboot.finishedAt,
+    targetNodes: physicalReboot.targetNodes,
+    sawBothTargetsUnavailable: physicalReboot.sawBothTargetsUnavailable,
+    minReadyNodes: physicalReboot.minReadyNodes,
+    kubernetesApiFailures: physicalReboot.criticalFailures.kubernetesApi,
+    sharedDnsFailures: physicalReboot.criticalFailures.sharedDns,
+    rancherFailures: physicalReboot.criticalFailures.rancher,
+    fullyRecoveredAtCheckpoint: true,
+    abruptPowerLossTested: false
+  } : { gracefulHostRebootObserved: false, abruptPowerLossTested: false },
   remainingGates: [
-    'Abrupt physical-host failure',
+    physicalReboot ? 'Abrupt ungraceful physical-host power loss' : 'Physical failure-domain reboot',
     'Client and Omada resolver cutover',
     'Public DNS and external-service acceptance'
   ],

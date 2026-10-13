@@ -12,6 +12,7 @@
     "review:ui": "node scripts/review-ui.mjs",
     "test:ui-review": "node --test scripts/tests/ui-review.test.mjs",
     "test:preview-data": "node --test preview-data/tests/*.test.mjs",
+    "test:service-health": "node --test scripts/tests/service-health.test.mjs",
     "build:common-ui": "npm --prefix rancher-common-ui run build",
     "test:common-ui": "npm --prefix rancher-common-ui test",
     "prepreview": "npm run build:common-ui"

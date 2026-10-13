@@ -2,7 +2,7 @@
 
 Requested October 11, 2026. Active work; do not interpret installation as completion.
 
-The baseline cluster is RKE2 v1.35.7+rke2r1 with 19 Ready nodes and Rancher v2.15.1.
+The baseline cluster is RKE2 v1.35.7+rke2r1 with 19 Ready nodes. Rancher is now v2.15.2.
 Existing running workloads were ready at initial inspection. The managers and
 shared UI were not installed. They now load native authenticated inventory in
 Rancher. Windows record writes and selective restore now pass live tests.
@@ -17,46 +17,33 @@ issuance reached the real staging ACME server but failed because the isolated
 test hostname has no public A/AAAA records. Local challenge routing passed;
 public issuance success remains pending.
 
-Current health checkpoint: October 13, 2026, 00:24 UTC. All 19 nodes and 20 certificates
-were Ready, all inspected workloads and PVCs were ready/bound, all attached
-Longhorn volumes were healthy, and all 18 discovered HTTPS and one HTTP endpoint were reachable
-without server errors. Both test snapshot schedules are disabled with no saved
-last-run error. The goal remains active; the unchecked acceptance items are
-pending. Browser sign-in has been restored; Rancher shows the repaired realtime
-gateway active with three ready replicas. Traefik now preserves client addresses,
-with dynamic qBittorrent proxy trust restricted by a persistent network policy.
-Two controlled proxy replacements and the final production address checks passed.
-Application workflow testing continues.
-Plex/Tautulli connectivity and real media-range checks now pass. Representative
-Plex and Emby HTTPS HLS transcoding, codec validation and owned-session cleanup
-also pass, with existing watch data preserved. Open WebUI
-authentication passes, but inference is blocked by unavailable external model
-servers and an empty model list. This dependency received an Alexa alert.
-Current installed versions: DNS Manager 0.1.25, Network Manager 0.1.25 and Common
-UI 1.0.2. Restricted-user browser inventory, namespace filters, refresh, access
-revocation and initial permission errors now pass. The temporary account and
-TLS test alias were removed; the original fixture route was restored.
+Current health checkpoint: October 13, 2026, 22:13 UTC. All 19 nodes and 21 certificates
+are Ready, all inspected workloads and PVCs are ready/bound, all attached Longhorn
+volumes are healthy, and all 18 HTTPS and one HTTP endpoints are reachable. Harbor's
+application health body is healthy, including registry and registryctl. Current installed
+versions are DNS Manager 0.1.31, Network Manager 0.1.26 and Common UI 1.0.2.
 
 Acceptance scope:
 
 - [x] Shared UI and both managers installed, cached, and visibly loading in Rancher.
 - [x] Live inventory, namespace filtering, refresh and permission failures.
-- [ ] Network deployment, HTTP/HTTPS/TCP/UDP routing, certificate validation,
+- [x] Network deployment, HTTP/HTTPS/TCP/UDP routing, certificate validation,
       edit/delete, rollback and reconciliation using isolated test resources.
 - [x] DNS engine deployment with persistent independent replicas and source integration.
 - [x] DNS record types, suffix policy, NXDOMAIN/NODATA, caching, TCP/UDP, transfer
       recovery, source outage, replica restart and rolling update.
 - [x] Authenticated Windows inventory/edit/transfer/NOTIFY and controller recovery.
-- [ ] Snapshots, encryption, scheduling, merge, selective restore, quota and restart.
-- [ ] Rancher native lifecycle, dependencies, authorization and error paths.
+- [x] Snapshots, encryption, scheduling, merge, selective restore, quota and restart.
+- [x] Rancher native lifecycle, dependencies, authorization and error paths.
 - [x] Managed forward/IPv4 reverse/IPv6 reverse zone creation and deletion, owned
       parent delegation cleanup, protected original zones, and replica confirmation.
 - [x] Deleted previously manager-owned zone restoration with supported records and replica readback.
 - [x] DNS navigation Apply, full snapshot restore, interrupted-confirmation reconciliation and native route handoff.
 - [x] Installed DNS credential references, fresh encrypted manual/native capture, unattended capture and backend restart recovery.
-- [ ] Executable DNS source lifecycle and credential-reference/Secret restoration Apply.
-- [ ] Cluster networking, storage, certificates, monitoring and other workload health.
-- [ ] Physical failure-domain and management-endpoint availability verified.
+- [x] Executable DNS source lifecycle and credential-reference/Secret restoration Apply.
+- [x] Cluster networking, storage, certificates, monitoring and other workload health.
+- [x] Graceful physical failure-domain reboot and automatic recovery verified.
+- [ ] Abrupt ungraceful physical-host power loss and management-endpoint continuity.
 - [ ] Document DNS cutover requirements and remaining limitations; send Alexa outcome.
 
 Keep fixtures isolated from production DNS and existing routes. Record concrete
@@ -1640,3 +1627,12 @@ Controller recovery follow-up October 12, 2026, 19:53–20:03 UTC:
 - Helm release `rancher` completed at revision 2. The original Deployment UID was preserved. All three `rancher/rancher:v2.15.2` replicas are Ready on separate workers with zero restarts, and their latest 300 log lines contain no error, fatal or panic entries. Rancher reconciled Fleet to `0.16.2` and Rancher Webhook to `0.11.3`; both are Ready.
 - The upgraded native UI reports `v2.15.2`, the local RKE2 cluster Active and 19 machines. Network Manager still loads 42 routes with `15 Minutes` selected. DNS Manager Instances still shows all three replicas API Reachable, each at `4 / 4 current`, with its Rancher-proxied Technitium management link.
 - Full post-upgrade health reports 63/63 Deployments, 12/12 StatefulSets, 12/12 DaemonSets and all 367 active pods Ready; 19/19 nodes and 21/21 certificates Ready; 19/19 configured ingress endpoints reachable with 18 strict-TLS connections; no unhealthy attached Longhorn volumes; and the recovery checkpoint passing with 82 DNS and 108 Network snapshots. Evidence: `.local/manager-installation/rancher-upgrade-2.15.2-owned.json` and `.local/manager-installation/production-recovery-bootstrap-checkpoint.json`.
+
+## Proxmox physical failure-domain reboot — October 13, 2026
+
+- Rebooted `proxmox09` through its authenticated Proxmox management interface after verifying both hosted Kubernetes VMs had Start at boot enabled. Proxmox cleanly stopped VM 8215 (`kubworker15`) and VM 8216 (`kubworker16`), the host became unreachable, and Kubernetes independently observed both workers NotReady with the cluster at 17/19 Ready nodes. The host and both VMs returned automatically; `kubworker15` became Ready first and `kubworker16` followed 45 seconds later.
+- During 138 probes from 21:53:23Z through 22:07:56Z, the Kubernetes API, shared DNS VIP `10.99.15.58`, and DNS replicas `10.99.15.55` and `10.99.15.57` had zero failed probes. The zone-local DNS replica `10.99.15.56` became unavailable as expected while its worker was lost. Rancher returned one HTTP 502 between successful samples 12.766 seconds apart, so this drill establishes recovery and general management availability but does not establish zero-error Rancher continuity.
+- Harbor returned HTTP 502/503 from 21:54:00Z through 22:03:06Z while its single database/Redis and registry path recovered on other workers. Its health endpoint then returned HTTP 200 while the response body still identified `registry` and `registryctl` as unhealthy. A stale registry volume attachment cleared, the replacement registry pod became Ready, and the 100 GiB Longhorn volume rebuilt its third replica from write-only to read/write. The final body reports every Harbor component healthy and the volume is healthy with three read/write replicas.
+- A DNS engine and one realtime gateway replacement retained `ImagePullBackOff` from the Harbor outage. Deleting those two failed replacement pods retried the same immutable image digests after Harbor recovered; DNS returned to 3/3 and the gateway returned to 3/3. No configuration, credential, DNS record, DHCP, resolver, or public DNS value changed.
+- The service-health verifier now parses Harbor's JSON health body and fails when any component is unhealthy even if the endpoint returns HTTP 200. Three regression tests cover healthy, unhealthy-component, and malformed responses. The final post-recovery sweep passes with 19/19 Ready nodes, 21/21 Ready certificates, no unready inspected workload, no unhealthy attached Longhorn volume, all 19 endpoints reachable, Harbor application status healthy, and the production recovery checkpoint passing.
+- This was a complete physical-zone loss and recovery through a graceful Proxmox host reboot. It does not claim abrupt power-cut semantics. The remaining external gates are an ungraceful physical power-loss drill, client/Omada resolver cutover, and public TCP/80 plus external-service acceptance. Evidence: `.local/manager-installation/proxmox09-failure-owned.json`, `proxmox09-failure-samples.jsonl`, `service-health-tests.json`, and `production-recovery-bootstrap-checkpoint.json`.
