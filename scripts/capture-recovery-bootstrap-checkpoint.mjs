@@ -122,6 +122,7 @@ const state = JSON.parse(stateObject.data['state.json']);
 const queueJobs = JSON.parse(queue.data['jobs.json']);
 const physicalReboot = await loadOptional('proxmox09-failure-owned.json');
 const abruptVmPowerOff = await loadOptional('proxmox09-abrupt-vm-owned.json');
+const publicEdgeAcceptance = await loadOptional('public-edge-acceptance.json');
 
 assert.equal(controller.metadata.uid, proof.deploymentUid);
 assert.equal(controller.metadata.generation, 9);
@@ -192,6 +193,12 @@ if (abruptVmPowerOff) {
   assert.equal(abruptVmPowerOff.failures.sharedDns, 0);
   assert.equal(abruptVmPowerOff.failures.rancher, 0);
   assert.equal(abruptVmPowerOff.failures.harbor, 0);
+}
+if (publicEdgeAcceptance) {
+  assert.equal(publicEdgeAcceptance.hostname, 'manager-acceptance.cormierconsulting.io');
+  assert.ok(publicEdgeAcceptance.http.probesCount >= 4);
+  assert.equal(publicEdgeAcceptance.passed,
+    publicEdgeAcceptance.dns.ready && publicEdgeAcceptance.http.ready && publicEdgeAcceptance.https.ready);
 }
 
 const baseline = await get(`${proxy}dns-manager-snapshots:8080/proxy/api/snapshots/9b68e6c3-e739-4050-8ec4-e7e25dcbebdb`);
@@ -268,6 +275,15 @@ const report = {
     recoveryChannelEmpty: credentialAcceptance.after.queueEmpty
   },
   accidentalRegressionCleanup: cleanup,
+  publicEdgeAcceptance: publicEdgeAcceptance ? {
+    observedAt: publicEdgeAcceptance.observedAt,
+    hostname: publicEdgeAcceptance.hostname,
+    dnsReady: publicEdgeAcceptance.dns.ready,
+    httpReady: publicEdgeAcceptance.http.ready,
+    httpsReady: publicEdgeAcceptance.https.ready,
+    probes: publicEdgeAcceptance.http.probesCount,
+    passed: publicEdgeAcceptance.passed
+  } : null,
   physicalFailureDomain: physicalReboot ? {
     gracefulHostRebootObserved: true,
     operation: physicalReboot.operation,
@@ -303,7 +319,7 @@ const report = {
   remainingGates: [
     abruptVmPowerOff ? 'Abrupt ungraceful physical-host power loss' : (physicalReboot ? 'Abrupt dual-VM or physical-host power loss' : 'Physical failure-domain reboot'),
     'Client and Omada resolver cutover',
-    'Public DNS and external-service acceptance'
+    publicEdgeAcceptance?.passed ? 'External-service business acceptance' : 'Public DNS and external HTTP/HTTPS edge acceptance'
   ],
   credentialValuesRotated: 0,
   dnsDhcpOrPublicCutoverPerformed: false,
