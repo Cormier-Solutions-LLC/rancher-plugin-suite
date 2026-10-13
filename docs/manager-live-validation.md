@@ -58,6 +58,17 @@ with VIP 10.99.15.58 on both TCP and UDP port 53. Its independent replica VIPs a
 10.99.15.55–57. The Windows zone source remains domain02.cormierconsulting.com at
 10.99.3.2. These addresses are inventory facts, not a request to change DHCP now.
 
+Read-only pre-cutover validation from the real Windows client `Desktop` records its
+current DHCP server and gateway as `10.99.1.1`, resolver rollback values as
+`10.99.3.2, 10.99.1.1`, and primary/search suffix as `cormierconsulting.com`.
+Sixty-four source-comparison assertions passed against all three replica VIPs and
+the shared VIP over default DNS transport and forced TCP. The shared VIP also passed
+actual short-name suffix expansion, reverse lookup, AD LDAP discovery, public
+recursion, and a DNSSEC-enabled request. Adapter DNS settings were byte-for-byte
+unchanged. Evidence: `.local/manager-installation/windows-dns-client-live-tests.json`
+and `windows-client-shared-dns-precutover.json`. Omada scope inventory and staged
+lease renewal remain pending because its management UI requires an authenticated session.
+
 - Preserve the current Omada/DHCP resolver list, DNS search suffixes, lease duration,
   conditional forwarders and static client resolver settings before any change.
   Keep the original resolver list as the rollback values. Record which VLANs and
