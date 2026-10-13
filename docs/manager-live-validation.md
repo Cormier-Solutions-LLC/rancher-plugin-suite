@@ -44,7 +44,7 @@ Acceptance scope:
 - [x] Cluster networking, storage, certificates, monitoring and other workload health.
 - [x] Graceful physical failure-domain reboot and automatic recovery verified.
 - [ ] Abrupt ungraceful physical-host power loss and management-endpoint continuity.
-- [ ] Document DNS cutover requirements and remaining limitations; send Alexa outcome.
+- [x] Document DNS cutover requirements and remaining limitations; send Alexa outcome.
 
 Keep fixtures isolated from production DNS and existing routes. Record concrete
 tests and failures below. An untested path remains unverified. Exhaustive testing
@@ -68,6 +68,7 @@ recursion, and a DNSSEC-enabled request. Adapter DNS settings were byte-for-byte
 unchanged. Evidence: `.local/manager-installation/windows-dns-client-live-tests.json`
 and `windows-client-shared-dns-precutover.json`. Omada scope inventory and staged
 lease renewal remain pending because its management UI requires an authenticated session.
+The requested Alexa input notification was accepted at this intervention boundary.
 
 - Preserve the current Omada/DHCP resolver list, DNS search suffixes, lease duration,
   conditional forwarders and static client resolver settings before any change.
