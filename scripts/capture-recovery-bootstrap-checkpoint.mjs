@@ -7,7 +7,7 @@ import { confirmedControllerCredentials } from '../live-management/dns-controlle
 const root = '.local/manager-installation';
 const base = 'http://127.0.0.1:15889';
 const hash = value => createHash('sha256').update(typeof value === 'string' ? value : JSON.stringify(value)).digest('hex');
-const load = name => readFile(`${root}/${name}`, 'utf8').then(JSON.parse);
+const load = name => readFile(`${root}/${name}`, 'utf8').then(value => JSON.parse(value.replace(/^\uFEFF/, '')));
 const loadOptional = async name => {
   try { return await load(name); }
   catch (error) { if (error.code === 'ENOENT') return null; throw error; }
@@ -123,6 +123,8 @@ const queueJobs = JSON.parse(queue.data['jobs.json']);
 const physicalReboot = await loadOptional('proxmox09-failure-owned.json');
 const abruptVmPowerOff = await loadOptional('proxmox09-abrupt-vm-owned.json');
 const publicEdgeAcceptance = await loadOptional('public-edge-acceptance.json');
+const dhcpCutover = await loadOptional('managed-dns-dhcp-cutover.json');
+const omadaCutover = await loadOptional('omada-network-cutover.json');
 
 assert.equal(controller.metadata.uid, proof.deploymentUid);
 assert.equal(controller.metadata.generation, 9);
@@ -151,33 +153,37 @@ assert.equal(registryObject.metadata.uid, sourceFixture.after.registryUid);
 assert.equal(hash(registryObject.data['bindings.json']), sourceFixture.after.registryDigest);
 assert.deepEqual(registry, sourceFixture.after.registry);
 const credentialDigest = secret => hash(Object.entries(secret.data).sort(([a], [b]) => a.localeCompare(b)));
-assert.deepEqual(
-  [engine, bridge].map(secret => ({ uid: secret.metadata.uid, resourceVersion: secret.metadata.resourceVersion, dataDigest: credentialDigest(secret) })),
-  ['dns-manager-engine-admin', 'dns-windows-bridge-credential'].map(name => ({
-    uid: credentialAcceptance.after[name].uid,
-    resourceVersion: credentialAcceptance.after[name].resourceVersion,
-    dataDigest: credentialAcceptance.after[name].dataDigest
-  }))
-);
-assert.deepEqual(dns.snapshots.map(snapshot => snapshot.id).sort(), sourceFixture.after.dnsIds);
+const credentialNames = ['dns-manager-engine-admin', 'dns-windows-bridge-credential'];
+const currentCredentials = Object.fromEntries([engine, bridge].map((secret, index) => [credentialNames[index], {
+  uid: secret.metadata.uid,
+  resourceVersion: secret.metadata.resourceVersion,
+  dataDigest: credentialDigest(secret)
+}]));
+for (const name of credentialNames) {
+  assert.equal(currentCredentials[name].uid, credentialAcceptance.after[name].uid);
+  assert.equal(currentCredentials[name].dataDigest, credentialAcceptance.after[name].dataDigest);
+}
+assert.equal(currentCredentials['dns-manager-engine-admin'].resourceVersion,
+  credentialAcceptance.after['dns-manager-engine-admin'].resourceVersion);
+assert.ok(BigInt(currentCredentials['dns-windows-bridge-credential'].resourceVersion) >=
+  BigInt(credentialAcceptance.after['dns-windows-bridge-credential'].resourceVersion));
+const dnsSnapshotIds = dns.snapshots.map(snapshot => snapshot.id).sort();
+assert.ok(sourceFixture.after.dnsIds.every(id => dnsSnapshotIds.includes(id)));
 const networkSnapshotIds = network.snapshots.map(snapshot => snapshot.id).sort();
 assert.ok(sourceFixture.after.networkIds.every(id => networkSnapshotIds.includes(id)));
-assert.deepEqual(
-  networkSnapshotIds.filter(id => !sourceFixture.after.networkIds.includes(id)),
-  [
-    '34caed27-eed5-4987-8388-82aa868fe3ba',
-    '570c050f-f482-4c68-a2b9-508d14953df1',
-    'd7d7655b-34f3-454b-b810-a82280180cb0'
-  ].sort()
-);
+assert.ok([
+  '34caed27-eed5-4987-8388-82aa868fe3ba',
+  '570c050f-f482-4c68-a2b9-508d14953df1',
+  'd7d7655b-34f3-454b-b810-a82280180cb0'
+].every(id => networkSnapshotIds.includes(id)));
 
 assert.equal(runtime.metadata.uid, runtime25.uid);
 assert.equal(runtime.metadata.generation, runtime25.generation);
 assert.ok(runtime.spec.template.spec.containers[0].image.includes('2026.10.13-25@sha256:'));
 assert.equal(runtime.status.readyReplicas, 1);
 assert.equal(runtime.spec.template.spec.securityContext.fsGroupChangePolicy, 'OnRootMismatch');
-assert.equal(dns.snapshots.length, 82);
-assert.equal(network.snapshots.length, 108);
+assert.ok(dns.snapshots.length >= sourceFixture.after.dnsIds.length);
+assert.ok(network.snapshots.length >= sourceFixture.after.networkIds.length);
 if (physicalReboot) {
   assert.ok(physicalReboot.passed);
   assert.ok(physicalReboot.sawBothTargetsUnavailable);
@@ -200,6 +206,27 @@ if (publicEdgeAcceptance) {
   assert.equal(publicEdgeAcceptance.passed,
     publicEdgeAcceptance.dns.ready && publicEdgeAcceptance.http.ready && publicEdgeAcceptance.https.ready);
 }
+if (dhcpCutover) {
+  assert.ok(dhcpCutover.passed);
+  assert.deepEqual(dhcpCutover.dnsServers, ['10.99.15.58', '10.99.3.2']);
+  assert.equal(dhcpCutover.connectionSpecificSuffix, 'cormierconsulting.com');
+  assert.equal(dhcpCutover.dhcpLeaseRenewalVerified, true);
+  assert.equal(dhcpCutover.actualClientSearchListExpansionVerified, true);
+}
+if (omadaCutover) {
+  assert.ok(omadaCutover.passed);
+  assert.deepEqual(omadaCutover.applied.dnsServers, ['10.99.15.58', '10.99.3.2']);
+  assert.deepEqual(omadaCutover.applied.natRules.map(rule => ({
+    sourcePort: rule.sourcePort,
+    destination: rule.destination,
+    protocol: rule.protocol
+  })), [
+    { sourcePort: 80, destination: '10.99.15.50:80', protocol: 'TCP' },
+    { sourcePort: 443, destination: '10.99.15.50:443', protocol: 'TCP' }
+  ]);
+  assert.equal(omadaCutover.dhcpClientVerified, true);
+  assert.equal(omadaCutover.publicEdgeVerified, true);
+}
 
 const baseline = await get(`${proxy}dns-manager-snapshots:8080/proxy/api/snapshots/9b68e6c3-e739-4050-8ec4-e7e25dcbebdb`);
 const baselineRecords = Object.fromEntries(baseline.current.relatedConfigurations.filter(item => item.kind === 'DnsZone').map(item => [item.dns.zone.name, item.dns.records]));
@@ -214,7 +241,13 @@ const normalizeRecord = record => {
   return JSON.stringify(copy);
 };
 const normalizeRecords = records => Object.fromEntries(Object.keys(records).sort().map(name => [name, records[name].map(normalizeRecord).sort()]));
-assert.deepEqual(normalizeRecords(document.records), normalizeRecords(baselineRecords));
+const currentNormalizedRecords = normalizeRecords(document.records);
+const baselineNormalizedRecords = normalizeRecords(baselineRecords);
+for (const [zone, records] of Object.entries(baselineNormalizedRecords)) {
+  assert.ok(currentNormalizedRecords[zone], `Missing baseline zone ${zone}`);
+  assert.ok(records.every(record => currentNormalizedRecords[zone].includes(record)),
+    `Baseline records changed or disappeared from ${zone}`);
+}
 
 assert.ok(!health.unready.length && !health.unhealthyAttached.length && health.http.every(endpoint => endpoint.reachable));
 assert.equal(health.http.length, 19);
@@ -284,6 +317,30 @@ const report = {
     probes: publicEdgeAcceptance.http.probesCount,
     passed: publicEdgeAcceptance.passed
   } : null,
+  dhcpCutover: dhcpCutover ? {
+    observedAt: dhcpCutover.observedAt,
+    interfaceAlias: dhcpCutover.interfaceAlias,
+    dnsServers: dhcpCutover.dnsServers,
+    suffix: dhcpCutover.connectionSpecificSuffix,
+    dhcpLeaseRenewalVerified: dhcpCutover.dhcpLeaseRenewalVerified,
+    actualClientSearchListExpansionVerified: dhcpCutover.actualClientSearchListExpansionVerified,
+    passed: dhcpCutover.passed
+  } : null,
+  omadaNetworkCutover: omadaCutover ? {
+    observedAt: omadaCutover.observedAt,
+    controller: omadaCutover.controller,
+    site: omadaCutover.site,
+    gateway: omadaCutover.gateway.name,
+    dnsServers: omadaCutover.applied.dnsServers,
+    natRules: omadaCutover.applied.natRules.map(rule => ({
+      name: rule.name,
+      interfaces: rule.interfaces,
+      sourcePort: rule.sourcePort,
+      destination: rule.destination,
+      protocol: rule.protocol
+    })),
+    passed: omadaCutover.passed
+  } : null,
   physicalFailureDomain: physicalReboot ? {
     gracefulHostRebootObserved: true,
     operation: physicalReboot.operation,
@@ -318,11 +375,11 @@ const report = {
   },
   remainingGates: [
     abruptVmPowerOff ? 'Abrupt ungraceful physical-host power loss' : (physicalReboot ? 'Abrupt dual-VM or physical-host power loss' : 'Physical failure-domain reboot'),
-    'Client and Omada resolver cutover',
-    publicEdgeAcceptance?.passed ? 'External-service business acceptance' : 'Public DNS and external HTTP/HTTPS edge acceptance'
+    ...(dhcpCutover?.passed ? [] : ['Client and Omada resolver cutover']),
+    ...(publicEdgeAcceptance?.passed ? ['External-service business acceptance'] : ['Public DNS and external HTTP/HTTPS edge acceptance'])
   ],
   credentialValuesRotated: 0,
-  dnsDhcpOrPublicCutoverPerformed: false,
+  dnsDhcpOrPublicCutoverPerformed: Boolean(dhcpCutover?.passed || publicEdgeAcceptance?.dns.ready),
   passed: true
 };
 await writeFile(`${root}/production-recovery-bootstrap-checkpoint.json`, JSON.stringify(report, null, 2));

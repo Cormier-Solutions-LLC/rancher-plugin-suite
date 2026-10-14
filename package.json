@@ -14,6 +14,7 @@
     "test:preview-data": "node --test preview-data/tests/*.test.mjs",
     "test:service-health": "node --test scripts/tests/service-health.test.mjs",
     "test:public-edge": "node scripts/test-public-manager-edge.mjs",
+    "test:dhcp-cutover": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-managed-dns-dhcp-cutover.ps1",
     "build:common-ui": "npm --prefix rancher-common-ui run build",
     "test:common-ui": "npm --prefix rancher-common-ui test",
     "prepreview": "npm run build:common-ui"
