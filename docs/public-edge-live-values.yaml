@@ -1,0 +1,8 @@
+# Live policy at the October 18, 2026 web-only cutover; chart version 0.1.0.
+# Review the current Helm values before replaying after any Rancher policy edits.
+publicHosts:
+  - proofing.cormierconsulting.io
+  - invoicing.cormierconsulting.io
+service:
+  type: LoadBalancer
+  loadBalancerIP: "10.99.15.59"

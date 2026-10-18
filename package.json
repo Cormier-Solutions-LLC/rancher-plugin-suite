@@ -16,6 +16,7 @@
     "test:public-edge": "node scripts/test-public-manager-edge.mjs",
     "test:public-access": "node scripts/test-public-edge.mjs",
     "test:public-access-live": "node scripts/verify-public-edge-live.mjs",
+    "test:public-access-external": "node scripts/verify-public-edge-external.mjs",
     "publish:public-access-chart": "node scripts/publish-public-edge-chart.mjs",
     "test:dhcp-cutover": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-managed-dns-dhcp-cutover.ps1",
     "build:common-ui": "npm --prefix rancher-common-ui run build",
