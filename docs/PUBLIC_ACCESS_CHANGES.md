@@ -86,7 +86,9 @@ Google and Cloudflare returned the new record. Previously cached NXDOMAIN
 answers may persist until their negative TTL expires.
 
 External Globalping probes verified the applications with trusted TLS and the
-HTTP-to-HTTPS redirects. Every other current web hostname was explicitly sent
+HTTP-to-HTTPS redirects. Final acceptance passed all 48 scenarios with 110 probe
+results; both domain names resolved and served their applications from US,
+Canadian, German and Australian probes. Every other current web hostname was explicitly sent
 to the WAN address over HTTP and HTTPS from US and German probes: HTTP closed
 without a response and HTTPS rejected the handshake. Direct-IP and unknown
 host requests and a forged forwarding-header attempt were also rejected.
