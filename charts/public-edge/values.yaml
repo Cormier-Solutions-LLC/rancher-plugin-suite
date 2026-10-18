@@ -1,0 +1,28 @@
+# This is the complete list of hostnames allowed through the public entry point.
+# Local Traefik routes are independent of this list. An empty list denies all.
+publicHosts:
+  - proofing.cormierconsulting.io
+  - invoicing.cormierconsulting.io
+
+# Rancher supplies global.cattle metadata when editing a release in its UI.
+global: {}
+
+replicaCount: 3
+image: nginx@sha256:970364228b1e4f932abc22d321932816782cca8a20b85a77552a7cfe9acfb3b5
+service:
+  # Stage privately first. Change to LoadBalancer after selecting a free VIP.
+  type: ClusterIP
+  loadBalancerIP: ""
+upstream:
+  host: traefik.traefik-system.svc.cluster.local
+  port: 443
+  caBundle: /etc/ssl/certs/ca-certificates.crt
+certificate:
+  issuerName: letsencrypt-prod
+  secretName: public-edge-tls
+resources:
+  requests:
+    cpu: 50m
+    memory: 32Mi
+  limits:
+    memory: 256Mi

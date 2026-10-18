@@ -1,0 +1,12 @@
+apiVersion: v2
+name: public-edge
+description: Explicit public hostname allowlist in front of the private Traefik ingress
+type: application
+version: 0.1.0
+appVersion: "1.30.6"
+annotations:
+  catalog.cattle.io/display-name: Public Web Access
+  catalog.cattle.io/namespace: public-edge
+  catalog.cattle.io/ui-source-repo: public-web-access
+  catalog.cattle.io/ui-source-repo-type: cluster
+keywords: [ingress, public-access, allowlist]

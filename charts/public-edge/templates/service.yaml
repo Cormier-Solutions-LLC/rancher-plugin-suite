@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "public-edge.name" . }}
+{{- if and (eq .Values.service.type "LoadBalancer") .Values.service.loadBalancerIP }}
+  annotations:
+    metallb.io/loadBalancerIPs: {{ .Values.service.loadBalancerIP | quote }}
+{{- end }}
+spec:
+  type: {{ .Values.service.type }}
+{{- if eq .Values.service.type "LoadBalancer" }}
+  externalTrafficPolicy: Local
+  allocateLoadBalancerNodePorts: false
+{{- end }}
+  selector:
+    {{- include "public-edge.selector" . | nindent 4 }}
+  ports:
+    - {name: http, port: 80, targetPort: http}
+    - {name: https, port: 443, targetPort: https}

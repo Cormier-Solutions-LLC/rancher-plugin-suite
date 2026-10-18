@@ -8,6 +8,11 @@ Rancher UI plugins, Helm registration charts, shared interface standards, and lo
 | Network Manager | [simple-network-manager-dev](simple-network-manager-dev/README.md) | http://127.0.0.1:5173 | Routing/certificate interface and native extension scaffold |
 | DNS Manager | [dns-manager-dev](dns-manager-dev/README.md) | http://127.0.0.1:5174 | DNS interface, native extension scaffold, and separate engine prototype |
 
+The [Public Web Access chart](charts/public-edge/README.md) provides a separate
+HTTP/HTTPS gateway with an explicit hostname allowlist while preserving private
+Traefik routing. [Deployment status and remaining cutover steps](docs/PUBLIC_ACCESS_CHANGES.md)
+distinguish private staging from internet enforcement.
+
 These previews use sample inspection data and local drafts. Building an extension does not establish live Rancher integration or authorize cluster changes.
 
 ## Run both plugins
