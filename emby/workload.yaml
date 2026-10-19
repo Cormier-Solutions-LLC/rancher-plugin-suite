@@ -22,7 +22,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: emby
-          image: emby/embyserver:4.9.3.0@sha256:338a17ad65a822f18d18574459046003a84d2fee82c2e234adf8645009238d0a
+          image: emby/embyserver:4.10.1.0@sha256:997e8c1ea1fde7d303eb455143e7be77dc4f20cb06acb11ffdcbcfaa87186ec2
           # Official image init drops to these IDs after its setup.
           # LXC guest uid/gid 999:990 map to 100999:100990 on the NAS.
           env:

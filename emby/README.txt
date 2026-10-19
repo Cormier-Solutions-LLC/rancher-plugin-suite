@@ -6,7 +6,8 @@ Kubernetes config: 20 GiB RWOP Longhorn, 3 replicas, Retain reclaim policy.
 NFS: 10.99.2.109:/mnt/network-share/Proxmox/private/other.
 Keep NAS library path /mnt/remote-other; media mount read-only.
 LXC guest identity 999:990 -> host/NFS identity 100999:100990.
-Container official image pinned to verified 4.9.3.0 SHA-256 digest.
+Current workload image: official Emby 4.10.1.0, pinned to SHA-256 digest
+997e8c1ea1fde7d303eb455143e7be77dc4f20cb06acb11ffdcbcfaa87186ec2.
 No GPU, Live TV, DLNA, or host networking requested.
 
 Applied: namespace.yaml, storage.yaml, migration-pod.yaml, workload.yaml,
@@ -96,3 +97,35 @@ Recovery artifacts from the prior root-disk restore test:
 
 Do not bulk-apply the whole directory; ingress and restore/start sequencing matter.
 workload.yaml declares the final desired one-replica state.
+
+Upgrade recovery point, 2026-10-18 (America/Chicago):
+The official stable release and Docker latest tag both resolved to 4.10.1.0.
+Release: https://github.com/MediaBrowser/Emby.Releases/releases/tag/4.10.1.0
+Emby 4.9.3.0 was stopped gracefully before taking the Longhorn CSI snapshot
+emby/emby-pre-upgrade-4-10-1-0-20261018 of emby-config. ReadyToUse=True was
+verified before upgrading. Retain this VolumeSnapshot: its class has Delete
+deletion policy, so deleting it also deletes the recovery snapshot.
+Offline copies of library.db, users.db, and authentication.db passed SQLite
+quick_check. Before upgrade: 19,251 MediaItems, 525 UserDatas rows, 3 users.
+Private evidence is retained under ignored .local/emby/upgrade-private/.
+
+Live acceptance passed after upgrading: one Ready replica, zero restarts,
+version 4.10.1.0 and original server ID/name through trusted HTTPS, web UI 200,
+TLS certificate Ready, healthy Longhorn config volume with three replicas.
+Existing API key authentication, anonymous/invalid-key rejection, all 3 users,
+configured library metadata, and a 4096-byte authenticated media range passed.
+An actual HTTPS HLS transcode returned valid playlists and an H.264/AAC segment;
+watch data was unchanged and the owned encoder was stopped (zero left running).
+Evidence: .local/emby/upgrade-tests/emby-route-media-tests.json and
+.local/emby/upgrade-tests/emby-hls-tests.json. Authenticated interactive client
+playback was not tested. Migration checks above describe the original 4.9.3.0
+deployment; workload.yaml is the current desired version.
+
+To recover after an unsuccessful upgrade, stop the StatefulSet and wait until
+emby-0 is gone. Preserve the current PVC and restore the snapshot into a NEW
+20 GiB ReadWriteOncePod PVC using storageClassName emby-longhorn-retain and
+dataSource {apiGroup: snapshot.storage.k8s.io, kind: VolumeSnapshot,
+name: emby-pre-upgrade-4-10-1-0-20261018}. Set both config mount paths to that
+claim and restore the prior 4.9.3.0 image digest from Git before starting one
+replica. Do not merely downgrade the image against upgraded databases; do not
+delete the original claim or run the source LXC alongside Kubernetes.
