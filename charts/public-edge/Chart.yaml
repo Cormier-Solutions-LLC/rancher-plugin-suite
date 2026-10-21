@@ -2,7 +2,7 @@ apiVersion: v2
 name: public-edge
 description: Explicit public hostname allowlist in front of the private Traefik ingress
 type: application
-version: 0.1.0
+version: 0.1.1
 appVersion: "1.30.6"
 annotations:
   catalog.cattle.io/display-name: Public Web Access
