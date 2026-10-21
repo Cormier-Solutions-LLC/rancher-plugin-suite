@@ -8,7 +8,11 @@ The initial allowlist is `proofing.cormierconsulting.io` and
 `invoicing.cormierconsulting.io`. Other hostnames remain available on the existing
 LAN Traefik VIP. The public gateway closes HTTP requests without an approved Host,
 rejects absent/unapproved TLS SNI, and requires HTTPS SNI and Host (HTTP/2
-`:authority`) to identify the same approved hostname. Parser errors such as
+`:authority`) to identify the same approved hostname before forwarding. When a
+browser reuses an HTTP/2 connection between the approved sites, a different
+approved authority receives **421 Misdirected Request** so it can retry on a new
+connection with the right SNI. The mismatched request never reaches the backend.
+HTTP/1.x mismatches still close without a response. Parser errors such as
 duplicate/missing Host headers are closed without an HTTP response. Clients can
 still connect to the public IP with an approved SNI and Host: this policy controls
 application publication, while application login continues to control users.
@@ -90,7 +94,7 @@ node scripts/verify-public-edge-live.mjs
 ```
 
 The first test runs the actual pinned Nginx image against a synthetic HTTPS backend
-and tests HTTP/1.0, HTTP/1.1, HTTP/2, TLS SNI, spoofed headers, WebSocket upgrades,
+and tests HTTP/1.0, HTTP/1.1, HTTP/2 connection reuse and 421 recovery, TLS SNI, spoofed headers, WebSocket upgrades,
 revocation and deny-all. It uses Docker, bundled Helm, and Git's OpenSSL by default;
 set `HELM` and `OPENSSL` to override executable paths.
 

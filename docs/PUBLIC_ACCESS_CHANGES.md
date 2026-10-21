@@ -147,3 +147,27 @@ cluster. The publisher preserves existing projected asset maps and records the
 deployment and artifact digests under `.local/public-edge/`. It creates no public
 route and introduces no repository credentials. Keep old content-addressed packages
 available for rollback.
+
+## HTTP/2 connection reuse recovery
+
+Chart 0.1.1 fixes `ERR_HTTP2_PROTOCOL_ERROR` when a browser reuses one TLS
+connection between Proof Studio and Ledger. Their shared certificate permits
+HTTP/2 connection coalescing, but the gateway must still avoid forwarding a
+request under a different SNI. For an approved HTTP/2 authority on the other
+approved site's connection, return **421 Misdirected Request** so the browser
+can reconnect with the correct SNI. A 421 must not be rewritten into Nginx's
+connection-closing 444 response.
+
+The 421 path runs only after validating the approved Host and only for HTTP/2
+over TLS. It does not forward that request to Traefik. Unknown/private hosts,
+hostless requests, absent/unknown SNI, malformed headers and HTTP/1.x mismatches
+retain their existing rejection behavior. DNS, NAT, Plex, private Traefik routes
+and application data are outside this change.
+
+The Docker acceptance suite covers both coalescing directions, no backend hit
+for 421, continued use of the original connection, and a successful connection
+to the requested origin. Live acceptance repeats the 421/reconnect checks with
+publicly trusted certificates alongside the existing hostname-denial checks.
+Run it against both the gateway VIP and WAN/hairpin address; retain the reports
+separately. Roll back the Helm release to the saved prior revision if the
+gateway rollout or any required access-control check fails.

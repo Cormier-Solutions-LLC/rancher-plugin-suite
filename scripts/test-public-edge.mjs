@@ -5,7 +5,7 @@ import path from 'node:path';
 import net from 'node:net';
 import tls from 'node:tls';
 import https from 'node:https';
-import http2 from 'node:http2';
+import {http2Sequence} from './lib/http2-sequence.mjs';
 
 const helm = process.env.HELM || '.tools/helm/windows-amd64/helm.exe';
 const openssl = process.env.OPENSSL || 'C:/Program Files/Git/usr/bin/openssl.exe';
@@ -127,25 +127,24 @@ try {
   check('Duplicate Host headers are dropped', duplicate.output === '');
   const absolute = await raw({port: httpPort, rawRequest: `GET http://rancher.cormierconsulting.io/ HTTP/1.1\r\nHost: ${hosts[0]}\r\nConnection: close\r\n\r\n`});
   check('Absolute request target cannot override the approved Host', absolute.output === '');
-  async function h2(authority) {
-    return new Promise((resolve, reject) => {
-      let status, connected = false;
-      const session = http2.connect(`https://127.0.0.1:${httpsPort}`, {servername: hosts[0], ca: cert});
-      session.on('connect', () => { connected = true; });
-      session.on('error', () => {});
-      const timer = setTimeout(() => {session.destroy(); reject(Error('HTTP/2 timed out'));}, 5000);
-      const request = session.request({':path': '/', ':authority': authority});
-      request.on('response', headers => {status = headers[':status'];});
-      request.on('data', () => {});
-      request.on('error', () => {});
-      request.on('close', () => {clearTimeout(timer); session.destroy(); resolve({status, connected});});
-      request.end();
-    });
-  }
+  const h2 = async (authority, servername = hosts[0]) => (await http2Sequence({
+    target: '127.0.0.1', port: httpsPort, servername, authorities: [authority], ca: cert
+  }))[0];
   check('HTTP/2 approved authority is proxied', (await h2(hosts[0])).status === 200);
-  for (const authority of ['', 'rancher.cormierconsulting.io', hosts[1]]) {
+  for (const authority of ['', 'rancher.cormierconsulting.io', 'unknown.example.com']) {
     const result = await h2(authority);
-    check(`HTTP/2 drops empty, private, or mismatched authority: ${authority}`, result.connected && result.status === undefined);
+    check(`HTTP/2 drops empty, private, or unknown authority: ${authority}`, result.status === undefined);
+  }
+  for (const servername of hosts) {
+    const other = hosts.find(host => host !== servername);
+    const hitsBefore = backendHits.length;
+    const sequence = await http2Sequence({target: '127.0.0.1', port: httpsPort, servername,
+      authorities: [servername, other, servername], ca: cert});
+    check(`HTTP/2 coalesced ${other} returns recoverable 421 without a stream error`, sequence[1].status === 421 && !sequence[1].error);
+    check(`HTTP/2 421 does not forward the mismatched request to a backend`, backendHits.length === hitsBefore + 2);
+    check(`HTTP/2 connection for ${servername} remains usable after 421`, sequence[0].status === 200 && sequence[2].status === 200);
+    const retry = await h2(other, other);
+    check(`HTTP/2 reconnect for ${other} succeeds with the correct origin`, retry.status === 200 && retry.body.includes(`"host":"${other}"`));
   }
   const websocket = await raw({port: httpsPort, secure: true, servername: hosts[0], rawRequest: `GET /ws HTTP/1.1\r\nHost: ${hosts[0]}\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n\r\n`});
   check('Approved WebSocket upgrade reaches the backend', websocket.output.startsWith('HTTP/1.1 101'));

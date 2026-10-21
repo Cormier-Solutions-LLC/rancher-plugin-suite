@@ -40,9 +40,15 @@ http {
     "{{ . }}:{{ . }}" 1;
 {{- end }}
   }
+  # A shared certificate allows browsers to coalesce approved HTTP/2 origins.
+  # Reject a different authority with 421 so the client retries a new connection.
+  map "$sni_matches_host:$http2" $misdirected_http2 {
+    default 0;
+    "0:h2" 1;
+  }
   map $http_upgrade $connection_upgrade { default upgrade; '' close; }
   # Parser errors (including HTTP/1.1 without Host) close the connection too.
-  error_page 400 414 421 494 495 496 497 = @drop;
+  error_page 400 414 494 495 496 497 = @drop;
   server {
     listen 8080 default_server;
     server_name _ "";
@@ -78,6 +84,7 @@ http {
     ssl_certificate_key $certificate_key;
     if ($public_host = "") { return 444; }
     if ($host != $public_host) { return 444; }
+    if ($misdirected_http2 = 1) { return 421; }
     if ($sni_matches_host = 0) { return 444; }
     location @drop { return 444; }
     location / {

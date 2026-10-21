@@ -3,6 +3,7 @@ import {execFileSync} from 'node:child_process';
 import {writeFile, mkdir} from 'node:fs/promises';
 import net from 'node:net';
 import tls from 'node:tls';
+import {http2Sequence} from './lib/http2-sequence.mjs';
 
 const target = process.env.PUBLIC_EDGE_TARGET || '127.0.0.1';
 const httpPort = Number(process.env.PUBLIC_EDGE_HTTP_PORT || 18080);
@@ -58,6 +59,18 @@ check('HTTPS without Host is dropped', (await request({secure: true, servername:
 check('Approved SNI and a different approved Host are rejected', (await request({host: publicHosts[1], secure: true, servername: publicHosts[0]})).output === '');
 check('Forged forwarding headers cannot expose Rancher', (await request({host: 'rancher.cormierconsulting.io', secure: true, servername: publicHosts[0], headers: `X-Forwarded-Host: ${publicHosts[0]}\r\nX-Forwarded-For: 10.99.1.1\r\n`})).output === '');
 check('Duplicate Host headers are dropped', (await request({rawRequest: `GET / HTTP/1.1\r\nHost: ${publicHosts[0]}\r\nHost: rancher.cormierconsulting.io\r\n\r\n`})).output === '');
+for (const servername of publicHosts) {
+  const other = publicHosts.find(host => host !== servername);
+  const sequence = await http2Sequence({target, port: httpsPort, servername, authorities: [servername, other, servername]});
+  check(`HTTP/2 ${other} on a ${servername} connection returns 421 without a protocol error`, sequence[1].status === 421 && !sequence[1].error);
+  check(`HTTP/2 ${servername} connection remains usable after a mismatched authority`, sequence[0].status === 200 && sequence[2].status === 200);
+  const retry = (await http2Sequence({target, port: httpsPort, servername: other, authorities: [other]}))[0];
+  check(`HTTP/2 retry to ${other} serves the expected application`, retry.status === 200 && retry.body.includes(other.startsWith('proofing.') ? 'Proof Studio' : 'Ledger'));
+}
+for (const authority of ['', 'rancher.cormierconsulting.io', 'unknown.example.com']) {
+  const result = (await http2Sequence({target, port: httpsPort, servername: publicHosts[0], authorities: [authority]}))[0];
+  check(`HTTP/2 drops missing/private/unknown authority ${authority}`, result.status === undefined);
+}
 const deployment = JSON.parse(execFileSync('kubectl', ['get', 'deployment', 'public-edge', '-n', 'public-edge', '-o', 'json'], {encoding: 'utf8'}));
 check('All configured gateway replicas are ready', deployment.status.readyReplicas === deployment.spec.replicas && deployment.status.updatedReplicas === deployment.spec.replicas);
 const report = {observedAt: new Date().toISOString(), target, httpPort, httpsPort, publicHosts, privateHosts, checks: passed.length, passed, success: true};
