@@ -1,0 +1,99 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: opensearch
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: opensearch-storage-budget
+  namespace: opensearch
+spec:
+  hard:
+    # 93 GiB is just under 100 decimal GB, including the temporary bootstrap PVC.
+    requests.storage: 93Gi
+    persistentvolumeclaims: "4"
+    # Writable container layers, logs and emptyDir; shared OS/image cache excluded.
+    limits.ephemeral-storage: 50G
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: opensearch-container-storage
+  namespace: opensearch
+spec:
+  limits:
+    - type: Container
+      default:
+        ephemeral-storage: 1G
+      defaultRequest:
+        ephemeral-storage: 100M
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: opensearch-longhorn-retain
+provisioner: driver.longhorn.io
+allowVolumeExpansion: true
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+parameters:
+  numberOfReplicas: "3"
+  staleReplicaTimeout: "30"
+  fsType: ext4
+  dataLocality: disabled
+  unmapMarkSnapChainRemoved: ignored
+  disableRevisionCounter: "true"
+  dataEngine: v1
+  backupTargetName: default
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: opensearch-security-config
+  namespace: opensearch
+type: Opaque
+stringData:
+  # The operator injects random password hashes from its credential Secrets.
+  # Replacing internal_users removes every bundled demo account.
+  internal_users.yml: |
+    _meta:
+      type: internalusers
+      config_version: 2
+    admin:
+      reserved: true
+      backend_roles:
+        - admin
+      description: Cluster administrator
+    kibanaserver:
+      reserved: true
+      description: Dashboards service account
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: opensearch-private-ingress
+  namespace: opensearch
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: NotIn
+        values:
+          - opensearch-operator
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector: {}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik-system
+      ports:
+        - port: 5601
+        - port: 9200
+    - from:
+        - namespaceSelector: {}
+      ports:
+        - port: 9200

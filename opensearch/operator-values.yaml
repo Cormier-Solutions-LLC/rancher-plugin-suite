@@ -1,0 +1,16 @@
+fullnameOverride: opensearch-operator
+legacyAPI:
+  enabled: false
+manager:
+  watchNamespace: opensearch
+  image:
+    tag: 3.0.0
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 200m
+      memory: 350Mi
+      ephemeral-storage: 100M
+    limits:
+      memory: 768Mi
+      ephemeral-storage: 1G

@@ -1,0 +1,76 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: opensearch-private-ingress
+  namespace: opensearch
+spec:
+  secretName: opensearch-private-ingress-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+    - opensearch.cormierconsulting.io
+    - opensearch-api.cormierconsulting.io
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: private-networks
+  namespace: opensearch
+spec:
+  ipAllowList:
+    sourceRange:
+      - 10.0.0.0/8
+      - 172.16.0.0/12
+      - 192.168.0.0/16
+      - fc00::/7
+---
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: opensearch-api
+  namespace: opensearch
+spec:
+  serverName: opensearch.opensearch.svc.cluster.local
+  rootCAs:
+    - secret: opensearch-http-cert
+---
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: opensearch-dashboards
+  namespace: opensearch
+spec:
+  serverName: opensearch-dashboards.opensearch.svc.cluster.local
+  rootCAs:
+    - secret: opensearch-dashboards-cert
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: opensearch-private
+  namespace: opensearch
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`opensearch.cormierconsulting.io`)
+      kind: Rule
+      middlewares:
+        - name: private-networks
+      services:
+        - name: opensearch-dashboards
+          port: 5601
+          scheme: https
+          serversTransport: opensearch-dashboards
+    - match: Host(`opensearch-api.cormierconsulting.io`)
+      kind: Rule
+      middlewares:
+        - name: private-networks
+      services:
+        - name: opensearch-nodes
+          port: 9200
+          scheme: https
+          serversTransport: opensearch-api
+  tls:
+    secretName: opensearch-private-ingress-tls
