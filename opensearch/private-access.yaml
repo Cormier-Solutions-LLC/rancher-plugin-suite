@@ -68,9 +68,15 @@ spec:
       middlewares:
         - name: private-networks
       services:
-        - name: opensearch-nodes
+        - name: opensearch-data-pve09
           port: 9200
           scheme: https
           serversTransport: opensearch-api
+          weight: 1
+        - name: opensearch-data-pve06
+          port: 9200
+          scheme: https
+          serversTransport: opensearch-api
+          weight: 1
   tls:
     secretName: opensearch-private-ingress-tls

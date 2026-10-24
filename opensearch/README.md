@@ -1,109 +1,118 @@
 # Private distributed OpenSearch
 
-OpenSearch and Dashboards 3.9.0, managed by operator 3.0.0 using the official
-3.0.14 Helm chart. The chart download is pinned and SHA-256 verified.
+OpenSearch and Dashboards 3.9.0 run under OpenSearch operator 3.0.0. The
+deployment downloads the official operator 3.0.14 Helm chart and verifies its
+SHA-256 digest before installation.
 
-## Storage and placement
+## Topology and capacity
 
-- Three combined cluster-manager/data/ingest nodes, each requesting 2 CPUs and
-  8 GiB RAM with a 4 GiB JVM heap. Required anti-affinity uses physical Proxmox
-  zones, not merely Kubernetes VM names. OpenSearch also advertises those zones
-  for shard allocation awareness.
-- Three **dedicated 30 GiB Longhorn PVCs**: 90 GiB total, approximately 96.6 GB.
-  The separate `opensearch-longhorn-retain` class retains volumes if claims are
-  deleted. Other applications' disks and the default storage class are untouched.
-- A hard namespace quota of 93 GiB keeps requested PVC capacity below 100 decimal
-  GB, including the temporary 1 GiB bootstrap claim. The bootstrap claim is removed
-  automatically after initialization; its retained PV may remain Released. Preserve
-  it until deliberately retiring that bootstrap recovery state.
-- Longhorn keeps three copies on distinct physical zones under existing global
-  placement rules. Thus 90 GiB of PVC capacity can consume up to 270 GiB of backend
-  data space, plus snapshots. Replication does not provide an independent backup.
-- The requested **50 GB software/temporary-storage budget** is enforced as
-  `limits.ephemeral-storage: 50G` across the namespace. Each search container has
-  a 12 GB writable-storage limit. Existing workers provide the OS; there is no
-  separate OS PVC. Shared OS files and container image caches are outside Kubernetes
-  namespace ephemeral-storage accounting. Kubelet local-storage measurement must
-  remain enabled to enforce container eviction limits.
-- Existing network-backed block storage is supported through Longhorn. No NFS
-  shared filesystem is used as an OpenSearch data directory. Shared PowerVault,
-  network and Proxmox storage dependencies still define the actual failure boundary;
-  20 Gbps link speed does not establish disk latency, IOPS or backend redundancy.
+- Three dedicated cluster-manager nodes use 30 GB PVCs, 4 GiB RAM and a 2 GiB
+  JVM heap. They do not carry data or ingest roles.
+- Eight data/ingest nodes use 200 GB PVCs, 4 GiB RAM and a 2 GiB JVM heap.
+  Four use the Proxmox09/PowerVault Longhorn disk pool and four use the
+  Proxmox06 thin-storage Longhorn disk pool.
+- Data pods span six eligible physical Proxmox zones. Managers span three
+  zones. Proxmox01 and Proxmox02 are currently excluded from this workload's
+  placement; the deployment preflight rejects an assignment in those zones and
+  maintains the `opensearch-eligible` label on workers in the other six zones.
+- OpenSearch allocation awareness uses both the physical zone and
+  `storage_domain`. Forced storage-domain awareness keeps each primary and its
+  search replica on different storage backends.
+- New application indices default to four primary shards and one replica, so a
+  normally balanced index can use all eight data nodes.
 
-With one OpenSearch replica and roughly 30% operating headroom, plan around
-30–35 GiB of primary indexed data, less system index overhead. Index size can differ
-from source document size. Watermarks are 70% low, 80% high and 90% flood stage.
-The PVC quota caps allocation, not retained documents. No automatic deletion or
-retention policy is configured; establish retention before sustained ingestion.
+The eight data PVCs provide 1.6 TB of raw OpenSearch capacity. One OpenSearch
+replica leaves about 800 GB for primary data before operating headroom. With
+30% free-space headroom, plan around 560 GB of primary indexed data, less system
+indices. Indexed size can differ substantially from source size. Disk
+watermarks are 70% low, 80% high and 90% flood stage.
 
-## Access
+The namespace storage quota is 1,692 GB: 1,600 GB for data nodes, 90 GB for
+managers and enough room for the temporary 1 GiB bootstrap claim. It allows 12
+claims during bootstrap and 11 afterward. The retained bootstrap PV is expected
+to remain Released after its claim is removed. The namespace also has a 100 GB
+writable container and temporary-storage quota.
+
+## Longhorn storage
+
+Three retained StorageClasses isolate the workload without changing Longhorn's
+cluster-wide defaults:
+
+- `opensearch-manager-longhorn-retain` selects `thin` disks.
+- `opensearch-data-pve09-retain` selects `proxmox09-nfs` disks.
+- `opensearch-data-pve06-retain` selects `proxmox06-nfs` disks.
+
+Every PVC has three Longhorn replicas with best-effort local placement and a
+`Retain` reclaim policy. At full allocation the eight data PVCs can consume up
+to 4.8 TB of backend space before snapshots, plus up to 270 GB for manager
+volumes. OpenSearch's replica and Longhorn's copies cover different failure
+levels. Neither replaces an independent OpenSearch snapshot repository.
+
+The OpenSearch data directory uses Longhorn block volumes. It does not mount an
+NFS or SMB filesystem directly. Both Longhorn disk pools remain dependent on
+their respective Proxmox/network storage paths.
+
+## Private access
 
 - Dashboards: https://opensearch.cormierconsulting.io
 - API from LAN/VPN: https://opensearch-api.cormierconsulting.io
-- API inside Kubernetes: https://opensearch-nodes.opensearch.svc.cluster.local:9200
-  (trust `ca.crt` from the `opensearch-http-cert` Secret).
+- API in Kubernetes: https://opensearch.opensearch.svc.cluster.local:9200
 
-Internal DNS maps both external names to private Traefik VIP `10.99.15.50`.
-Traefik permits private source ranges only. These names are excluded from the
-public gateway allowlist. ClusterIP Services do not expose transport or node ports.
-NetworkPolicy limits Dashboards ingress to its namespace and Traefik; authenticated
-API access is allowed from cluster namespaces. No public DNS A records are created.
-Let's Encrypt uses the existing DNS-01 issuer. TLS is enabled for transport, API and
-Dashboards; Traefik and Dashboards validate backend CA certificates. The operator
-renews generated certificates, and cert-manager renews ingress certificates.
+Private DNS maps the two external names to Traefik VIP `10.99.15.50`. Traefik
+accepts private source ranges and balances API requests across both data pools.
+The names are absent from the public gateway allowlist. Transport, API,
+Dashboards and ingress TLS are enabled, and backend certificates are verified.
 
-Username: `admin`. Run `./opensearch/copy-admin-password.ps1` to copy the password
-without printing it. Passwords are generated into Kubernetes Secrets; demo users
-are removed. Create narrowly scoped ingest/application accounts before connecting
-real clients. Do not give applications the admin credential.
-
-`index-defaults.yaml` sets one primary shard and one replica for new `app-*`,
-`documents-*`, `logs-*`, `events-*`, `traces-*` and `metrics-*` indices. Applications
-can provide higher-priority templates. System index templates are left alone.
+The administrator is `admin`. Run `./opensearch/copy-admin-password.ps1` to
+copy its generated password without printing it. The only built-in accounts are
+the randomized administrator and Dashboards service account; demo accounts are
+removed. Create narrowly scoped application and ingestion users before loading
+real data.
 
 ## Deploy and verify
 
-Prerequisites: existing cluster access, Helm, Node.js 24+, Longhorn, cert-manager,
-Traefik, the `letsencrypt-prod` DNS-01 ClusterIssuer and physical zone node labels.
-Inspect `kubectl config current-context` before applying to another environment.
+Prerequisites are working `kubectl` access, Helm, Node.js 24+, Longhorn,
+cert-manager, Traefik, the `letsencrypt-prod` ClusterIssuer and physical zone
+labels. The script verifies every selected worker and required Longhorn disk tag
+before changing the cluster.
 
 ```powershell
 ./opensearch/deploy.ps1
 node opensearch/verify-live.mjs
-# Optional bounded recovery drill: recreates only opensearch-nodes-0.
+
+# Also recreate one data pod and prove that its PVC and test document survive.
 node opensearch/verify-live.mjs --restart-one-node
 ```
 
-For a first installation without DNS records, start `kubectl proxy --port=18089
---address=127.0.0.1` in another terminal and use `-ConfigurePrivateDns`. The DNS helper
-uses the existing managed Windows DNS workflow, saves a pre-change backup, refuses
-conflicting records and records durable receipts. It does not replay unresolved writes.
+Use `-ConfigurePrivateDns` only for a first installation without the existing
+records and while an authenticated `kubectl proxy` listens at `127.0.0.1:18089`.
+The DNS helper refuses conflicting records and records the managed DNS backup
+and operation receipt under ignored `.local/opensearch/` storage.
 
-Live verification checks trusted HTTPS, API authentication, Dashboards login redirect,
-public gateway hostname rejection, green three-node health, physical placement,
-internal users, dedicated Longhorn volumes and replica placement, indexing and search.
-The optional drill checks a new pod UID, the same PVC UID and preserved indexed data.
-It does not simulate physical-host, PowerVault, network or power loss. Each test uses
-and removes its own uniquely named index. Reports are written under ignored
-`.local/opensearch/` without passwords or security password hashes.
+Live verification checks trusted private HTTPS, authentication, public-gateway
+rejection, green 11-node health, exact manager/data roles, zone and storage
+attributes, generated accounts, all 11 PVCs, three tagged Longhorn copies per
+volume, cross-zone replica placement, eight-node shard distribution, indexing
+and search. The optional drill deletes only one data pod and removes its unique
+test index afterward. The non-secret report is
+`.local/opensearch/live-verification.json`.
 
-## Recovery and operations
+## Operations and recovery
 
-Inspect `kubectl -n opensearch get pods,pvc,opensearchcluster,resourcequota` and
-`kubectl -n opensearch describe opensearchcluster opensearch`. Monitor free disk,
-JVM heap/GC, indexing rejection, shard health and node availability. This deployment
-does not yet add dedicated OpenSearch metric scraping or application/log collectors.
+Monitor cluster health, unassigned shards, disk watermarks, JVM heap/GC,
+indexing rejections, Longhorn volume health and both backend storage systems.
+No collectors, automatic retention policy or dedicated OpenSearch metrics
+scrape is included yet.
 
-Before storing important data, configure an **OpenSearch-native snapshot repository**
-on an agreed NFS or S3-compatible backup target, schedule snapshots and test a restore
-to a separate cluster. No native backup/restore has been configured or verified yet.
-Longhorn replicas and retained volumes are not substitutes for those snapshots.
+Before importing important data, configure an OpenSearch-native snapshot
+repository on an agreed independent NFS or S3-compatible target, schedule it
+and test a restore into another cluster. Longhorn replicas and retained PVCs
+are recovery aids rather than independent backups.
 
-For a bad configuration, restore the prior Git manifests and apply them, allowing
-the operator to roll nodes sequentially. Keep all data PVCs. Do not downgrade an
-OpenSearch image over data migrated by a newer version. Recover incompatible data
-from a verified native snapshot into a separate cluster. Do not delete the namespace,
-operator CRDs, data PVCs, retained PVs or CA Secrets as a restart procedure.
+For configuration rollback, restore the earlier Git manifests and let the
+operator roll nodes sequentially while preserving all PVCs. Do not delete the
+namespace, CRDs, PVCs, retained PVs or CA secrets as a restart procedure. Do
+not run an older OpenSearch version against data written by a newer version.
 
-Official references: [operator release guide](https://github.com/opensearch-project/opensearch-k8s-operator/blob/v3.0.0/docs/userguide/main.md),
-[OpenSearch production setup](https://docs.opensearch.org/latest/install-and-configure/install-opensearch/index/).
+Official references: [operator guide](https://github.com/opensearch-project/opensearch-k8s-operator/blob/v3.0.0/docs/userguide/main.md)
+and [OpenSearch production setup](https://docs.opensearch.org/latest/install-and-configure/install-opensearch/index/).

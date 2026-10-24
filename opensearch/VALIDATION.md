@@ -1,40 +1,43 @@
-# Live acceptance — October 23, 2026
+# Live acceptance — October 24, 2026
 
-Verified against the existing RKE2 cluster at 8:26 PM America/Chicago.
-The detailed non-secret report is `.local/opensearch/live-verification.json`.
+Verified against the RKE2 cluster at 12:16 PM America/Chicago. The detailed
+non-secret report is `.local/opensearch/live-verification.json`.
 
-- OpenSearch/Dashboards 3.9.0; cluster green with three data/manager/ingest nodes.
-- OpenSearch pods placed on `kubworker15/proxmox09`, `kubworker03/proxmox02`
-  and `kubworker01/proxmox01`.
-- Three dedicated 30 GiB claims are Bound using `opensearch-longhorn-retain`.
-  Each volume is healthy with three running Longhorn replicas in distinct physical
-  zones. Total active data PVC capacity is 90 GiB, approximately 96.6 GB.
-- Data quota is 93 GiB, below 100 decimal GB, including bootstrap allowance.
-  An additional 4 GiB claim was rejected by server dry-run without creating storage.
-- Writable-container/temporary-storage quota is 50 GB; active container limits
-  total 39 GB. Existing worker OS files and shared image cache are outside this quota.
-- Private system DNS resolves both OpenSearch names to `10.99.15.50`. Normal
-  hostname-based HTTPS returns the Dashboards login redirect and API HTTP 401.
-  Trusted ingress TLS, authenticated Dashboards status and full backend TLS
-  verification passed. Only randomized `admin` and `kibanaserver` internal users exist.
-- Public gateway positive control passed; both OpenSearch Host headers were rejected
-  by its existing hostname allowlist. This was a LAN test of the public gateway VIP,
-  not an independent Internet-origin probe.
-- Application index template, one search replica, document indexing, refresh,
-  full-text search and green shard allocation passed.
-- Recreated `opensearch-nodes-0`: the replacement had a new pod UID, retained the
-  original PVC UID and preserved the indexed test document. The cluster returned
-  to green with all three nodes. The uniquely named test index was removed.
-- All 27 pre-existing Longhorn volumes retained their identities and provisioned sizes.
-- Helm lint, PowerShell parsing, JavaScript syntax checks, Git whitespace checks
-  and a redacted secret scan passed.
+- OpenSearch and Dashboards 3.9.0 are green with 11 OpenSearch nodes: three
+  manager-only nodes and eight data/ingest nodes. Managers span three physical
+  zones; data nodes span six eligible zones.
+- Four data nodes have `storage_domain=proxmox09`; four have
+  `storage_domain=proxmox06`. Cluster allocation awareness uses zone and storage
+  domain, with both storage-domain values forced.
+- The 11 dedicated retained claims are Bound: three 30 GB manager PVCs and eight
+  200 GB data PVCs, for 1.69 TB of active OpenSearch PVC allocation.
+- The temporary 1 GiB bootstrap claim was removed. Its Retain-policy PV remains
+  Released as an explicit recovery artifact outside the active claim quota.
+- Every PVC is a healthy Longhorn volume with three running replicas on the
+  intended tagged disk pool, copies in three physical zones and a local copy on
+  the attached worker. The manager volumes use `thin`; the data volumes use
+  `proxmox09-nfs` or `proxmox06-nfs` as declared.
+- Private hostname HTTPS, trusted ingress TLS, API authentication, Dashboards
+  login and authenticated Dashboards status passed. The public gateway config
+  omits both OpenSearch names and rejected both Host headers.
+- Only the randomized `admin` and `kibanaserver` internal users exist; bundled
+  demo users are absent.
+- The application template has four primary shards and one OpenSearch replica.
+  A temporary test index allocated exactly one shard copy to every data node;
+  each primary/replica pair used different storage domains and physical zones.
+  Indexing and full-text search passed, and the test index was removed.
+- Recreating `opensearch-data-pve06-0` produced a new pod while retaining the
+  PVC UID and test document. The cluster returned to green.
+- The operator completed its bootstrap OnDelete pass with `RollingRestart`
+  status `Finished`. All OpenSearch pods, both Dashboards replicas and the
+  operator were Ready afterward.
+- The operator chart passed Helm lint. PowerShell and JavaScript parsing,
+  server-side manifest dry runs and Git whitespace checks passed.
 
-This verifies a normal single-pod recreation, not physical-host, PowerVault or
-power-loss recovery, nor an uninterrupted-request SLO. One HTTP 502 was observed
-while the earlier operator-driven resource update was rolling nodes. Clients should
-handle transient connection failures and retries appropriately.
+The recovery drill covers one normal data-pod recreation. It does not simulate
+a physical host, Proxmox storage server, network, PowerVault or power failure.
 
-No ingestion collectors, automatic index retention, native OpenSearch snapshot
-repository, scheduled native backups, restore drill or dedicated OpenSearch metric
-scraping has been configured. These are operational follow-ups before important
-or sustained data ingestion. Shared storage/backend failure domains still apply.
+No ingestion collectors, automatic retention policy, OpenSearch-native snapshot
+repository, scheduled native backups, restore drill or dedicated OpenSearch
+metrics scrape is configured yet. Configure and test independent native
+snapshots before importing important data.

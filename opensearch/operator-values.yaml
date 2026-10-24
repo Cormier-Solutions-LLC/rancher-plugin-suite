@@ -1,4 +1,6 @@
 fullnameOverride: opensearch-operator
+nodeSelector:
+  storage.cormierconsulting.io/opensearch-eligible: "true"
 legacyAPI:
   enabled: false
 manager:

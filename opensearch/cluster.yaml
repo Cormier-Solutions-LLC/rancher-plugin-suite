@@ -12,14 +12,15 @@ spec:
       - name: zone
         nodeLabel: topology.kubernetes.io/zone
     additionalConfig:
-      cluster.routing.allocation.awareness.attributes: zone
+      cluster.routing.allocation.awareness.attributes: "zone,storage_domain"
+      cluster.routing.allocation.awareness.force.storage_domain.values: "proxmox09,proxmox06"
       cluster.routing.allocation.disk.watermark.low: "70%"
       cluster.routing.allocation.disk.watermark.high: "80%"
       cluster.routing.allocation.disk.watermark.flood_stage: "90%"
       action.destructive_requires_name: "true"
   bootstrap:
     diskSize: 1Gi
-    storageClass: opensearch-longhorn-retain
+    storageClass: opensearch-manager-longhorn-retain
     jvm: -Xms1g -Xmx1g
     resources:
       requests:
@@ -48,7 +49,9 @@ spec:
   dashboards:
     enable: true
     version: 3.9.0
-    replicas: 1
+    replicas: 2
+    nodeSelector:
+      storage.cormierconsulting.io/opensearch-eligible: "true"
     resources:
       requests:
         cpu: 500m
@@ -65,25 +68,23 @@ spec:
       opensearch.ssl.verificationMode: full
       opensearch.ssl.certificateAuthorities: '["/usr/share/opensearch-dashboards/certs/ca.crt"]'
   nodePools:
-    - component: nodes
+    - component: managers
       replicas: 3
-      diskSize: 30Gi
+      diskSize: 30G
       roles:
         - cluster_manager
-        - data
-        - ingest
-      jvm: -Xms4g -Xmx4g
+      jvm: -Xms2g -Xmx2g
       resources:
         requests:
-          cpu: "2"
-          memory: 8Gi
-          ephemeral-storage: 2G
+          cpu: "1"
+          memory: 4Gi
+          ephemeral-storage: 1G
         limits:
-          memory: 8Gi
-          ephemeral-storage: 12G
+          memory: 4Gi
+          ephemeral-storage: 6G
       persistence:
         pvc:
-          storageClass: opensearch-longhorn-retain
+          storageClass: opensearch-manager-longhorn-retain
           accessModes:
             - ReadWriteOnce
       pdb:
@@ -94,11 +95,108 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                  - key: node-role.kubernetes.io/control-plane
-                    operator: DoesNotExist
+                  - key: storage.cormierconsulting.io/opensearch-pool
+                    operator: In
+                    values:
+                      - manager
+                  - key: topology.kubernetes.io/zone
+                    operator: NotIn
+                    values:
+                      - proxmox01
+                      - proxmox02
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             - labelSelector:
                 matchLabels:
-                  opensearch.org/opensearch-nodepool: nodes
+                  opensearch.org/opensearch-nodepool: managers
               topologyKey: topology.kubernetes.io/zone
+    - component: data-pve09
+      replicas: 4
+      diskSize: 200G
+      roles:
+        - data
+        - ingest
+      additionalConfig:
+        node.attr.storage_domain: proxmox09
+      jvm: -Xms2g -Xmx2g
+      resources:
+        requests:
+          cpu: "1"
+          memory: 4Gi
+          ephemeral-storage: 1G
+        limits:
+          memory: 4Gi
+          ephemeral-storage: 8G
+      persistence:
+        pvc:
+          storageClass: opensearch-data-pve09-retain
+          accessModes:
+            - ReadWriteOnce
+      pdb:
+        enable: true
+        minAvailable: 3
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: storage.cormierconsulting.io/opensearch-pool
+                    operator: In
+                    values:
+                      - data-pve09
+                  - key: topology.kubernetes.io/zone
+                    operator: NotIn
+                    values:
+                      - proxmox01
+                      - proxmox02
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  opensearch.org/opensearch-nodepool: data-pve09
+              topologyKey: kubernetes.io/hostname
+    - component: data-pve06
+      replicas: 4
+      diskSize: 200G
+      roles:
+        - data
+        - ingest
+      additionalConfig:
+        node.attr.storage_domain: proxmox06
+      jvm: -Xms2g -Xmx2g
+      resources:
+        requests:
+          cpu: "1"
+          memory: 4Gi
+          ephemeral-storage: 1G
+        limits:
+          memory: 4Gi
+          ephemeral-storage: 8G
+      persistence:
+        pvc:
+          storageClass: opensearch-data-pve06-retain
+          accessModes:
+            - ReadWriteOnce
+      pdb:
+        enable: true
+        minAvailable: 3
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: storage.cormierconsulting.io/opensearch-pool
+                    operator: In
+                    values:
+                      - data-pve06
+                  - key: topology.kubernetes.io/zone
+                    operator: NotIn
+                    values:
+                      - proxmox01
+                      - proxmox02
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  opensearch.org/opensearch-nodepool: data-pve06
+              topologyKey: kubernetes.io/hostname
