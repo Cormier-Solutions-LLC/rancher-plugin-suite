@@ -13,6 +13,10 @@ HTTP/HTTPS gateway with an explicit hostname allowlist while preserving private
 Traefik routing. [Deployment status and remaining cutover steps](docs/PUBLIC_ACCESS_CHANGES.md)
 distinguish private staging from internet enforcement.
 
+The [private OpenSearch deployment](opensearch/README.md) provides a distributed
+three-node search cluster with dedicated retained Longhorn data volumes and
+authenticated Dashboards on the LAN/VPN.
+
 These previews use sample inspection data and local drafts. Building an extension does not establish live Rancher integration or authorize cluster changes.
 
 ## Run both plugins
