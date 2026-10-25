@@ -99,5 +99,40 @@ settings were changed as part of the NFS move.
 
 ## Guest-disk completion
 
-The batch is in progress. Final configuration, task, filesystem and workload
-checks will be recorded here after all 18 native moves complete.
+The batch is in progress. Five of 18 moves are complete: canary VM 8210 and
+stopped VMs 8201–8204. VM 8201's native task returned `OK`. All four stopped
+guests retain their stopped state. VMs 8205 and 8206 have two native mirror
+jobs running; the remaining disks are queued. All 14 online guest filesystems
+still reported their original UUIDs, 500 GiB size and writable mount options
+during the batch.
+
+Destination contention caused new Longhorn replica failures and a stale
+iSCSI device for `data-opensearch-data-pve06-0`. New dispatcher starts were
+held, preserving all in-flight native tasks. The two running mirror jobs
+were temporarily limited to 2 MiB/s using native HMP
+`block_job_set_speed mirror-scsi1 2M`; read-back confirmed 2,097,152 bytes/s.
+This is a temporary recovery limit, separate from the requested two-copy
+concurrency. Restore speed `0` and resume the two-copy dispatcher when safe.
+
+The already-unavailable OpenSearch pod and the worker08 CSI plugin were
+recreated. The worker's mount remained stale. Worker08 was briefly cordoned,
+and reserve worker12 was assigned the `data-pve06` pool after verifying its
+available capacity (2,591 MiB memory requested before adding the 4 GiB pod).
+The existing PVC was attached on worker12; its filesystem mounted successfully
+at 23:22:31 UTC. The data pod is Ready again with zero restarts. Worker08 is
+uncordoned. Longhorn improved to 29 attached/healthy volumes with two still
+degraded/rebuilding, versus 31 attached/healthy before the batch. The three
+detached/unknown and six attaching/unknown volumes predate this change.
+
+The active durable dispatcher is `/root/nfs-migration-20261025/schedule-two.py`
+under `nfs-migration-20261025-two` on Proxmox06. It is currently SIGSTOP-paused
+to hold new starts during replica recovery. The native VM transfers continue
+independently. The obsolete `nfs-migration-20261025-fast` dispatcher is also
+SIGSTOP-paused and must never be resumed; it would launch four copies. Remove
+obsolete dispatchers only after their native tasks have finished.
+
+The chat's five-minute completion follow-up continues the authorized work,
+including restoration of normal copy speed, two-copy scheduling, final live
+checks, documentation, Git push and the requested Alexa completion notice.
+Final configuration, native task, filesystem and workload checks must pass
+before reporting that the whole migration is complete.
