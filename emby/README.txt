@@ -3,7 +3,10 @@ Emby migration: proxmox09 LXC 105 -> existing RKE2 Kubernetes cluster
 Confirmed source: Emby 4.9.3.0; program data /var/lib/emby ~989 MiB.
 Original guest root filesystem ~3.7 GiB used of 50 GiB allocated.
 Kubernetes config: 20 GiB RWOP Longhorn, 3 replicas, Retain reclaim policy.
-NFS: 10.99.2.109:/mnt/network-share/Proxmox/private/other.
+Active NFS: 10.99.2.106:/mnt/longhorn-remote/private/other.
+The 2026-10-25 migration uses emby-media-proxmox06 / emby-media-proxmox06-nfs.
+Its 10 TiB XFS volume is separate from the 8 TiB guest-image filesystem.
+The original proxmox09 export and emby-media claim are retained for rollback.
 Keep NAS library path /mnt/remote-other; media mount read-only.
 LXC guest identity 999:990 -> host/NFS identity 100999:100990.
 Current workload image: official Emby 4.10.1.0, pinned to SHA-256 digest
@@ -27,7 +30,7 @@ Config-volume move tested from kubworker15 to kubworker14: marker SHA-256
 unchanged and NAS staging folder still readable. Longhorn volume healthy.
 The temporary staging pod was removed after that test; the Emby StatefulSet
 has no fixed worker assignment, node-local media volume, or hostPath.
-NAS access survives worker changes while server 10.99.2.109 and its export stay
+NAS access survives worker changes while server 10.99.2.106 and its export stay
 available. New workers need the same NAS routing/firewall/export authorization,
 NFS CSI support, and Longhorn prerequisites; validate with verify-worker-share.yaml.
 Abrupt node failure can take longer than a graceful move due to safe volume detach.

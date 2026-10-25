@@ -55,6 +55,6 @@ spec:
             - {name: tmp, mountPath: /tmp}
       volumes:
         - name: media
-          persistentVolumeClaim: {claimName: emby-media, readOnly: true}
+          persistentVolumeClaim: {claimName: emby-media-proxmox06, readOnly: true}
         - name: tmp
           emptyDir: {sizeLimit: 1Mi}

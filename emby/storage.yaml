@@ -34,7 +34,8 @@ spec:
       storage: 20Gi
 ---
 # Capacity is descriptive for the existing export, not a NAS quota or allocation.
-# This export was measured inside Proxmox guest 105 on proxmox09.
+# Retained source export for rollback after the 2026-10-25 NFS migration.
+# The active workload uses emby-media-proxmox06 below.
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -80,3 +81,51 @@ spec:
   resources:
     requests:
       storage: 43Ti
+---
+# Existing 10 TiB XFS recovery volume on proxmox06, synchronized from source.
+# Mounted separately from the 8 TiB guest-image filesystem at this export path.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: emby-media-proxmox06-nfs
+  labels:
+    app.kubernetes.io/part-of: emby
+spec:
+  capacity:
+    storage: 10Ti
+  accessModes: [ReadOnlyMany]
+  volumeMode: Filesystem
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  claimRef:
+    namespace: emby
+    name: emby-media-proxmox06
+  mountOptions:
+    - nfsvers=3
+    - proto=tcp
+    - hard
+    - timeo=600
+    - retrans=2
+  csi:
+    driver: nfs.csi.k8s.io
+    volumeHandle: emby-media-proxmox06-private-other
+    readOnly: true
+    volumeAttributes:
+      server: "10.99.2.106"
+      share: /mnt/longhorn-remote/private/other
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: emby-media-proxmox06
+  namespace: emby
+  labels:
+    app.kubernetes.io/part-of: emby
+spec:
+  accessModes: [ReadOnlyMany]
+  volumeMode: Filesystem
+  storageClassName: ""
+  volumeName: emby-media-proxmox06-nfs
+  resources:
+    requests:
+      storage: 10Ti

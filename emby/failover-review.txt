@@ -25,7 +25,8 @@ Expected behavior: several minutes of recovery after an abrupt worker loss,
 followed by access at https://emby.cormierconsulting.io with the same accounts,
 server identity and persisted watch progress. Active playback/transcodes stop.
 No promise of uninterrupted streams or recovery from every kind of partition.
-The NFS server 10.99.2.109 must remain available; its outage still affects media.
+After the 2026-10-25 media migration, NFS server 10.99.2.106 must remain
+available; its outage still affects media. See docs/nfs-migration-20261025.md.
 Current healthy config replicas are on kubworker05/proxmox03,
 kubworker07/proxmox05 and kubworker14/proxmox08.
 

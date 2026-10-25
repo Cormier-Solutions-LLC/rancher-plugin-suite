@@ -9,15 +9,18 @@ SHA-256 digest before installation.
 - Three dedicated cluster-manager nodes use 30 GB PVCs, 4 GiB RAM and a 2 GiB
   JVM heap. They do not carry data or ingest roles.
 - Eight data/ingest nodes use 200 GB PVCs, 4 GiB RAM and a 2 GiB JVM heap.
-  Four use the Proxmox09/PowerVault Longhorn disk pool and four use the
-  Proxmox06 thin-storage Longhorn disk pool.
+  Four use the legacy `proxmox09-nfs` Longhorn disk pool and four use the
+  `proxmox06-nfs` Longhorn disk pool. The 2026-10-25 NFS migration moves the
+  legacy pool's guest disks onto Proxmox06 as well; these names remain logical
+  selectors for existing volumes, not independent physical storage backends.
 - Data pods span six eligible physical Proxmox zones. Managers span three
   zones. Proxmox01 and Proxmox02 are currently excluded from this workload's
   placement; the deployment preflight rejects an assignment in those zones and
   maintains the `opensearch-eligible` label on workers in the other six zones.
 - OpenSearch allocation awareness uses both the physical zone and
-  `storage_domain`. Forced storage-domain awareness keeps each primary and its
-  search replica on different storage backends.
+  `storage_domain`. Forced storage-domain awareness separates the two logical
+  disk pools. After NFS consolidation both depend on Proxmox06, so it no longer
+  provides protection against failure of that shared storage server.
 - New application indices default to four primary shards and one replica, so a
   normally balanced index can use all eight data nodes.
 
@@ -49,8 +52,10 @@ volumes. OpenSearch's replica and Longhorn's copies cover different failure
 levels. Neither replaces an independent OpenSearch snapshot repository.
 
 The OpenSearch data directory uses Longhorn block volumes. It does not mount an
-NFS or SMB filesystem directly. Both Longhorn disk pools remain dependent on
-their respective Proxmox/network storage paths.
+NFS or SMB filesystem directly. Both Longhorn disk pools now depend on the
+Proxmox06 NFS server and the same guest-image filesystem. Existing Longhorn
+disk names/tags and OpenSearch node attributes remain unchanged to preserve
+volume placement. See [NFS migration](../docs/nfs-migration-20261025.md).
 
 ## Private access
 
