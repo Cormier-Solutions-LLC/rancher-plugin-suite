@@ -105,6 +105,15 @@ were deleted or changed.
 
 ## Guest-disk completion
 
+Latest user instruction: **stop the migration**. Both active native copies
+(8205/scsi1 and 8207/scsi1) were stopped, and QMP confirmed no remaining block
+jobs. Both VMs remain running on the original source disks. The r3 dispatcher
+was terminated after those checks, and the completion heartbeat is PAUSED.
+Do not resume transfers without a new user request. Six of 18 moves are
+verified; 12 disks remain: 8205/scsi1, 8207/scsi1+scsi2,
+8208/scsi1+scsi2, 8209/scsi1 and 8211–8216/scsi1. Media cutover is complete.
+The following paragraphs retain the operational history before this stop.
+
 The batch is in progress. Six of 18 moves are verified: canary VM 8210,
 stopped VMs 8201–8204 and running VM 8206. VM 8206's native task returned
 `OK`; its serial, UUID, 500 GiB size and writable mount match baseline, and
