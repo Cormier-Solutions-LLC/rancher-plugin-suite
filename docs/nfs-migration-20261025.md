@@ -96,6 +96,12 @@ OpenSearch had one unassigned replica for `security-auditlog-2026.10.25`.
 Allocation explain dates its I/O failure to 19:07:15 UTC, before this migration
 started. All 11 OpenSearch nodes were present. No index data or allocation
 settings were changed as part of the NFS move.
+After the data pods recovered, a dry run and one native
+`POST /_cluster/reroute?retry_failed=true` cleared the exhausted retry count.
+At 00:37 UTC on October 26 the cluster was green with all 11 nodes, all
+27 primary shards active and zero unassigned shards; two shards were
+relocating. No primary was forced, and no index data or allocation settings
+were deleted or changed.
 
 ## Guest-disk completion
 
@@ -132,13 +138,23 @@ VM 8205/scsi1 and VM 8207/scsi1 copies. Both native tasks stopped, QMP showed
 no remaining old block jobs, and both running guests still referenced their
 original source disks before retry. The obsolete paused dispatcher processes
 were then terminated. The fresh `nfs-migration-20261025-two-r2` unit on
-Proxmox06 runs `/root/nfs-migration-20261025/schedule-two.py`; it started the
+Proxmox06 ran `/root/nfs-migration-20261025/schedule-two.py`; it started the
 two replacement copies at 00:16 UTC with `--bwlimit 0`. QMP confirmed speed
 limit `0` for both. Do not restart either obsolete dispatcher or cancel the
 fresh transfers without a new user request. VM 8205's canceled attempt left
 an approximately 19 GiB unreferenced partial `vm-8205-disk-1.qcow2`; retain
 it pending final verification. Its existing attached destination disk-0 is
 unrelated to that partial and must be preserved.
+
+At the user's subsequent explicit request, the same two copies were stopped
+and restarted again at 00:37 UTC. Before stopping, native read-back still
+showed speed limit `0` for both: no bandwidth cap remained. Both native tasks
+then reached terminal interrupted states, QMP reported no old block jobs,
+and both guests remained running with their source disks attached and no
+guest locks. The paused r2 dispatcher was terminated only after those checks.
+The active replacement unit is `nfs-migration-20261025-two-r3`, using the same
+two-copy scheduler with `--bwlimit 0`. Native cleanup removed the r2 partials;
+the earlier retained 8205 disk-1 partial and all source disks remain preserved.
 
 The earlier offline transfers are not comparable to the current live mirrors
 using their displayed 500 GiB provisioned capacity alone. Native task timing
