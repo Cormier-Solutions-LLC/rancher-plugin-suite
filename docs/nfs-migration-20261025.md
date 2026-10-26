@@ -99,20 +99,23 @@ settings were changed as part of the NFS move.
 
 ## Guest-disk completion
 
-The batch is in progress. Five of 18 moves are complete: canary VM 8210 and
-stopped VMs 8201–8204. VM 8201's native task returned `OK`. All four stopped
-guests retain their stopped state. VMs 8205 and 8206 have two native mirror
-jobs running; the remaining disks are queued. All 14 online guest filesystems
-still reported their original UUIDs, 500 GiB size and writable mount options
-during the batch.
+The batch is in progress. Six of 18 moves are verified: canary VM 8210,
+stopped VMs 8201–8204 and running VM 8206. VM 8206's native task returned
+`OK`; its serial, UUID, 500 GiB size and writable mount match baseline, and
+its source remains as `unused0`. All four originally stopped guests remain
+stopped. VMs 8205 and 8207 currently have two native mirror jobs running;
+the remaining disks are queued. All 14 online guest filesystems reported
+their original UUIDs, 500 GiB size and writable mount options during the batch.
 
 Destination contention caused new Longhorn replica failures and a stale
 iSCSI device for `data-opensearch-data-pve06-0`. New dispatcher starts were
 held, preserving all in-flight native tasks. The two running mirror jobs
 were temporarily limited to 2 MiB/s using native HMP
 `block_job_set_speed mirror-scsi1 2M`; read-back confirmed 2,097,152 bytes/s.
-This is a temporary recovery limit, separate from the requested two-copy
-concurrency. Restore speed `0` and resume the two-copy dispatcher when safe.
+At the user's subsequent request, bandwidth limits were removed and the
+two-copy queue resumed at 00:10 UTC on October 26. Native read-back confirmed
+speed `0`, meaning unlimited. Keep the two-copy concurrency and do not
+silently restore the temporary cap or hold new starts against this instruction.
 
 The already-unavailable OpenSearch pod and the worker08 CSI plugin were
 recreated. The worker's mount remained stale. Worker08 was briefly cordoned,
@@ -120,19 +123,46 @@ and reserve worker12 was assigned the `data-pve06` pool after verifying its
 available capacity (2,591 MiB memory requested before adding the 4 GiB pod).
 The existing PVC was attached on worker12; its filesystem mounted successfully
 at 23:22:31 UTC. The data pod is Ready again with zero restarts. Worker08 is
-uncordoned. Longhorn improved to 29 attached/healthy volumes with two still
-degraded/rebuilding, versus 31 attached/healthy before the batch. The three
+uncordoned. At 00:04 UTC Longhorn had improved to 30 attached/healthy volumes
+with one still degraded/rebuilding, versus 31 attached/healthy before the batch. The three
 detached/unknown and six attaching/unknown volumes predate this change.
 
-The active durable dispatcher is `/root/nfs-migration-20261025/schedule-two.py`
-under `nfs-migration-20261025-two` on Proxmox06. It is currently SIGSTOP-paused
-to hold new starts during replica recovery. The native VM transfers continue
-independently. The obsolete `nfs-migration-20261025-fast` dispatcher is also
-SIGSTOP-paused and must never be resumed; it would launch four copies. Remove
-obsolete dispatchers only after their native tasks have finished.
+The user explicitly requested a one-time stop and restart of the active
+VM 8205/scsi1 and VM 8207/scsi1 copies. Both native tasks stopped, QMP showed
+no remaining old block jobs, and both running guests still referenced their
+original source disks before retry. The obsolete paused dispatcher processes
+were then terminated. The fresh `nfs-migration-20261025-two-r2` unit on
+Proxmox06 runs `/root/nfs-migration-20261025/schedule-two.py`; it started the
+two replacement copies at 00:16 UTC with `--bwlimit 0`. QMP confirmed speed
+limit `0` for both. Do not restart either obsolete dispatcher or cancel the
+fresh transfers without a new user request. VM 8205's canceled attempt left
+an approximately 19 GiB unreferenced partial `vm-8205-disk-1.qcow2`; retain
+it pending final verification. Its existing attached destination disk-0 is
+unrelated to that partial and must be preserved.
+
+The earlier offline transfers are not comparable to the current live mirrors
+using their displayed 500 GiB provisioned capacity alone. Native task timing
+and allocated source-file sizes were:
+
+| VM | Allocated source data | Task duration | Guest state / method |
+| --- | ---: | ---: | --- |
+| 8201 | 33.2 GiB | 13m 19s | Stopped / offline conversion |
+| 8202 | 104 MiB | 13s | Stopped / offline conversion |
+| 8203 | 89 MiB | 10s | Stopped / offline conversion |
+
+Sparse empty ranges account for most of the fast logical progress on 8202
+and 8203. VM 8201's allocated size divided by elapsed time is approximately
+42.5 MiB/s, an estimate rather than measured network throughput. Running
+VMs 8205 and 8207/scsi1 had approximately 23.1 and 44.0 GiB allocated and
+use live mirrors that also track guest writes. A subsequent destination
+sample reached 100% utilization at approximately 95 MiB/s writes plus
+4.5 MiB/s reads, with approximately 25 ms write latency. Both source hosts
+have healthy bonded 10 Gb links. These observations identify destination
+contention and different copy workloads; they do not establish a SCSI
+interface speed limit.
 
 The chat's five-minute completion follow-up continues the authorized work,
-including restoration of normal copy speed, two-copy scheduling, final live
+including unlimited copy speed, two-copy scheduling, final live
 checks, documentation, Git push and the requested Alexa completion notice.
 Final configuration, native task, filesystem and workload checks must pass
 before reporting that the whole migration is complete.
