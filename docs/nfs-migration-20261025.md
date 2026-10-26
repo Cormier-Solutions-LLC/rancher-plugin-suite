@@ -161,6 +161,22 @@ have healthy bonded 10 Gb links. These observations identify destination
 contention and different copy workloads; they do not establish a SCSI
 interface speed limit.
 
+A later 10-second sample measured mirror progress of 11.27 MiB/s for 8205
+and 18.73 MiB/s for 8207. The destination was 99.9% busy at 35.27 MiB/s
+writes and 19.67 ms write latency; the source image volume was only 5.8%
+busy. Guest writes on the migrating disks were just 0.01–0.02 MiB/s, so
+guest dirtying did not explain that sample's bottleneck. The destination NFS
+export is synchronous and Linux reports its block device as write through;
+controller cache policy was not independently queried. Total elapsed time
+also includes the temporary 2 MiB/s cap and work repeated after the user's
+requested restart. VM 8205's smaller allocated size than VM 8201 means
+"more data" alone cannot explain the slower 8205 move.
+
+Read-only QCOW2 maps found approximately 21.0 GiB of nonzero-data extents on
+8205 versus 33.1 GiB on 8201. Both also contain large explicitly zero-marked
+ranges. The live mirror accounts for roughly 250 GiB, which must not be
+reported as physical data or measured network throughput.
+
 The chat's five-minute completion follow-up continues the authorized work,
 including unlimited copy speed, two-copy scheduling, final live
 checks, documentation, Git push and the requested Alexa completion notice.
