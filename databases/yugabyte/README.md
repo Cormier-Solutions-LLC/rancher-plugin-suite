@@ -73,8 +73,8 @@ transaction retries; never suppress advisory-lock or constraint errors.
 - Harbor: live on `registry_live_20261108`; final frozen-source fingerprints and
   independent restore verified (49 tables, 30,968 rows). Authenticated projects,
   native API create/read/delete and normal core/exporter rollout passed. The
-  credential-free override is in `applications/harbor-values.json`; reconcile
-  Helm with that override after the source-retirement HA gate.
+  credential-free override is in `applications/harbor-values.json`; the Helm
+  release is reconciled with that external-database configuration.
 - Proof Studio: final source snapshot restored twice (50 tables, 1,411 rows).
   Native runtime credentials, TLS, advisory locks, commit/read and rollback
   passed; the normal application is live and HTTPS readiness passed.
@@ -185,3 +185,10 @@ Original source PVCs have Retain reclaim behavior and were not deleted. The old
 World Simulator database container was removed without deleting its named volume.
 Task-created trial databases and temporary migration candidates were removed.
 Do not delete retained recovery files or volumes as routine deployment cleanup.
+
+Harbor reconciliation also exposed a stale backup freeze on kubworker07
+(VMID 8207 on proxmox06), preventing one scanner-volume replica from stopping.
+With no active Proxmox tasks, five guest filesystems were thawed and the stale
+backup lock removed. The exact leftover replica process stopped, the existing
+volume reattached healthy on worker14, and Trivy returned Ready. No replica data
+was deleted and no active backup was interrupted.
