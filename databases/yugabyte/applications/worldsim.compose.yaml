@@ -1,0 +1,15 @@
+# Overlay for the existing World Simulator compose.yaml. Secrets are supplied
+# in process environment by the deployment helper, never embedded here.
+services:
+  db:
+    profiles: [legacy-postgres]
+  app:
+    image: ${WORLDSIM_IMAGE:-world-simulator:local}
+    pull_policy: never
+    depends_on: !reset {}
+    environment:
+      ConnectionStrings__Database: ${WORLDSIM_DATABASE_CONNECTION:?Load the worldsim-connection Kubernetes Secret first}
+    extra_hosts:
+      - "ysql.yugabyte.svc.cluster.local:${YUGABYTE_LAN_IP:-10.99.15.60}"
+    volumes:
+      - "${WORLDSIM_CA_FILE:?Export the public YugabyteDB CA first}:/secrets/yugabyte-ca.crt:ro"

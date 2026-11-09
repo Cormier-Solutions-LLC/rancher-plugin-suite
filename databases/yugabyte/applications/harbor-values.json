@@ -1,0 +1,33 @@
+{
+  "database": {
+    "type": "external",
+    "external": {
+      "host": "ysql.yugabyte.svc.cluster.local",
+      "port": "5433",
+      "username": "harbor_owner",
+      "coreDatabase": "registry_live_20261108",
+      "existingSecret": "harbor-yugabyte",
+      "sslmode": "verify-full"
+    },
+    "maxOpenConns": 30,
+    "maxIdleConns": 5
+  },
+  "caBundleSecretName": "harbor-yugabyte-ca",
+  "enableMigrateHelmHook": false,
+  "core": {
+    "extraEnvVars": [
+      {
+        "name": "PGSSLROOTCERT",
+        "value": "/harbor_cust_cert/custom-ca.crt"
+      }
+    ]
+  },
+  "exporter": {
+    "extraEnvVars": [
+      {
+        "name": "PGSSLROOTCERT",
+        "value": "/harbor_cust_cert/custom-ca.crt"
+      }
+    ]
+  }
+}

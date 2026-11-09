@@ -1,0 +1,112 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: yugabyte-backup
+  namespace: yugabyte
+spec:
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    metadata: {}
+    spec:
+      activeDeadlineSeconds: 7200
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            app: yugabyte-backup
+        spec:
+          automountServiceAccountToken: false
+          containers:
+          - command:
+            - python3
+            - /scripts/backup.py
+            env:
+            - name: BACKUP_DATABASES
+              value: licensing,tablelink,worldsim,registry_live_20261108,proofstudio_final_20261108,invoicing
+            - name: BACKUP_HOSTS
+              value: yb-pve08-yb-tserver-0.yb-pve08-yb-tservers.yugabyte.svc.cluster.local,yb-pve08-yb-tserver-1.yb-pve08-yb-tservers.yugabyte.svc.cluster.local,yb-pve09-yb-tserver-0.yb-pve09-yb-tservers.yugabyte.svc.cluster.local,yb-pve09-yb-tserver-1.yb-pve09-yb-tservers.yugabyte.svc.cluster.local
+            image: yugabytedb/yugabyte:2026.1.2.0-b137@sha256:b6dba322c7340e1a87affd9b4715fa938354b6ab81b0b0833b07f6b5d085e274
+            imagePullPolicy: IfNotPresent
+            name: backup
+            resources:
+              limits:
+                cpu: 200m
+                memory: 512Mi
+              requests:
+                cpu: 200m
+                memory: 512Mi
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+            volumeMounts:
+            - mountPath: /backups
+              name: backups
+            - mountPath: /scripts
+              name: script
+              readOnly: true
+            - mountPath: /secrets/database
+              name: credentials
+              readOnly: true
+            - mountPath: /secrets/backup
+              name: encryption
+              readOnly: true
+            - mountPath: /secrets/ca
+              name: ca
+              readOnly: true
+          dnsPolicy: ClusterFirst
+          nodeSelector:
+            kubernetes.io/hostname: kubworker03
+          restartPolicy: Never
+          schedulerName: default-scheduler
+          securityContext:
+            fsGroup: 10001
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 10001
+            runAsUser: 10001
+          terminationGracePeriodSeconds: 30
+          volumes:
+          - name: backups
+            persistentVolumeClaim:
+              claimName: yugabyte-backups
+          - configMap:
+              defaultMode: 420
+              name: yugabyte-backup-script
+            name: script
+          - name: credentials
+            secret:
+              defaultMode: 420
+              secretName: yugabyte-backup
+          - name: encryption
+            secret:
+              defaultMode: 420
+              secretName: yugabyte-backup-encryption
+          - name: ca
+            secret:
+              defaultMode: 420
+              items:
+              - key: tls.crt
+                path: ca.crt
+              secretName: yugabyte-ca
+  schedule: 0 3 * * *
+  successfulJobsHistoryLimit: 1
+  suspend: false
+  timeZone: America/Chicago
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: yugabyte-backups
+  namespace: yugabyte
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: longhorn
+  volumeMode: Filesystem
