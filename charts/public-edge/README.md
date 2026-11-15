@@ -80,9 +80,11 @@ private VIP. DNS records alone are not an access control.
 Before adding Invoicing's missing public record, read the live GoDaddy zone and
 capture the exact affected record set for rollback. Add only the approved name
 using the existing Secret-backed GoDaddy access, after the gateway cutover is
-verified. Preserve unrelated DNS and certificate-validation TXT records. A public
-DNS/DDNS reconciliation controller is separate future work; this chart enforces
-the HTTP/TLS allowlist and does not update GoDaddy A/CNAME records automatically.
+verified. Preserve unrelated DNS and certificate-validation TXT records. Public
+DNS/DDNS reconciliation is handled by the separate
+[`public-edge-ddns` CronJob](../../public-edge-ddns/README.md), which reads this
+chart's live `public-hosts.json` list. This chart enforces the HTTP/TLS allowlist;
+the updater reconciles public A records and preserves aliases to managed names.
 
 ## Validation
 

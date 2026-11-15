@@ -1,0 +1,91 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "batch/v1",
+      "kind": "CronJob",
+      "metadata": {"name": "public-edge-ddns", "namespace": "public-edge"},
+      "spec": {
+        "schedule": "*/5 * * * *",
+        "timeZone": "America/Chicago",
+        "suspend": true,
+        "concurrencyPolicy": "Forbid",
+        "startingDeadlineSeconds": 120,
+        "successfulJobsHistoryLimit": 2,
+        "failedJobsHistoryLimit": 3,
+        "jobTemplate": {
+          "spec": {
+            "backoffLimit": 1,
+            "activeDeadlineSeconds": 180,
+            "ttlSecondsAfterFinished": 86400,
+            "template": {
+              "metadata": {"labels": {"app.kubernetes.io/name": "public-edge-ddns"}},
+              "spec": {
+                "automountServiceAccountToken": false,
+                "restartPolicy": "Never",
+                "securityContext": {
+                  "runAsNonRoot": true, "runAsUser": 1000, "runAsGroup": 1000,
+                  "fsGroup": 1000, "seccompProfile": {"type": "RuntimeDefault"}
+                },
+                "containers": [{
+                  "name": "updater",
+                  "image": "node:24.20.0-alpine@sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf",
+                  "command": ["node", "/app/updater.mjs"],
+                  "env": [
+                    {"name": "DNS_ZONE", "value": "cormierconsulting.io"},
+                    {"name": "DRY_RUN", "value": "false"}
+                  ],
+                  "resources": {
+                    "requests": {"cpu": "10m", "memory": "32Mi"},
+                    "limits": {"cpu": "200m", "memory": "96Mi"}
+                  },
+                  "securityContext": {
+                    "allowPrivilegeEscalation": false, "readOnlyRootFilesystem": true,
+                    "capabilities": {"drop": ["ALL"]}
+                  },
+                  "volumeMounts": [
+                    {"name": "script", "mountPath": "/app", "readOnly": true},
+                    {"name": "hosts", "mountPath": "/hosts", "readOnly": true},
+                    {"name": "credentials", "mountPath": "/credentials", "readOnly": true}
+                  ]
+                }],
+                "volumes": [
+                  {"name": "script", "configMap": {"name": "public-edge-ddns-script"}},
+                  {"name": "hosts", "configMap": {
+                    "name": "public-edge-config",
+                    "items": [{"key": "public-hosts.json", "path": "public-hosts.json"}]
+                  }},
+                  {"name": "credentials", "secret": {
+                    "secretName": "public-edge-ddns-godaddy", "defaultMode": 288,
+                    "items": [{"key": "token", "path": "token"}]
+                  }}
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {"name": "public-edge-ddns", "namespace": "public-edge"},
+      "spec": {
+        "podSelector": {"matchLabels": {"app.kubernetes.io/name": "public-edge-ddns"}},
+        "policyTypes": ["Ingress", "Egress"],
+        "ingress": [],
+        "egress": [
+          {
+            "to": [{"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "kube-system"}}}],
+            "ports": [{"port": 53, "protocol": "UDP"}, {"port": 53, "protocol": "TCP"}]
+          },
+          {
+            "to": [{"ipBlock": {"cidr": "0.0.0.0/0", "except": ["0.0.0.0/8", "10.0.0.0/8", "100.64.0.0/10", "127.0.0.0/8", "169.254.0.0/16", "172.16.0.0/12", "192.168.0.0/16", "224.0.0.0/4", "240.0.0.0/4"]}}],
+            "ports": [{"port": 443, "protocol": "TCP"}]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -15,6 +15,7 @@
     "test:service-health": "node --test scripts/tests/service-health.test.mjs",
     "test:public-edge": "node scripts/test-public-manager-edge.mjs",
     "test:public-access": "node scripts/test-public-edge.mjs",
+    "test:public-access-ddns": "node --test public-edge-ddns/updater.test.mjs",
     "test:public-access-live": "node scripts/verify-public-edge-live.mjs",
     "test:public-access-external": "node scripts/verify-public-edge-external.mjs",
     "publish:public-access-chart": "node scripts/publish-public-edge-chart.mjs",

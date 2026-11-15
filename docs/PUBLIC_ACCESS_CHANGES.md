@@ -135,7 +135,9 @@ policy with reviewed Helm values and verify the resulting certificate/rollout.
 
 See `charts/public-edge/README.md` for policy control, deployment, external
 acceptance, and rollback. Dynamic GoDaddy A/CNAME reconciliation is separate from
-this gateway and has not been implemented by this change.
+this gateway and was not implemented by the original cutover. The subsequent
+[`public-edge-ddns` CronJob](../public-edge-ddns/README.md) now reconciles public A
+records from the live gateway hostname list every five minutes.
 
 ## Chart publication
 
