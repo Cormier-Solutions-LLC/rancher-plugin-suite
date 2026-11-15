@@ -1,4 +1,5 @@
 import json, subprocess, pathlib, sys, yaml, os, urllib.request, tarfile, hashlib, shutil
+from certificate_init import harden_certificate_init
 
 REPO=pathlib.Path(__file__).resolve().parents[2]
 ROOT=REPO/'.local'/'yugabyte-render';ROOT.mkdir(parents=True,exist_ok=True)
@@ -72,6 +73,7 @@ for h,nodes,cpu,mem in HOSTS:
    x['spec']['persistentVolumeClaimRetentionPolicy']={'whenDeleted':'Retain','whenScaled':'Retain'}
    for c in p['spec'].get('initContainers',[]):
     c['resources']={'requests':{'cpu':'100m','memory':'128Mi'},'limits':{'cpu':'100m','memory':'128Mi'}}
+    if c['name']=='certmanager-init':c['command']=harden_certificate_init(c['command'])
    for c in p['spec']['containers']:
     if c['name']=='yb-cleanup':
      c['resources']={'requests':{'cpu':'5m','memory':'16Mi'},'limits':{'cpu':'5m','memory':'16Mi'}}

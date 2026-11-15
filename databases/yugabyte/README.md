@@ -105,6 +105,54 @@ verified against its pinned SHA-256. Configure RF3 placement explicitly with
 `yb-admin modify_placement_info onprem.lab.proxmox07:1,onprem.lab.proxmox08:1,onprem.lab.proxmox09:1 3`
 using the three master addresses and the mounted node certificates.
 
+### Certificate initialization recovery
+
+`certificate_init.py` hardens the pinned chart's `certmanager-init` command.
+It replaces the ephemeral certificate symlink itself (`ln -sfnT`), removes only
+the known legacy `certs/certs -> /mnt/disk0/certs` self-link, and sets mode 600
+only on regular certificate files. The certificate directory retains owner
+traversal permission with no group/other access. Certificate validation and the
+existing non-root UID remain in place. Unexpected chart scripts or a different
+legacy symlink fail closed for operator inspection.
+
+The previous initializer could create a self-link on retry. Its wildcard chmod
+then followed that link and set the certificate directory to mode 600, causing
+the next file operation to fail with `Permission denied`. Valid certificates
+and correct file ownership do not rule out this failure. Inspect directory modes
+and symlink targets without printing private keys. Do not disable TLS, replace
+the CA, or recursively change database-directory permissions to work around it.
+
+For an existing outage, save the affected StatefulSet specifications privately,
+stage the corrected initializer with automatic rollout disabled, and recreate
+only failed pods first. Preserve PVCs, database files, credentials and placement.
+Verify all three masters and six data servers, then wait for the master's
+`/api/v1/health-check` to report no dead nodes and no under-replicated tablets.
+Confirm three voter replicas across physical hosts for application tablets;
+pod readiness (`SELECT 1`) alone does not establish application-data availability.
+Restart remaining pods one at a time only after replication is healthy, checking
+replication and application readiness between pods. Restore the saved rollout
+strategies after every pod uses the corrected template.
+
+Run `python3 -m unittest test_certificate_init.py` from this directory on Linux.
+The regression test starts with the legacy self-link and non-traversable directory,
+then executes three initializations and verifies private modes and readable files.
+It uses temporary fixture files, never a serving database or actual private keys.
+The Linux mode/symlink test is skipped on Windows. Run `deploy.py` without
+`--apply` for a rendered, server-side dry run before deployment.
+
+Recovery on 2026-11-15 corrected all six StatefulSet templates and restarted all
+nine database pods, one healthy pod at a time after recovering the three failed
+pods on worker13. Final checks found no dead data servers or under-replicated
+tablets, with Invoicing's schema tablet represented on all three physical hosts.
+A dedicated `provider_test_` database verified committed reads through all six
+SQL coordinators and rollback behavior, then was removed. Invoicing's frontend,
+health and database-readiness endpoints returned HTTPS 200; Harbor reported all
+components healthy. SQL coordinator replacement caused transient Invoicing
+readiness failures and container restarts, so this was not a zero-interruption
+recovery. Original application databases, credentials and recovery files were
+retained. StatefulSet snapshots and detailed verification are preserved privately
+under `.local/yugabyte-recovery-20261115`.
+
 `install-backup.py` provisions the least-privilege backup reader, encryption-key
 Secret, script and PVC. A newly installed nightly schedule starts suspended; an existing
 schedule retains its state unless `--enable-schedule` is explicitly supplied. It never replaces missing
