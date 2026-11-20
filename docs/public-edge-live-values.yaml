@@ -1,8 +1,12 @@
-# Live policy at the October 18, 2026 web-only cutover; chart version 0.1.0.
+# Hostname policy verified November 20, 2026, including the LicensingServer launch.
 # Review the current Helm values before replaying after any Rancher policy edits.
 publicHosts:
   - proofing.cormierconsulting.io
   - invoicing.cormierconsulting.io
+  - cutaway.cormierconsulting.io
+  - tablelink.cormierconsulting.io
+  - crypto.cormierconsulting.io
+  - licensing.cormierconsulting.io
 service:
   type: LoadBalancer
   loadBalancerIP: "10.99.15.59"
