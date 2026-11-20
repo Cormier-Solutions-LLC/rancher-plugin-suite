@@ -1,4 +1,4 @@
-# Hostname policy verified November 20, 2026, including the LicensingServer launch.
+# Hostname policy verified November 20, 2026, including LicensingServer and Access.
 # Review the current Helm values before replaying after any Rancher policy edits.
 publicHosts:
   - proofing.cormierconsulting.io
@@ -7,6 +7,7 @@ publicHosts:
   - tablelink.cormierconsulting.io
   - crypto.cormierconsulting.io
   - licensing.cormierconsulting.io
+  - access.cormierconsulting.io
 service:
   type: LoadBalancer
   loadBalancerIP: "10.99.15.59"
