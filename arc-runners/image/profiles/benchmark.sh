@@ -1,12 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-context=$(cd "$(dirname "$0")/.." && pwd)
-base=harbor.cormierconsulting.io/automation/arc-runner-linux@sha256:cacbd0adafb78ff675e72217e704f064664c04b9bb5fccc5887f17ab436fb835
-export DOCKER_BUILDKIT=1
-for profile in proofing realtimestack codeql-os codeql; do
-  docker build --target "$profile" -f "$context/Dockerfile.profiles" -t "runner-benchmark:$profile" "$context"
-done
+profiles=$(cd "$(dirname "$0")" && pwd)
+scratch=$(mktemp -d "${RUNNER_TEMP:-/tmp}/runner-profile-benchmark.XXXXXXXX")
+trap 'rm -rf -- "$scratch"' EXIT
 
 measure() {
   local profile=$1 variant=$2
@@ -18,81 +15,92 @@ measure() {
   printf '| %s | %s | %s |\n' "$profile" "$variant" "$duration" | tee -a "${GITHUB_STEP_SUMMARY:-/dev/null}"
 }
 
-proofing() {
-  local image=$1 mode=$2
-  docker run --rm --entrypoint bash \
-    --mount "type=bind,source=$context/profiles/proofing,target=/fixture,readonly" \
-    "$image" -euc '
-    if [[ "$1" == cold ]]; then
-      node_version=24.22.3
-      curl --fail --silent --show-error --location --retry 2 \
-        "https://nodejs.org/dist/v${node_version}/node-v${node_version}-linux-x64.tar.xz" -o /tmp/node.tar.xz
-      printf "%s  %s\n" 4f2b175a6d53a5c617a80dba2676238a0688cef28c6da4eba35c7d844e66fcfb /tmp/node.tar.xz | sha256sum -c -
-      mkdir /tmp/node /tmp/proofing
-      tar -xJf /tmp/node.tar.xz --strip-components=1 -C /tmp/node
-      export PATH=/tmp/node/bin:$PATH PLAYWRIGHT_BROWSERS_PATH=/tmp/browser-cold
-      cp /fixture/package*.json /tmp/proofing/
-      npm ci --prefix /tmp/proofing --ignore-scripts --no-audit --no-fund
-      /tmp/proofing/node_modules/.bin/playwright install chromium
-      cd /tmp/proofing
-    else
-      export PATH=/opt/hostedtoolcache/node/24.22.3/x64/bin:$PATH
-      cd /opt/proofing-tools
-    fi
-    test "$(node -p process.version)" = v24.22.3
-    node --input-type=module -e '\''
-      import { chromium } from "playwright";
-      const browser = await chromium.launch();
-      try {
-        const page = await browser.newPage();
-        await page.setContent("<title>runner benchmark</title>");
-        if (await page.title() !== "runner benchmark") process.exitCode = 1;
-      } finally { await browser.close(); }
-    '\''
-  ' -- "$mode"
+prepare_proofing() (
+  local target=$1
+  mkdir -p "$target"/{node,tools}
+  curl -fsSL --retry 2 --connect-timeout 15 --max-time 180 \
+    https://nodejs.org/dist/v24.22.3/node-v24.22.3-linux-x64.tar.xz -o "$target/node.tar.xz"
+  printf '%s  %s\n' 4f2b175a6d53a5c617a80dba2676238a0688cef28c6da4eba35c7d844e66fcfb "$target/node.tar.xz" | sha256sum -c -
+  tar -xJf "$target/node.tar.xz" --strip-components=1 -C "$target/node"
+  cp "$profiles/proofing"/package*.json "$target/tools"
+  export PATH="$target/node/bin:$PATH" PLAYWRIGHT_BROWSERS_PATH="$target/browsers" npm_config_cache="$target/npm-cache"
+  npm ci --prefix "$target/tools" --ignore-scripts --no-audit --no-fund
+  "$target/tools/node_modules/.bin/playwright" install chromium
+)
+
+run_proofing() (
+  local target=$1
+  export PATH="$target/node/bin:$PATH" PLAYWRIGHT_BROWSERS_PATH="$target/browsers"
+  test "$(node -p process.version)" = v24.22.3
+  cd "$target/tools"
+  node --input-type=module <<'JS'
+import { chromium } from 'playwright';
+const browser = await chromium.launch();
+try {
+  const page = await browser.newPage();
+  await page.setContent('<title>runner benchmark</title>');
+  if (await page.title() !== 'runner benchmark') process.exitCode = 1;
+} finally { await browser.close(); }
+JS
+)
+
+cold_proofing() {
+  prepare_proofing "$1"
+  run_proofing "$1"
 }
 
-aot() {
-  docker run --rm --entrypoint bash \
-    --mount "type=bind,source=$context/profiles/realtimestack,target=/fixture,readonly" \
-    "$1" -euc '
-    mkdir /tmp/bench
-    cp /fixture/RunnerAot.csproj /fixture/Program.cs /tmp/bench/
-    dotnet publish /tmp/bench/RunnerAot.csproj -c Release -o /tmp/bench/out
-    test "$(/tmp/bench/out/RunnerAot)" = "Runner Native AOT profile ready."
-  '
+run_aot() (
+  local output=$1 cache=$2
+  mkdir -p "$output"
+  cp "$profiles/realtimestack/RunnerAot.csproj" "$profiles/realtimestack/Program.cs" "$output"
+  export NUGET_PACKAGES="$cache/packages" NUGET_HTTP_CACHE_PATH="$cache/http"
+  dotnet publish "$output/RunnerAot.csproj" -c Release -o "$output/out"
+  test "$("$output/out/RunnerAot")" = 'Runner Native AOT profile ready.'
+)
+
+prepare_codeql() {
+  local target=$1
+  mkdir -p "$target"
+  curl -fsSL --retry 2 --connect-timeout 15 --max-time 480 \
+    https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.27.5/codeql-bundle-linux64.tar.zst -o "$target/codeql.tar.zst"
+  printf '%s  %s\n' 141e6eb4e99c8498a1258e282e6f7b59c747b4b1a7eabc7cbf7d1aa92792edf0 "$target/codeql.tar.zst" | sha256sum -c -
+  tar --zstd -xf "$target/codeql.tar.zst" -C "$target"
+  rm "$target/codeql.tar.zst"
 }
 
-codeql() {
-  local image=$1 mode=$2
-  docker run --rm --memory 8g --entrypoint bash "$image" -euc '
-    cli=/opt/hostedtoolcache/CodeQL/2.27.5/x64/codeql/codeql
-    if [[ "$1" == cold ]]; then
-      curl --fail --silent --show-error --location --retry 2 \
-        https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.27.5/codeql-bundle-linux64.tar.zst -o /tmp/codeql.tar.zst
-      printf "%s  %s\n" 141e6eb4e99c8498a1258e282e6f7b59c747b4b1a7eabc7cbf7d1aa92792edf0 /tmp/codeql.tar.zst | sha256sum -c -
-      tar --zstd -xf /tmp/codeql.tar.zst -C /tmp
-      cli=/tmp/codeql/codeql
-    fi
-    mkdir /tmp/codeql-input
-    printf "%s\n" "export const runnerProfile = 1;" >/tmp/codeql-input/fixture.js
-    "$cli" database create /tmp/runner-codeql-db --language=javascript-typescript --build-mode=none --threads=2 --source-root=/tmp/codeql-input
-    "$cli" database analyze /tmp/runner-codeql-db --threads=2 --ram=4096 --format=sarif-latest --output=/tmp/runner-codeql.sarif javascript-code-scanning.qls
-    jq -e "any(.runs[]; .tool.driver.name == \"CodeQL\")" /tmp/runner-codeql.sarif >/dev/null
-  ' -- "$mode"
+run_codeql() {
+  local output=$1 cache=$2
+  local cli="$cache/codeql/codeql"
+  mkdir -p "$output/source"
+  printf '%s\n' 'export const runnerProfile = 1;' >"$output/source/fixture.js"
+  "$cli" database create "$output/db" --language=javascript-typescript --build-mode=none --threads=2 --source-root="$output/source"
+  "$cli" database analyze "$output/db" --threads=2 --ram=4096 --format=sarif-latest --output="$output/results.sarif" javascript-code-scanning.qls
+  jq -e 'any(.runs[]; .tool.driver.name == "CodeQL")' "$output/results.sarif" >/dev/null
 }
+
+cold_codeql() {
+  prepare_codeql "$2"
+  run_codeql "$@"
+}
+
+if ! command -v zstd >/dev/null; then
+  sudo -n apt-get update
+  sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends zstd
+fi
+
+# Materialize all three profiles before starting the timed runs.
+prepare_proofing "$scratch/proofing"
+run_aot "$scratch/aot-prepare" "$scratch/aot-cache"
+prepare_codeql "$scratch/codeql"
 
 printf '| Profile | Input | Elapsed ms |\n|---|---|---:|\n' >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
-docker pull "$base"
-measure Proofing cold proofing "$base" cold
-measure Proofing precompiled proofing runner-benchmark:proofing precompiled
-measure Proofing precompiled proofing runner-benchmark:proofing precompiled
-measure Proofing cold proofing "$base" cold
-measure Native-AOT cold aot "$base"
-measure Native-AOT precompiled aot runner-benchmark:realtimestack
-measure Native-AOT precompiled aot runner-benchmark:realtimestack
-measure Native-AOT cold aot "$base"
-measure CodeQL cold codeql runner-benchmark:codeql-os cold
-measure CodeQL precompiled codeql runner-benchmark:codeql precompiled
-measure CodeQL precompiled codeql runner-benchmark:codeql precompiled
-measure CodeQL cold codeql runner-benchmark:codeql-os cold
+measure Proofing cold cold_proofing "$scratch/proof-cold-a"
+measure Proofing precompiled run_proofing "$scratch/proofing"
+measure Proofing precompiled run_proofing "$scratch/proofing"
+measure Proofing cold cold_proofing "$scratch/proof-cold-b"
+measure Native-AOT cold run_aot "$scratch/aot-cold-a" "$scratch/aot-cold-cache-a"
+measure Native-AOT precompiled run_aot "$scratch/aot-warm-a" "$scratch/aot-cache"
+measure Native-AOT precompiled run_aot "$scratch/aot-warm-b" "$scratch/aot-cache"
+measure Native-AOT cold run_aot "$scratch/aot-cold-b" "$scratch/aot-cold-cache-b"
+measure CodeQL cold cold_codeql "$scratch/codeql-out-cold" "$scratch/codeql-cold"
+measure CodeQL precompiled run_codeql "$scratch/codeql-out-warm" "$scratch/codeql"
