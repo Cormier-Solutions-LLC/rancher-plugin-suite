@@ -7,8 +7,11 @@ async function request(host,path,body,headers={},method='POST'){
 try{
  const deployment=await kube('/apis/apps/v1/namespaces/automation/deployments/mcp-gateway'),env=deployment.spec.template.spec.containers[0].env;
  const config=await kube('/api/v1/namespaces/automation/configmaps/mcp-gateway-profiles-g9bttt95dc');
- for(const profile of JSON.parse(config.data['profiles.json']).profiles.filter(p=>p.hosts.includes('mcp-phone.cormierconsulting.io'))){
-  const host=profile.hosts[0],ref=env.find(e=>e.name===profile.clientTokenEnv)?.valueFrom?.secretKeyRef;assert.ok(ref);
+ const host='mcp-phone.cormierconsulting.io';
+ const profiles=JSON.parse(config.data['profiles.json']).profiles.filter(p=>Array.isArray(p.hosts) && p.hosts.some(name=>name===host));
+ assert.ok(profiles.length,'Phone gateway profile is missing');
+ for(const profile of profiles){
+  const ref=env.find(e=>e.name===profile.clientTokenEnv)?.valueFrom?.secretKeyRef;assert.ok(ref);
   const secret=await kube('/api/v1/namespaces/automation/secrets/'+ref.name),token=Buffer.from(secret.data[ref.key],'base64').toString('utf8');
   const initialize={jsonrpc:'2.0',id:1,method:'initialize',params:{protocolVersion:'2025-03-26',capabilities:{},clientInfo:{name:'manager-acceptance',version:'1.0'}}};
   assert.ok([401,403].includes((await request(host,'/mcp',initialize)).status),'Unauthenticated MCP access was accepted.');

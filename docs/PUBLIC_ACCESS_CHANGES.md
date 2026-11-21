@@ -118,11 +118,10 @@ live `publicHosts` list in Rancher's installed `public-edge` app; retain its
 LoadBalancer settings when saving. A Rancher edit is not automatically written
 back into this repository's cutover snapshot.
 
-Run `npm run test:public-access-external` for independent internet acceptance.
-It uses Globalping measurement credits and tests this initial two-domain policy
-plus Plex. Plex's public certificate supplies its `plex.direct` hostname for
-discovery; every external HTTPS result must independently validate TLS. Set
-`PUBLIC_EDGE_PLEX_HOST` if discovery is unavailable. After a transient failure,
+Set `PUBLIC_EDGE_PLEX_HOST` to the configured `plex.direct` hostname before
+running `npm run test:public-access-external`. It uses Globalping measurement
+credits to test the two-domain policy and Plex. Every external HTTPS result
+must independently validate TLS. After a transient failure,
 `node scripts/verify-public-edge-external.mjs --resume` retains passing results
 less than 30 minutes old and retries the failures. Use it only while the WAN,
 deployed policy and router configuration remain unchanged.

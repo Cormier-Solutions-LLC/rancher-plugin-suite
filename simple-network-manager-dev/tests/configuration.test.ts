@@ -125,7 +125,7 @@ assert.deepEqual(edited.find(item => item.kind === 'Ingress').spec.rules[0].http
 const pathSource = routeEditSource('IngressRoute/prod-realtime/prod-realtime-gateway');
 const pathEdit = buildRouteEdit(pathSource, { ...editInput, name: pathSource.resource.metadata.name, namespace: pathSource.primary.namespace, service: pathSource.primary.service, hosts: ['changed.cormierconsulting.io'], mappings: pathSource.mappings }) as any[];
 assert.match(pathEdit.find(item => item.kind === 'IngressRoute').spec.routes[0].match, /Path/);
-assert.match(pathEdit.find(item => item.kind === 'IngressRoute').spec.routes[0].match, /changed.cormierconsulting.io/);
+assert.match(pathEdit.find(item => item.kind === 'IngressRoute').spec.routes[0].match, /Host\(`changed\.cormierconsulting\.io`\)/);
 assert.deepEqual(pathEdit.find(item => item.kind === 'IngressRoute').spec.routes.map((route: any) => route.middlewares), pathSource.resource.spec.routes.map((route: any) => route.middlewares));
 const harbor = routeEditSource('Ingress/harbor/harbor-ingress');
 const harborEdit = buildRouteEdit(harbor, { ...editInput, name: harbor.resource.metadata.name, namespace: harbor.primary.namespace, service: 'changed-primary', hosts: harbor.hosts, mappings: harbor.mappings }) as any[];

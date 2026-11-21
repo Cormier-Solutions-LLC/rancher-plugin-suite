@@ -5,7 +5,8 @@ export async function kube(path){const r=await fetch(base+path,{signal:AbortSign
 export async function connect(){
   const host='mcp-phone.cormierconsulting.io';
   const [deployment,config]=await Promise.all([kube('/apis/apps/v1/namespaces/automation/deployments/mcp-gateway'),kube('/api/v1/namespaces/automation/configmaps/mcp-gateway-profiles-g9bttt95dc')]);
-  const profile=JSON.parse(config.data['profiles.json']).profiles.find(p=>p.hosts.includes(host));
+  const profile=JSON.parse(config.data['profiles.json']).profiles.find(p=>Array.isArray(p.hosts) && p.hosts.some(name=>name===host));
+  assert.ok(profile, 'Phone gateway profile is missing');
   const ref=deployment.spec.template.spec.containers[0].env.find(e=>e.name===profile.clientTokenEnv).valueFrom.secretKeyRef;
   const secret=await kube('/api/v1/namespaces/automation/secrets/'+ref.name),token=Buffer.from(secret.data[ref.key],'base64').toString('utf8');
   async function request(body,headers={},method='POST'){
