@@ -1,0 +1,144 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: opensearch
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: opensearch-storage-budget
+  namespace: opensearch
+spec:
+  hard:
+    # 3 x 30 GB managers + 8 x 200 GB data nodes + temporary 1 GiB bootstrap.
+    requests.storage: 1692G
+    persistentvolumeclaims: "12"
+    limits.ephemeral-storage: 100G
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: opensearch-container-storage
+  namespace: opensearch
+spec:
+  limits:
+    - type: Container
+      default:
+        ephemeral-storage: 1G
+      defaultRequest:
+        ephemeral-storage: 100M
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: opensearch-manager-longhorn-retain
+provisioner: driver.longhorn.io
+allowVolumeExpansion: true
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+parameters:
+  numberOfReplicas: "3"
+  staleReplicaTimeout: "30"
+  fsType: ext4
+  dataLocality: best-effort
+  diskSelector: thin
+  unmapMarkSnapChainRemoved: ignored
+  disableRevisionCounter: "true"
+  dataEngine: v1
+  backupTargetName: default
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: opensearch-data-pve09-retain
+provisioner: driver.longhorn.io
+allowVolumeExpansion: true
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+parameters:
+  numberOfReplicas: "3"
+  staleReplicaTimeout: "30"
+  fsType: ext4
+  dataLocality: best-effort
+  diskSelector: proxmox09-nfs
+  unmapMarkSnapChainRemoved: ignored
+  disableRevisionCounter: "true"
+  dataEngine: v1
+  backupTargetName: default
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: opensearch-data-pve06-retain
+provisioner: driver.longhorn.io
+allowVolumeExpansion: true
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+parameters:
+  numberOfReplicas: "3"
+  staleReplicaTimeout: "30"
+  fsType: ext4
+  dataLocality: best-effort
+  diskSelector: proxmox06-nfs
+  unmapMarkSnapChainRemoved: ignored
+  disableRevisionCounter: "true"
+  dataEngine: v1
+  backupTargetName: default
+---
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshotClass
+metadata:
+  name: opensearch-retained-snapshots
+driver: driver.longhorn.io
+deletionPolicy: Retain
+parameters:
+  type: snap
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: opensearch-security-config
+  namespace: opensearch
+type: Opaque
+stringData:
+  internal_users.yml: |
+    _meta:
+      type: internalusers
+      config_version: 2
+    admin:
+      reserved: true
+      backend_roles:
+        - admin
+      description: Cluster administrator
+    kibanaserver:
+      reserved: true
+      description: Dashboards service account
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: opensearch-private-ingress
+  namespace: opensearch
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: NotIn
+        values:
+          - opensearch-operator
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector: {}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik-system
+      ports:
+        - port: 5601
+        - port: 9200
+    - from:
+        - namespaceSelector: {}
+      ports:
+        - port: 9200
