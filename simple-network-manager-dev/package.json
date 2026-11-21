@@ -43,6 +43,7 @@
   "overrides": {
     "dompurify": "3.4.17",
     "braces@^3": "3.0.3",
+    "serialize-javascript": "7.1.4",
     "frontmatter-markdown-loader": {
       "markdown-it": "14.3.3"
     }
