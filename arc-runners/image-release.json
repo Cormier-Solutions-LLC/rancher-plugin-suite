@@ -1,27 +1,32 @@
 {
-  "tag": "2026.10.11-1",
-  "image": "harbor.cormierconsulting.io/automation/arc-runner-linux@sha256:cacbd0adafb78ff675e72217e704f064664c04b9bb5fccc5887f17ab436fb835",
-  "baseImage": "ghcr.io/actions/actions-runner@sha256:e5496277be5d09bc968b3d64911b74e219ac4a3f2edce956a3ecf9271bea1ef4",
+  "tag": "precompiled-shared-20261121-r2",
+  "image": "harbor.cormierconsulting.io/automation/arc-runner-linux@sha256:aff611469abff1f2b001dbfdca57610c4c2ff830a289f72c3e15e7ec697c60f1",
+  "previousImage": "harbor.cormierconsulting.io/automation/arc-runner-linux@sha256:cacbd0adafb78ff675e72217e704f064664c04b9bb5fccc5887f17ab436fb835",
   "status": "deployed and verified",
-  "helmRevision": 10,
-  "sourcePullRequest": "https://github.com/Cormier-Solutions-LLC/WebSockets-Kubernetes/pull/228",
-  "sourceCommit": "3fae244158bd9b3e061d751b01a85fad58a0b54f",
-  "prewarmedWorkers": 16,
+  "helmRevision": 11,
+  "sourcePullRequest": "https://github.com/Cormier-Solutions-LLC/rancher-plugin-suite/pull/8",
+  "sourceCommit": "fd4c2cb13d81bf09d1644704b37c729f7da43e45",
+  "prewarmedWorkers": 15,
+  "capacity": {
+    "maxRunners": 48,
+    "minRunners": 16
+  },
+  "profiles": {
+    "proofing": "harbor.cormierconsulting.io/automation/arc-runner-linux@sha256:2b5f32ee4cc75bedb44d2bac9e071e40638f5e06685750cf34024c8a9968cfdb",
+    "realtimestack": "harbor.cormierconsulting.io/automation/arc-runner-linux@sha256:888dcde7e98365baf46a4bc50a0ef6521438df3073966b161e5906ecc9cfdb7c",
+    "codeqlPrivate": "harbor.cormierconsulting.io/ci-toolchains/codeql-runner-linux@sha256:442453975ef8658caea430bfd4a786965bffdbe451425588a91cea664ef451eb"
+  },
   "validation": {
-    "localSetupTests": 12,
-    "windowsNpmReuse": "passed",
-    "nativeAot": "compiled and executed",
+    "nativeAot": "restored offline, compiled, and executed",
     "browsers": [
-      "chromium",
-      "firefox",
-      "webkit"
+      "Playwright 1.64.1 Chromium",
+      "Playwright 1.63.0 Chromium",
+      "Playwright 1.63.0 Firefox",
+      "Playwright 1.63.0 WebKit"
     ],
     "kubernetesDockerAndSharedWorkspace": "passed",
-    "githubActionsSetupRun": "https://github.com/Cormier-Solutions-LLC/WebSockets-Kubernetes/actions/runs/38162914009",
-    "systemAndNodeSetupSeconds": {
-      "before": 25,
-      "after": 4
-    }
-  },
-  "ciReusePullRequestStatus": "open; full CI also fails on main because of Harbor password references and Windows line-ending assertions"
+    "privateCodeQl": "https://github.com/Cormier-Solutions-LLC/ProofingEngine/actions/runs/44951323862",
+    "realtimeStackFullCi": "https://github.com/Cormier-Solutions-LLC/RealtimeStack/actions/runs/44948270398/attempts/2",
+    "proofingFullCi": "https://github.com/Cormier-Solutions-LLC/ProofingEngine/actions/runs/44948270011/attempts/2"
+  }
 }
