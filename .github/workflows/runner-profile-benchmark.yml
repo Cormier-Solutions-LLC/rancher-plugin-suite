@@ -1,0 +1,25 @@
+name: Runner profile benchmark
+
+on:
+  push:
+    branches: [codex/precompile-ci-runner-profiles]
+    paths: ['arc-runners/image/**', '.github/workflows/runner-profile-benchmark.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: runner-profile-benchmark
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    runs-on: cormier-runners
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build and benchmark candidate profiles
+        run: bash arc-runners/image/profiles/benchmark.sh
