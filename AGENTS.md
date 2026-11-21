@@ -14,9 +14,10 @@ schema, driver, transaction/locking behavior, migrations and extensions before
 cutover. Retain PostgreSQL as a documented exception when compatibility fails;
 never bypass locking or data-integrity checks to force a migration.
 
-The cluster uses RF3 with one replica per physical Proxmox host. Its two data
-nodes plus master and sidecars must remain within 15% combined CPU and RAM of
-each participating physical host. Preserve host placement, accounting quotas,
+The cluster uses RF3 across three disjoint groups of physical Proxmox hosts.
+Put each tablet's three replicas on distinct physical hosts. Combined YugabyteDB
+CPU and RAM allocations, including masters and sidecars, must remain within 15%
+of each participating physical host. Preserve host placement, accounting quotas,
 single-copy strict-local XFS volumes and TLS. Do not use the default three-copy
 Longhorn class for YugabyteDB's replicated data.
 

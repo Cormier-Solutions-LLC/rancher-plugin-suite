@@ -15,32 +15,44 @@ YugabyteDB 2026.1.2.0-b137, pinned image digest:
 | proxmox07 | kubworker11/12 | 2 | 2.1 | 3 GiB | 0.5 CPU / 1 GiB |
 | proxmox08 | kubworker13 | 2 | 3.3 | 17 GiB | 0.5 CPU / 1 GiB |
 | proxmox09 | kubworker15/16 | 2 | 2.1 | 16 GiB | 0.5 CPU / 1 GiB |
+| proxmox01 | kubworker02 | 1 | 3 | 8 GiB | — |
 
 Each pod also has a 5m CPU / 16 MiB cleanup sidecar. Total steady allocations:
-16.545 CPU and 76,944 MiB, below 15% of each participating physical host.
+19.550 CPU and 85,152 MiB, below 15% of each participating physical host.
 Requests equal limits. PriorityClass-scoped ResourceQuotas cap each host's
 accounting group; a namespace quota also bounds the universe total. No pod
 preempts other workloads.
 
 Worker14 was fenced during commissioning and remains excluded. Both proxmox08 data nodes
 therefore share worker13; they remain one physical-host failure domain.
-Other hosts are excluded from this first deployment because of CPU limits,
-storage latency or shared NFS dependencies. Do not silently expand placement.
+The proxmox01 tablet server uses kubworker02's local SSD-backed ZFS disk
+through Longhorn. Additional hosts require deliberate capacity and storage
+qualification.
+
+On 2026-11-21, the addition of yb-pve01-yb-tserver-0 was verified after the
+balancer settled. All seven tablet servers and both YSQL services were ready.
+The 672 tablets with explicit Raft peer lists had three voters on distinct
+physical hosts. The new server carried 224 voting replicas and 97 leaders.
+The final health check reported no dead servers, under-replicated tablets,
+or leaderless tablets. Hostname-verified TLS reads through the new server
+passed for eight application databases.
 
 ## Replication, storage and security
 
-RF3 explicitly requires one replica in each of `onprem.lab.proxmox07`,
-`onprem.lab.proxmox08`, `onprem.lab.proxmox09`. Three masters use those same
-failure domains. One host loss retains a majority; two host failures do not.
-With exactly three placement domains a missing third copy cannot be restored
-until its domain returns or placement is deliberately expanded.
+RF3 requires one replica in each of `onprem.lab.proxmox07`,
+`onprem.lab.proxmox08` and `onprem.lab.proxmox09`. The first two groups each
+use the physical host of the same name. The third group spans physical
+proxmox09 and proxmox01. Each tablet still has its three replicas on distinct
+physical hosts. The masters stay on proxmox07, proxmox08 and proxmox09. Losing
+one physical host leaves a majority. Losing the only surviving member of a
+replica group prevents re-replication into that group until it returns.
 
 StorageClass `yugabyte-local-xfs-retain` uses one Longhorn replica, strict-local
 placement, the `thin` disk tag, XFS and Retain. These worker disks were verified
-as local Proxmox Thin volumes on the participating hosts, not NFS. Data volumes
-start at 20 GiB per data node; masters have 5 GiB each. RF3 provides roughly
-40 GiB of unique data+indexes before operational headroom. This is a small
-commissioning cluster, not the full-size SQL Server replacement.
+as host-local storage on participating hosts. Data volumes start at 20 GiB per
+data node and masters have 5 GiB each. The two smaller replica groups still bound
+capacity to roughly 40 GiB of unique data and indexes before operational
+headroom.
 
 Both node-to-node and client-to-server TLS are enabled. NetworkPolicy limits
 ingress to this universe and approved application namespaces. SQL readiness
@@ -96,8 +108,17 @@ Invoicing keeps its original SQLite files and matching credential key.
 
 `deploy.py --base --apply` applies the budget, storage, certificate and endpoint
 resources. `deploy.py` renders and server-validates the pinned official chart;
-`--apply` deliberately changes the deployment. `--host 07`, `08` or `09` scopes
-one host. Set `KUBERNETES_SERVER` only when a particular controller endpoint is
+`--apply` deliberately changes the deployment. `--host 01`, `07`, `08` or
+`09` scopes workload rendering and application to one physical host. To install
+the additional tablet server, apply `--base --host 01` for the host and
+namespace quotas and tablet-server disruption budget, then apply `--host 01`
+for the workload. Verify all seven tablet servers, an idle balancer, and three
+voting replicas on distinct physical hosts. To roll back, remove the new pod
+from YSQL service selection, drain its leaders and tablet replicas through
+YugabyteDB`s balancer, verify RF3 on the original hosts, and only then scale
+the new StatefulSet to zero. Retain its PVC.
+
+Set `KUBERNETES_SERVER` only when a particular controller endpoint is
 needed; otherwise kubectl uses the current context. Python requires PyYAML and
 Helm must be on PATH or supplied through `HELM_PATH`. Downloaded charts and
 rendered files stay under ignored `.local/yugabyte-render`. The chart archive is

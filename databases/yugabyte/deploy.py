@@ -19,7 +19,25 @@ if '--base' not in sys.argv and not (ROOT/'yugabyte/Chart.yaml').exists():
    if member.issym() or member.islnk() or not (ROOT/member.name).resolve().is_relative_to(ROOT.resolve()):raise RuntimeError('Unsafe chart archive entry')
   tf.extractall(ROOT)
 NS='yugabyte'
-HOSTS=[('07',['kubworker11','kubworker12'],'2.1','3Gi'),('08',['kubworker13'],'3.3','17Gi'),('09',['kubworker15','kubworker16'],'2.1','16Gi')]
+HOSTS = [
+    ('07', ['kubworker11', 'kubworker12'], '2.1', '3Gi'),
+    ('08', ['kubworker13'], '3.3', '17Gi'),
+    ('09', ['kubworker15', 'kubworker16'], '2.1', '16Gi'),
+    ('01', ['kubworker02'], '3', '8Gi'),
+]
+MASTER_HOSTS = ('07', '08', '09')
+HOST_BUDGETS = {
+    '07': ('4800m', '14Gi', '3'),
+    '08': ('7200m', '37Gi', '3'),
+    '09': ('4800m', '35Gi', '3'),
+    '01': ('3100m', '9Gi', '1'),
+}
+# The placement groups have disjoint physical host memberships.
+# A tablet's one group-09 replica can be hosted by physical proxmox09 or proxmox01.
+PLACEMENT_ZONE = {'01': 'proxmox09'}
+selected = sys.argv[sys.argv.index('--host') + 1] if '--host' in sys.argv else None
+if selected is not None and selected not in HOST_BUDGETS:
+ raise RuntimeError('Unknown physical host')
 def run(args,data=None):
  if args[0]=='kubectl':args=args[:1]+(['--server='+os.environ['KUBERNETES_SERVER']] if os.environ.get('KUBERNETES_SERVER') else [])+args[1:]
  p=subprocess.run(args,input=data,text=True,capture_output=True,encoding='utf-8')
@@ -33,7 +51,7 @@ def obj(kind,name,spec,api='v1',ns=NS):
  return {'apiVersion':api,'kind':kind,'metadata':{'name':name,**({'namespace':ns} if ns else {})},'spec':spec}
 base=[{'apiVersion':'v1','kind':'Namespace','metadata':{'name':NS}},
  {'apiVersion':'storage.k8s.io/v1','kind':'StorageClass','metadata':{'name':'yugabyte-local-xfs-retain'},'provisioner':'driver.longhorn.io','allowVolumeExpansion':True,'reclaimPolicy':'Retain','volumeBindingMode':'WaitForFirstConsumer','parameters':{'numberOfReplicas':'1','dataLocality':'strict-local','diskSelector':'thin','fsType':'xfs','dataEngine':'v1','staleReplicaTimeout':'30'}},
- obj('ResourceQuota','yugabyte-budget',{'hard':{'requests.cpu':'16800m','limits.cpu':'16800m','requests.memory':'80Gi','limits.memory':'80Gi','requests.storage':'160Gi','persistentvolumeclaims':'12','pods':'12'}}),
+ obj('ResourceQuota','yugabyte-budget',{'hard':{'requests.cpu':'20','limits.cpu':'20','requests.memory':'84Gi','limits.memory':'84Gi','requests.storage':'180Gi','persistentvolumeclaims':'12','pods':'12'}}),
  obj('Issuer','yugabyte-selfsigned',{'selfSigned':{}},'cert-manager.io/v1'),
  obj('Certificate','yugabyte-ca',{'isCA':True,'commonName':'Cormier YugabyteDB CA','secretName':'yugabyte-ca','duration':'87600h','privateKey':{'algorithm':'RSA','size':2048},'issuerRef':{'name':'yugabyte-selfsigned','kind':'Issuer'}},'cert-manager.io/v1'),
  obj('Issuer','yugabyte-ca',{'ca':{'secretName':'yugabyte-ca'}},'cert-manager.io/v1'),
@@ -43,24 +61,34 @@ if '--base' in sys.argv:
  base.append(obj('Service','ysql-lan',{'type':'LoadBalancer','externalTrafficPolicy':'Local','loadBalancerSourceRanges':['10.99.0.0/16'],'selector':{'database.cormiersolutions.com/role':'tserver'},'ports':[{'name':'ysql','port':5433,'targetPort':5433}]}))
  for item in base:
   if item['kind']=='NetworkPolicy':item['spec']['ingress'].append({'from':[{'ipBlock':{'cidr':'10.99.0.0/16'}}],'ports':[{'protocol':'TCP','port':5433}]})
- for role,minimum in [('master',2),('tserver',5)]:
+ for role,minimum in [('master',2),('tserver',6)]:
   base.append(obj('PodDisruptionBudget',role+'-quorum',{'minAvailable':minimum,'selector':{'matchLabels':{'database.cormiersolutions.com/role':role}}},'policy/v1'))
  for h,_,_,_ in HOSTS:
   base.append({'apiVersion':'scheduling.k8s.io/v1','kind':'PriorityClass','metadata':{'name':'yugabyte-pve'+h},'value':0,'globalDefault':False,'preemptionPolicy':'Never','description':'Accounting scope for the YugabyteDB budget on proxmox'+h})
-  cap={'07':('4800m','14Gi'),'08':('7200m','37Gi'),'09':('4800m','35Gi')}[h]
-  base.append(obj('ResourceQuota','pve'+h+'-budget',{'hard':{'requests.cpu':cap[0],'limits.cpu':cap[0],'requests.memory':cap[1],'limits.memory':cap[1],'pods':'3'},'scopeSelector':{'matchExpressions':[{'scopeName':'PriorityClass','operator':'In','values':['yugabyte-pve'+h]}]}}))
+  cpu_cap, memory_cap, pod_cap = HOST_BUDGETS[h]
+  base.append(obj('ResourceQuota','pve'+h+'-budget',{'hard':{'requests.cpu':cpu_cap,'limits.cpu':cpu_cap,'requests.memory':memory_cap,'limits.memory':memory_cap,'pods':pod_cap},'scopeSelector':{'matchExpressions':[{'scopeName':'PriorityClass','operator':'In','values':['yugabyte-pve'+h]}]}}))
+ if selected:
+  budget_names = {'yugabyte-budget', 'pve'+selected+'-budget', 'yugabyte-pve'+selected, 'tserver-quorum'}
+  base = [item for item in base if item['metadata']['name'] in budget_names]
  print(apply(base,dry='--apply' not in sys.argv));sys.exit()
 ca=json.loads(run(['kubectl','get','secret','yugabyte-ca','-n',NS,'-o','json']))['data']['tls.crt']
-masters=','.join(f'yb-pve{h}-yb-master-0.yb-pve{h}-yb-masters.{NS}.svc.cluster.local:7100' for h,_,_,_ in HOSTS)
+masters=','.join(f'yb-pve{h}-yb-master-0.yb-pve{h}-yb-masters.{NS}.svc.cluster.local:7100' for h in MASTER_HOSTS)
 all_items=[]
 for h,nodes,cpu,mem in HOSTS:
+ if selected and h != selected:
+  continue
  name='yb-pve'+h
- values={'fullnameOverride':name,'oldNamingStyle':False,'isMultiAz':True,'AZ':'proxmox'+h,'masterAddresses':masters,'replicas':{'master':1,'tserver':2,'totalMasters':3},'Image':{'tag':'2026.1.2.0-b137'},'resource':{'master':{'requests':{'cpu':'0.5','memory':'1Gi'},'limits':{'cpu':'0.5','memory':'1Gi'}},'tserver':{'requests':{'cpu':cpu,'memory':mem},'limits':{'cpu':cpu,'memory':mem}}},'storage':{'master':{'count':1,'size':'5Gi','storageClass':'yugabyte-local-xfs-retain'},'tserver':{'count':1,'size':'20Gi','storageClass':'yugabyte-local-xfs-retain'}},'enableLoadBalancer':False,'serviceEndpoints':[],'yugabytedUi':{'enabled':False},'tls':{'enabled':True,'nodeToNode':True,'clientToServer':True,'insecure':False,'rootCA':{'cert':ca,'key':''},'certManager':{'enabled':True,'bootstrapSelfsigned':False,'issuer':'yugabyte-ca','certificates':{'duration':'8760h','renewBefore':'720h'}}},'gflags':{'master':{'placement_cloud':'onprem','placement_region':'lab','placement_zone':'proxmox'+h},'tserver':{'placement_cloud':'onprem','placement_region':'lab','placement_zone':'proxmox'+h,'ysql_enable_auth':True,'ysql_hba_conf_csv':'local all yugabyte trust,hostssl all all 0.0.0.0/0 md5','enable_ysql_conn_mgr':False}},'commonLabels':{'database.cormiersolutions.com/universe':'shared','database.cormiersolutions.com/physical-host':'proxmox'+h}}
+ zone = PLACEMENT_ZONE.get(h, 'proxmox'+h)
+ has_master = h in MASTER_HOSTS
+ values={'fullnameOverride':name,'oldNamingStyle':False,'isMultiAz':True,'AZ':zone,'masterAddresses':masters,'replicas':{'master':int(has_master),'tserver':2 if has_master else 1,'totalMasters':len(MASTER_HOSTS)},'Image':{'tag':'2026.1.2.0-b137'},'resource':{'master':{'requests':{'cpu':'0.5','memory':'1Gi'},'limits':{'cpu':'0.5','memory':'1Gi'}},'tserver':{'requests':{'cpu':cpu,'memory':mem},'limits':{'cpu':cpu,'memory':mem}}},'storage':{'master':{'count':1,'size':'5Gi','storageClass':'yugabyte-local-xfs-retain'},'tserver':{'count':1,'size':'20Gi','storageClass':'yugabyte-local-xfs-retain'}},'enableLoadBalancer':False,'serviceEndpoints':[],'yugabytedUi':{'enabled':False},'tls':{'enabled':True,'nodeToNode':True,'clientToServer':True,'insecure':False,'rootCA':{'cert':ca,'key':''},'certManager':{'enabled':True,'bootstrapSelfsigned':False,'issuer':'yugabyte-ca','certificates':{'duration':'8760h','renewBefore':'720h'}}},'gflags':{'master':{'placement_cloud':'onprem','placement_region':'lab','placement_zone':zone},'tserver':{'placement_cloud':'onprem','placement_region':'lab','placement_zone':zone,'ysql_enable_auth':True,'ysql_hba_conf_csv':'local all yugabyte trust,hostssl all all 0.0.0.0/0 md5','enable_ysql_conn_mgr':False}},'commonLabels':{'database.cormiersolutions.com/universe':'shared','database.cormiersolutions.com/physical-host':'proxmox'+h}}
  for role in ['master','tserver']:
   values['gflags'][role].update(durable_wal_write=True,require_durable_wal_write=True)
  path=ROOT/(name+'-values.json');path.write_text(json.dumps(values,indent=2))
  rendered=run([HELM,'template',name,str(ROOT/'yugabyte'),'-n',NS,'-f',str(path)])
  items=[x for x in yaml.safe_load_all(rendered) if x]
+ if not has_master:
+  items = [item for item in items if '-yb-master' not in item['metadata']['name']
+           and not item['metadata']['name'].endswith(('-master-gflags', '-master-hooks'))]
  for x in items:
   x.setdefault('metadata',{}).setdefault('namespace',NS)
   if x['kind']=='Certificate' and 'dnsNames' in x['spec'] and x['spec']['dnsNames']:
@@ -88,8 +116,4 @@ for h,nodes,cpu,mem in HOSTS:
   if x['kind']=='Job': raise RuntimeError('Unexpected chart job')
  all_items+=items
 out=ROOT/'yugabyte-rendered.json';out.write_text(json.dumps({'apiVersion':'v1','kind':'List','items':all_items},indent=2))
-if '--host' in sys.argv:
- selected=sys.argv[sys.argv.index('--host')+1]
- if selected not in ['07','08','09']:raise RuntimeError('Unknown physical host')
- all_items=[x for x in all_items if x['metadata']['name'].startswith('yb-pve'+selected)]
 print(apply(all_items,dry='--apply' not in sys.argv))
