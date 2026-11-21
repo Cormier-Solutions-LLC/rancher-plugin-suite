@@ -1,0 +1,46 @@
+# syntax=docker/dockerfile:1
+ARG RUNNER_BASE=harbor.cormierconsulting.io/automation/arc-runner-linux@sha256:cacbd0adafb78ff675e72217e704f064664c04b9bb5fccc5887f17ab436fb835
+FROM ${RUNNER_BASE} AS baseline
+
+FROM baseline AS proofing
+USER root
+RUN set -eu; \
+    node_version=24.22.3; \
+    archive="node-v${node_version}-linux-x64.tar.xz"; \
+    curl -fSL --retry 3 "https://nodejs.org/dist/v${node_version}/${archive}" -o "/tmp/${archive}"; \
+    printf '%s  %s\n' 4f2b175a6d53a5c617a80dba2676238a0688cef28c6da4eba35c7d844e66fcfb "/tmp/${archive}" | sha256sum -c -; \
+    install -d -o runner -g runner "/opt/hostedtoolcache/node/${node_version}/x64"; \
+    tar -xJf "/tmp/${archive}" --strip-components=1 -C "/opt/hostedtoolcache/node/${node_version}/x64"; \
+    chown -R runner:runner "/opt/hostedtoolcache/node/${node_version}"; \
+    touch "/opt/hostedtoolcache/node/${node_version}/x64.complete"; \
+    rm "/tmp/${archive}"
+COPY --chown=runner:runner profiles/proofing/package*.json /opt/proofing-tools/
+USER runner
+RUN npm ci --prefix /opt/proofing-tools --ignore-scripts && \
+    /opt/proofing-tools/node_modules/.bin/playwright install chromium
+
+FROM baseline AS realtimestack
+USER runner
+COPY --chown=runner:runner profiles/realtimestack/ /tmp/runner-aot/
+RUN dotnet publish /tmp/runner-aot/RunnerAot.csproj -c Release -o /tmp/runner-aot-output && \
+    /tmp/runner-aot-output/RunnerAot && rm -rf /tmp/runner-aot /tmp/runner-aot-output
+
+FROM baseline AS codeql-os
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends zstd && rm -rf /var/lib/apt/lists/*
+USER runner
+
+FROM codeql-os AS codeql
+USER root
+RUN set -eu; \
+    version=2.27.5; \
+    cache="/opt/hostedtoolcache/CodeQL/${version}/x64"; \
+    curl -fSL --retry 3 "https://github.com/github/codeql-action/releases/download/codeql-bundle-v${version}/codeql-bundle-linux64.tar.zst" -o /tmp/codeql.tar.zst; \
+    printf '%s  %s\n' 141e6eb4e99c8498a1258e282e6f7b59c747b4b1a7eabc7cbf7d1aa92792edf0 /tmp/codeql.tar.zst | sha256sum -c -; \
+    install -d -o runner -g runner "$cache"; \
+    tar --zstd -xf /tmp/codeql.tar.zst -C "$cache"; \
+    touch "$cache.complete"; \
+    chown -R runner:runner /opt/hostedtoolcache/CodeQL; \
+    "$cache/codeql/codeql" version; \
+    rm /tmp/codeql.tar.zst
+USER runner

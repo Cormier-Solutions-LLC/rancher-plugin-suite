@@ -1,0 +1,9 @@
+*
+!Dockerfile.profiles
+!profiles/
+!profiles/proofing/
+!profiles/proofing/package.json
+!profiles/proofing/package-lock.json
+!profiles/realtimestack/
+!profiles/realtimestack/RunnerAot.csproj
+!profiles/realtimestack/Program.cs
