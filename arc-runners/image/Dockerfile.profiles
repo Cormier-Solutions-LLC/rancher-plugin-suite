@@ -22,8 +22,11 @@ RUN npm ci --prefix /opt/proofing-tools --ignore-scripts && \
 FROM baseline AS realtimestack
 USER runner
 COPY --chown=runner:runner profiles/realtimestack/ /tmp/runner-aot/
-RUN dotnet publish /tmp/runner-aot/RunnerAot.csproj -c Release -o /tmp/runner-aot-output && \
-    /tmp/runner-aot-output/RunnerAot && rm -rf /tmp/runner-aot /tmp/runner-aot-output
+RUN dotnet restore /tmp/runner-aot/RunnerAot.csproj -p:Configuration=Release && \
+    mkdir /tmp/empty-nuget-feed && \
+    dotnet restore /tmp/runner-aot/RunnerAot.csproj --force --source /tmp/empty-nuget-feed -p:Configuration=Release -p:NuGetAudit=false && \
+    dotnet publish /tmp/runner-aot/RunnerAot.csproj -c Release --no-restore -o /tmp/runner-aot-output && \
+    /tmp/runner-aot-output/RunnerAot && rm -rf /tmp/runner-aot /tmp/runner-aot-output /tmp/empty-nuget-feed
 
 FROM proofing AS shared
 COPY --from=realtimestack --chown=runner:runner /home/runner/.nuget/packages/ /home/runner/.nuget/packages/
