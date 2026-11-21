@@ -27,6 +27,34 @@
     "kubernetesDockerAndSharedWorkspace": "passed",
     "privateCodeQl": "https://github.com/Cormier-Solutions-LLC/ProofingEngine/actions/runs/44951323862",
     "realtimeStackFullCi": "https://github.com/Cormier-Solutions-LLC/RealtimeStack/actions/runs/44948270398/attempts/2",
-    "proofingFullCi": "https://github.com/Cormier-Solutions-LLC/ProofingEngine/actions/runs/44948270011/attempts/2"
+    "proofingFullCi": "https://github.com/Cormier-Solutions-LLC/ProofingEngine/actions/runs/44955847300",
+    "fullCiComparison": {
+      "realtimeStack": {
+        "baseline": "https://github.com/Cormier-Solutions-LLC/RealtimeStack/actions/runs/44941034718",
+        "baselineEvent": "push",
+        "candidateEvent": "workflow_dispatch",
+        "sourceCommit": "23020d78af7a69c531dd0da4d660e9c7ce796dbe",
+        "jobCount": 25,
+        "executedJobs": 24,
+        "jobSpanSeconds": {
+          "before": 3096.0,
+          "after": 3002.0
+        },
+        "elapsedFromRunStartSeconds": {
+          "before": 3098.0,
+          "after": 3170.0
+        }
+      },
+      "proofingEngine": {
+        "baseline": "https://github.com/Cormier-Solutions-LLC/ProofingEngine/actions/runs/44948270011/attempts/1",
+        "sourceCommit": "07e43643cb7235ca3688dab186c530acc9231e9e",
+        "baselineFailingCheck": "Browser storage unit test timeout",
+        "candidateFailingCheck": "CockroachDB fixture pull received Docker Hub HTTP 429",
+        "buildNodeSetupSeconds": {
+          "before": 85,
+          "after": 17
+        }
+      }
+    }
   }
 }
