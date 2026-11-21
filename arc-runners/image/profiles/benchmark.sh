@@ -23,17 +23,17 @@ prepare_proofing() (
   printf '%s  %s\n' 4f2b175a6d53a5c617a80dba2676238a0688cef28c6da4eba35c7d844e66fcfb "$target/node.tar.xz" | sha256sum -c -
   tar -xJf "$target/node.tar.xz" --strip-components=1 -C "$target/node"
   cp "$profiles/proofing"/package*.json "$target/tools"
-  export PATH="$target/node/bin:$PATH" PLAYWRIGHT_BROWSERS_PATH="$target/browsers" npm_config_cache="$target/npm-cache"
-  npm ci --prefix "$target/tools" --ignore-scripts --no-audit --no-fund
-  "$target/tools/node_modules/.bin/playwright" install chromium
+  PATH="$target/node/bin:$PATH" npm_config_cache="$target/npm-cache" \
+    "$target/node/bin/npm" ci --prefix "$target/tools" --ignore-scripts --no-audit --no-fund
+  PLAYWRIGHT_BROWSERS_PATH="$target/browsers" \
+    "$target/node/bin/node" "$target/tools/node_modules/playwright/cli.js" install chromium
 )
 
 run_proofing() (
   local target=$1
-  export PATH="$target/node/bin:$PATH" PLAYWRIGHT_BROWSERS_PATH="$target/browsers"
-  test "$(node -p process.version)" = v24.22.3
+  test "$("$target/node/bin/node" -p process.version)" = v24.22.3
   cd "$target/tools"
-  node --input-type=module <<'JS'
+  PLAYWRIGHT_BROWSERS_PATH="$target/browsers" "$target/node/bin/node" --input-type=module <<'JS'
 import { chromium } from 'playwright';
 const browser = await chromium.launch();
 try {

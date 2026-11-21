@@ -1,5 +1,30 @@
 # Linux CI runner image
 
+## Precompiled workload profiles
+
+`Dockerfile.profiles` extends the running ARC image by digest. The targets are
+`proofing` with Node 24.22.3 and Playwright 1.64.1 Chromium, `realtimestack`
+with the Linux x64 .NET 10.0.15 AOT runtime and compiler packs, and `codeql`
+with the 2.27.5 CLI and precompiled query packs. Build one target with:
+
+```powershell
+docker build --target proofing -f arc-runners/image/Dockerfile.profiles -t cormier-runner-candidate:proofing arc-runners/image
+```
+
+Use the Runner profile benchmark workflow to verify the matching workloads
+on `cormier-runners`. Its November 21, 2026 comparison measured 30.49 s to
+1.26 s for Node and Chromium preparation and launch, 13.66 s to 8.78 s for
+the Native AOT smoke build, and 93.53 s to 56.10 s for CodeQL setup and the
+sample scan. The comparison excluded runner image pulls and full application
+pipeline time. Publish CodeQL images only to a registry approved for licensed
+internal use.
+
+The PGlite profile helper builds migration-only fixtures from a checked-out
+repository and compares fresh migration with snapshot loading. It keys the
+fixture to the Node version, package lock and migration bytes.
+
+[Matched benchmark run](https://github.com/Cormier-Solutions-LLC/rancher-plugin-suite/actions/runs/44928650674)
+
 Extends the exact Ubuntu 24.04 x64 Actions runner digest currently used by ARC.
 The runner entrypoint and Docker-in-Docker wiring stay compatible with ARC 0.14.2.
 

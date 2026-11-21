@@ -15,6 +15,7 @@ concurrency:
 
 jobs:
   benchmark:
+    if: github.repository == 'Cormier-Solutions-LLC/rancher-plugin-suite'
     runs-on: cormier-runners
     timeout-minutes: 55
     steps:
