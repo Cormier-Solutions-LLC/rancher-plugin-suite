@@ -4,32 +4,28 @@ Target: `arc-runners/cormier-runners`, ARC chart/controller `0.14.2`.
 
 ## Prebuilt Linux image
 
-The Linux x64 runner now uses the Harbor image recorded by digest in
-`image-values.yaml` and `image-release.json`. The reproducible build recipe and
-cache layout are documented in `image/README.md`; `image-manifest.json` records
-the installed SDK patches and OS packages. CI continues using
-`runs-on: cormier-runners`.
+`image-values.yaml` and `image-release.json` record the deployed image digest.
+`image/Dockerfile.profiles` builds the shared profile with Node 24.22.3,
+Playwright 1.64.1 Chromium, and the Linux x64 .NET 10.0.15 Native AOT packs.
+The existing Playwright 1.63.0 Chromium, Firefox, and WebKit remain available.
+CI continues using `runs-on: cormier-runners`.
 
-The image was tested locally for setup/fallback contracts, PowerShell modules,
-all three Playwright engines and Native AOT. A Kubernetes canary also verified
-Docker-in-Docker and the shared workspace. All 16 worker nodes were prewarmed
-before the Helm image upgrade to revision 10. Temporary validation and prewarm
-resources were removed afterwards. Capacity, resource settings, the Docker
-sidecar and one-hour idle policy remain in place.
+The release prewarmed the worker image and validated Chromium, an offline
+Native AOT build, and Docker-in-Docker with the ARC shared workspace. The
+GitHub Actions queue was drained before replacing the image. The Helm upgrade
+preserved the live capacity, runner resources, and Docker sidecar, then resumed
+the idle policy. Licensed CodeQL tools are published to a private artifact
+repository for the repository-scoped benchmark pool.
 
-The CI reuse optimizations and versioned image source are in WebSockets-Kubernetes
-PR 228. Its full CI currently encounters Harbor secret references and Windows
-line-ending assertions that also fail on the recorded main-branch baseline.
-The focused setup workflow is used to validate the runner change separately.
+Publish the shared profile to `automation/arc-runner-linux` using a short-lived
+Harbor project robot with repository push and pull permissions. Store the
+publisher credential in the `harbor/arc-runner-image-publisher` Secret and
+renew it for the next publish. Record the verified registry digest before
+changing the Helm values.
 
-Roll back just this image with:
-
-```powershell
-.tools/helm/windows-amd64/helm.exe rollback cormier-runners 9 -n arc-runners --wait --timeout 3m
-```
-
-Revision 9 retains the 16-runner capacity and idle policy. Do not remove those
-resources for an image-only rollback.
+Before any image-only rollback, capture live Helm values, runner resources and
+current capacity. Restore the prior runner digest and preserve the live values
+when applying the overlay with Helm. The prior digest is in `image-release.json`.
 
 ## Capacity and idle policy
 
@@ -85,7 +81,7 @@ kubectl get autoscalingrunnerset,ephemeralrunnersets,pods,resourcequota -n arc-r
 ```
 
 Helm owns the baseline limits; the policy owns the runtime `minRunners` value
-and activity annotation. Future Helm upgrades must retain the 16-runner limit.
+and activity annotation. Future Helm upgrades must preserve the live maximum unless capacity is part of the change.
 
 ## Rollback
 

@@ -8,14 +8,14 @@ template:
         value: unix:///var/run/docker.sock
       - name: RUNNER_WAIT_FOR_DOCKER_IN_SECONDS
         value: '120'
-      image: harbor.cormierconsulting.io/automation/arc-runner-linux@sha256:cacbd0adafb78ff675e72217e704f064664c04b9bb5fccc5887f17ab436fb835
+      image: harbor.cormierconsulting.io/automation/arc-runner-linux@sha256:aff611469abff1f2b001dbfdca57610c4c2ff830a289f72c3e15e7ec697c60f1
       name: runner
       resources:
         limits:
           memory: 8Gi
         requests:
-          cpu: 500m
-          memory: 1Gi
+          cpu: '1'
+          memory: 2Gi
       volumeMounts:
       - mountPath: /home/runner/_work
         name: work
