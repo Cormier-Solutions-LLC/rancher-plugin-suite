@@ -11,6 +11,12 @@ with the 2.27.5 CLI and precompiled query packs. Build one target with:
 docker build --target proofing -f arc-runners/image/Dockerfile.profiles -t cormier-runner-candidate:proofing arc-runners/image
 ```
 
+Use the `shared` target for the general-purpose pool. It combines the
+Proof Studio browser tools and RealtimeStack Native AOT packages while
+retaining the base ARC entrypoint. The `codeql-cache` target contains only
+the CodeQL tool-cache files. Publish that artifact to a private registry and
+seed it in jobs that have access to the project's pull credential.
+
 Use the Runner profile benchmark workflow to verify the matching workloads
 on `cormier-runners`. Its November 21, 2026 comparison measured 30.49 s to
 1.26 s for Node and Chromium preparation and launch, 13.66 s to 8.78 s for

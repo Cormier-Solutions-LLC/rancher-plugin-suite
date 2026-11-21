@@ -25,6 +25,9 @@ COPY --chown=runner:runner profiles/realtimestack/ /tmp/runner-aot/
 RUN dotnet publish /tmp/runner-aot/RunnerAot.csproj -c Release -o /tmp/runner-aot-output && \
     /tmp/runner-aot-output/RunnerAot && rm -rf /tmp/runner-aot /tmp/runner-aot-output
 
+FROM proofing AS shared
+COPY --from=realtimestack --chown=runner:runner /home/runner/.nuget/packages/ /home/runner/.nuget/packages/
+
 FROM baseline AS codeql-os
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends zstd && rm -rf /var/lib/apt/lists/*
@@ -44,3 +47,6 @@ RUN set -eu; \
     "$cache/codeql/codeql" version; \
     rm /tmp/codeql.tar.zst
 USER runner
+
+FROM scratch AS codeql-cache
+COPY --from=codeql /opt/hostedtoolcache/CodeQL/ /codeql-cache/CodeQL/
