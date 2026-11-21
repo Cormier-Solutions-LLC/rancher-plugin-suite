@@ -9,7 +9,8 @@ function request(body,headers={},method='POST'){return new Promise((resolve,reje
 function unpack(result){assert.ok(result&&!result.isError,'Phone tool rejected operation');if(result.structuredContent!==undefined){const value=result.structuredContent;return Object.keys(value).length===1&&Array.isArray(value.result)?value.result:value;}const t=result.content?.find(c=>c.type==='text')?.text;return t?JSON.parse(t):undefined;}
 const deployment=await kube('/apis/apps/v1/namespaces/automation/deployments/mcp-gateway');
 const config=await kube('/api/v1/namespaces/automation/configmaps/mcp-gateway-profiles-g9bttt95dc');
-const profile=JSON.parse(config.data['profiles.json']).profiles.find(p=>p.hosts.includes(host));
+const profile=JSON.parse(config.data['profiles.json']).profiles.find(p=>Array.isArray(p.hosts) && p.hosts.some(name=>name===host));
+assert.ok(profile,'Phone gateway profile is missing');
 const ref=deployment.spec.template.spec.containers[0].env.find(e=>e.name===profile.clientTokenEnv).valueFrom.secretKeyRef;
 const secret=await kube('/api/v1/namespaces/automation/secrets/'+ref.name),token=Buffer.from(secret.data[ref.key],'base64').toString('utf8');
 const init=await request({jsonrpc:'2.0',id:1,method:'initialize',params:{protocolVersion:'2025-03-26',capabilities:{},clientInfo:{name:'manager-lifecycle-acceptance',version:'1.0'}}},{Authorization:'Bearer '+token});

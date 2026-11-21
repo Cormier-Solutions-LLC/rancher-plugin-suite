@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {mkdir, readFile, writeFile} from 'node:fs/promises';
-import tls from 'node:tls';
 
 // Globalping sends these requests from independently hosted internet probes.
 // It cannot send missing Host headers; verify those with verify-public-edge-live.
+const plexHost = process.env.PUBLIC_EDGE_PLEX_HOST;
+assert.match(plexHost || '', /^[a-z0-9-]+\.[a-f0-9]+\.plex\.direct$/, 'Set PUBLIC_EDGE_PLEX_HOST to the configured Plex hostname');
 const allowed = ['proofing.cormierconsulting.io', 'invoicing.cormierconsulting.io'];
 const resources = JSON.parse(execFileSync('kubectl', ['get', 'ingress,ingressroute', '-A', '-o', 'json'], {encoding:'utf8'}));
 const privateHosts = [...new Set(resources.items.flatMap(v => [
@@ -23,19 +24,6 @@ const [ipify, other] = await Promise.all([
 ]);
 assert.equal(ipify.ip, other, 'WAN address observations disagree');
 const wan = ipify.ip;
-// Read the public Plex certificate to discover its plex.direct hostname. This
-// discovery socket does not establish trust; the external HTTPS checks below
-// must validate the certificate chain and that exact hostname independently.
-const plexHost = process.env.PUBLIC_EDGE_PLEX_HOST || await new Promise((resolve,reject) => {
-  const socket = tls.connect({host:wan,port:32400,rejectUnauthorized:false}, () => {
-    const commonName = socket.getPeerCertificate().subject?.CN || '';
-    socket.destroy();
-    if (!/^\*\.[a-f0-9]+\.plex\.direct$/.test(commonName)) return reject(Error('Unexpected Plex certificate; specify PUBLIC_EDGE_PLEX_HOST'));
-    resolve(wan.replaceAll('.','-')+commonName.slice(1));
-  });
-  socket.setTimeout(10000,()=>{socket.destroy();reject(Error('Plex certificate discovery timed out'));});
-  socket.on('error',reject);
-});
 const prior = process.argv.includes('--resume') ? JSON.parse(await readFile('.local/public-edge/external-tests.json','utf8')) : null;
 if (prior) {
   assert.equal(prior.wan,wan);
