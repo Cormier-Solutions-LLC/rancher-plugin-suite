@@ -25,14 +25,6 @@ spec:
         - protocol: TCP
           port: 8090
       from:
-        - ipBlock:
-            cidr: 10.99.0.0/20
-        - ipBlock:
-            cidr: 10.77.0.0/20
-        - namespaceSelector:
+        - podSelector:
             matchLabels:
-              kubernetes.io/metadata.name: traefik-system
-          podSelector:
-            matchLabels:
-              app.kubernetes.io/name: traefik
-              app.kubernetes.io/instance: traefik-traefik-system
+              app.kubernetes.io/name: torrent-access-gateway

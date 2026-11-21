@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: torrent
+  namespace: torrent
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: torrent.cormierconsulting.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: torrent-access-gateway
+                port:
+                  number: 8080
+  tls:
+    - hosts:
+        - torrent.cormierconsulting.io
+      secretName: torrent-tls

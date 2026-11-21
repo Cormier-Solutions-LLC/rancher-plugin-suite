@@ -1,0 +1,31 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: torrent-access-stage
+  namespace: torrent
+spec:
+  entryPoints: [websecure]
+  routes:
+    - match: Host(`torrent.cormierconsulting.io`) && PathPrefix(`/_access/`)
+      kind: Rule
+      priority: 200
+      services:
+        - {name: torrent-access-gateway, port: 8080}
+  tls: {secretName: torrent-tls}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: torrent-access-stage
+  namespace: torrent
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: torrent
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: torrent-access-gateway
+      ports: [{protocol: TCP, port: 8090}]
