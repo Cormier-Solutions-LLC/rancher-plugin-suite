@@ -4,6 +4,27 @@ import {defaultInventory} from '../../pkg/dns-manager/ui/default-inventory.js';
 import {markRaw} from 'vue';
 import {navigationState} from '../../pkg/dns-manager/navigation';
 
+it('renders observed record types and TTLs as text and keeps the TTL editor value intact', async () => {
+ const inventory = structuredClone(defaultInventory) as any;
+ const zone = inventory.zones[0].id;
+ const type = 'TXT & <span>type</span>';
+ const ttl = '90" & <span>seconds</span>';
+ inventory.records[zone] = [{name:'encoding-check',type,value:'example.test',ttl}];
+ const state = {version:1,drafts:[],logs:[]};
+ const document = {data:{inventory,state}};
+ const source = markRaw({kind:'rancher',document,capabilities:{stageChanges:true},loadState:()=>state,saveState:async()=>{},reload:async()=>document});
+ const app = await renderManager('zone:' + zone,{previewShell:false,dataSource:source});
+ const row = getByRole(app.root,'row',{name:/encoding-check/});
+ const cells = row.querySelectorAll('td');
+ expect(cells[2].textContent).toBe(type);
+ expect(cells[4].textContent).toBe(ttl);
+ expect(cells[2].querySelector('span')).toBeNull();
+ expect(cells[4].querySelector('span')).toBeNull();
+ fireEvent.click(row.querySelector('button[data-action="edit-record"]')!);
+ await flushPromises();
+ expect(app.root.querySelector('input[name="ttl"]')?.getAttribute('value')).toBe(ttl);
+});
+
 it('live refresh preserves the reviewed snapshot gate during a zone write, and confirmed creation adds navigation',async()=>{
  vi.stubGlobal('URL',Object.assign(class extends URL {},{createObjectURL:vi.fn(()=> 'blob:zone-review'),revokeObjectURL:vi.fn()}));
  const zone='manager-review.cormierconsulting.io',inv=structuredClone(defaultInventory) as any;inv.source.managementReachable=true;
