@@ -17,3 +17,16 @@ export function validateSourceCatalogBackup(snapshot,catalog,registry,identity,{
  let saved,expected;try{saved=validateDnsSourceCatalog(current.configuration.dns.catalog,registry);expected=validateDnsSourceCatalog(catalog,registry);}catch{throw fail();}
  if(sourceCatalogFingerprint(saved)!==sourceCatalogFingerprint(expected))throw fail();return true;
 }
+
+export function hasDnsSourceCatalog(current) {
+  return [current?.configuration, ...(current?.relatedConfigurations || [])]
+    .some(item => item?.kind === 'DnsSourceCatalog' || item?.id === 'sources/catalog');
+}
+
+// The scope and coverage signatures also identify ZIPs written before the flag
+// was added, including merged snapshots in which the catalog was secondary.
+export function isDnsSourceCatalogIndex(index) {
+  return index.restrictedSourceCatalog === true ||
+    index.scope?.source === 'Authenticated Rancher source catalog' ||
+    index.coverage?.some(entry => entry.id === 'configuration/sources/catalog') === true;
+}

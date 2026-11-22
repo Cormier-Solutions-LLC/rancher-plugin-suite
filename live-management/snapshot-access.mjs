@@ -8,6 +8,7 @@ const networkInventory = Object.values(networkCapturePaths).map(path => {
     ? {verb: 'list', group: '', version: group, resource: version}
     : {verb: 'list', group, version, resource};
 });
+export const dnsSourceCatalogConfigMaps = ['dns-manager-sources', 'dns-manager-source-bindings'];
 const dnsInventory = ['dns-windows-observations', 'dns-manager-observations']
   .map(name => ({verb: 'get', ...configMap('dns-system', name)}));
 
@@ -52,18 +53,30 @@ export async function authorizeSnapshot({headers, method, manager, stateName, re
   const state = configMap('cattle-ui-plugin-system', stateName);
   const permissions = [{verb: 'get', ...state}, ...(manager === 'dns' ? dnsInventory : networkInventory)];
   if (mutating) permissions.push({verb: 'update', ...state});
-  await Promise.all(permissions.map(async resourceAttributes => {
+  async function requireAccess(resourceAttributes) {
     const result = await call('/apis/authorization.k8s.io/v1/selfsubjectaccessreviews', 'POST', {
       apiVersion: 'authorization.k8s.io/v1', kind: 'SelfSubjectAccessReview', spec: {resourceAttributes}
     });
     if (result?.status?.allowed !== true || result.status.denied || result.status.evaluationError) throw denied();
-  }));
+  }
+  await Promise.all(permissions.map(requireAccess));
 
+  let catalogAccess;
   return {
     userId,
     readSecret(path) {
       if (!/^\/api\/v1\/namespaces\/[a-z0-9-]+\/secrets\/[a-z0-9.-]+$/.test(path)) throw denied();
       return call(path);
+    },
+    canReadDnsSourceCatalog() {
+      if (manager !== 'dns') return false;
+      catalogAccess ??= Promise.all(dnsSourceCatalogConfigMaps.map(name =>
+        requireAccess({verb: 'get', ...configMap('dns-system', name)})))
+        .then(() => true, error => {
+          if (error.status === 403) return false;
+          throw error;
+        });
+      return catalogAccess;
     }
   };
 }

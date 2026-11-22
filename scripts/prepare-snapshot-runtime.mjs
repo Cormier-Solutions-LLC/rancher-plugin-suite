@@ -7,6 +7,7 @@ for(const [folder,config] of [['simple-network-manager-dev','pkg/simple-network-
  copy(`${folder}/container/server.mjs`,`${folder}/container/server.mjs`);copy(`${folder}/${config}`,`${folder}/${config}`);
 }
 copy('preview-data/schedule-secrets.mjs','preview-data/schedule-secrets.mjs');
+copy('preview-data/local-http.mjs','preview-data/local-http.mjs');
 copy('preview-data/fresh-dns-source.mjs','preview-data/fresh-dns-source.mjs');
 copy('preview-data/fresh-network-source.mjs','preview-data/fresh-network-source.mjs');
 copy('live-management/network-observations.mjs','live-management/network-observations.mjs');
