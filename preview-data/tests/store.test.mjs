@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve, sep } from 'node:path';
-import { createServer } from 'node:http';
+import { createServer, request } from 'node:http';
 import { createPreviewStore, previewDataMiddleware } from '../store.mjs';
 import { createPreviewDataClient } from '../client.mjs';
 
@@ -38,7 +38,7 @@ test('invalid documents and concurrent saves cannot replace valid source', async
 });
 
 test('HTTP writes reject cross-origin and malformed bodies; client queues edits without loss', async t => {
-  const { store } = await fixture(t);
+  const { initial, store } = await fixture(t);
   const middleware = previewDataMiddleware({ store, pluginId: 'example' });
   const server = createServer((req, res) => middleware(req, res, () => { res.writeHead(404); res.end(); }));
   await new Promise(done => server.listen(0, '127.0.0.1', done));
@@ -46,6 +46,22 @@ test('HTTP writes reject cross-origin and malformed bodies; client queues edits 
   const origin = `http://127.0.0.1:${server.address().port}`;
   const url = origin + '/__preview-data/example';
   const headers = { 'Content-Type': 'application/json', 'X-Preview-Data': '1' };
+  const { port } = server.address();
+  for (const method of ['GET', 'PUT']) {
+    for (const host of ['preview.example.test', '127.0.0.1:' + (port === 65535 ? 65534 : port + 1)]) {
+      const status = await new Promise((resolve, reject) => {
+        const req = request(url, { method, headers: { ...headers, Host: host } }, res => {
+          res.resume();
+          resolve(res.statusCode);
+        });
+        req.on('error', reject);
+        req.end(method === 'PUT' ? JSON.stringify({ revision: 0, data: initial.data }) : undefined);
+      });
+      assert.equal(status, 403, method + ' ' + host);
+    }
+  }
+  assert.equal((await fetch(url, { headers: { Origin: 'http://localhost:' + port } })).status, 403);
+  assert.equal((await store.load()).revision, 0);
   assert.equal((await fetch(url, { method: 'PUT', headers: { ...headers, Origin: 'https://other.example' }, body: '{}' })).status, 403);
   assert.equal((await fetch(url, { method: 'PUT', headers, body: '{' })).status, 400);
   assert.equal((await fetch(origin + '/__preview-data/../../other')).status, 404);

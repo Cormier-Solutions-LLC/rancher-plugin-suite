@@ -102,15 +102,18 @@ for(const [folder,config] of [['dns-manager-dev','pkg/dns-manager/snapshot-featu
       const request = new EventEmitter();
       request.end = body => {
         const response = new EventEmitter();
-        const fixture = options.headers.Cookie?.match(/^R_SESS=(catalog|reader); CSRF=fixture$/)?.[1];
+        const fixture = options.headers.Cookie?.match(/^R_SESS=(catalog|reader|readonly|bridge); CSRF=fixture$/)?.[1];
         let result = {};
         response.statusCode = fixture ? 201 : 403;
         if (fixture && options.path.endsWith('/selfsubjectreviews')) {
-          result = {apiVersion: 'authentication.k8s.io/v1', kind: 'SelfSubjectReview', status: {userInfo: {username: 'user-test'}}};
+          const username = fixture === 'bridge' ? 'system:serviceaccount:dns-system:dns-windows-bridge' : 'user-test';
+          result = {apiVersion: 'authentication.k8s.io/v1', kind: 'SelfSubjectReview', status: {userInfo: {username}}};
         }
         if (fixture && options.path.endsWith('/selfsubjectaccessreviews')) {
-          const {name} = JSON.parse(body).spec.resourceAttributes;
-          result = {status: {allowed: name !== 'dns-manager-sources' || fixture === 'catalog'}};
+          const {name, verb} = JSON.parse(body).spec.resourceAttributes;
+          const allowed = (name !== 'dns-manager-sources' || fixture === 'catalog') &&
+            (verb !== 'update' || fixture !== 'readonly');
+          result = {status: {allowed}};
         }
         callback(response);
         queueMicrotask(() => {
@@ -135,6 +138,11 @@ for(const [folder,config] of [['dns-manager-dev','pkg/dns-manager/snapshot-featu
     [`SNAPSHOT_FRESH_${manager}`]: 'true'
   }, true);
   const rancherRead = (path, session) => fetch(base + path, {headers: {Cookie: 'R_SESS=' + session + '; CSRF=fixture'}});
+  const rancherWrite = (path, session, method, body) => fetch(base + path, {
+    method,
+    headers: {Cookie: 'R_SESS=' + session + '; CSRF=fixture', Origin: 'https://rancher.cormierconsulting.io', 'Content-Type': 'application/json'},
+    body: JSON.stringify(body)
+  });
   const restarted = await rancherRead('/api/snapshot-schedule', 'reader');
   assert.equal(restarted.status, 200);
   const paused = await restarted.json();
@@ -148,6 +156,15 @@ for(const [folder,config] of [['dns-manager-dev','pkg/dns-manager/snapshot-featu
     assert.ok(!(await listed('reader')).some(record => record.id === catalogId));
     assert.equal((await rancherRead('/api/snapshots/' + catalogId + '/backup.zip', 'catalog')).status, 200);
     assert.equal((await rancherRead('/api/snapshots/' + catalogId + '/backup.zip', 'reader')).status, 404);
+    assert.equal((await rancherRead('/api/snapshots/' + catalogId + '/manifests.yaml', 'reader')).status, 404);
+    assert.equal((await rancherWrite('/api/snapshots/delete', 'reader', 'POST', {ids: [catalogId], backupId: automatic.id})).status, 404);
+    assert.equal((await rancherWrite('/api/snapshot-cleanup/run', 'reader', 'POST', {})).status, 200);
+    assert.ok((await listed('catalog')).some(record => record.id === catalogId));
+  }
+  assert.equal((await rancherRead('/api/snapshots', 'readonly')).status, 200);
+  assert.equal((await rancherRead('/api/snapshots', 'bridge')).status, 403);
+  for (const [method, route] of [['PUT', 'snapshot-schedule'], ['PUT', 'snapshot-cleanup'], ['POST', 'snapshot-cleanup/run'], ['POST', 'snapshots']]) {
+    assert.equal((await rancherWrite('/api/' + route, 'readonly', method, {})).status, 403, route);
   }
   assert.equal((await fetch(base+'/healthz')).status,200);
   for (const path of ['/api/snapshots','/api/snapshot-storage','/api/snapshot-schedule','/api/snapshot-cleanup'])
