@@ -39,7 +39,8 @@ rules:
   - apiGroups: [""]
     resources: [services/proxy]
     resourceNames: ["http:dns-manager-snapshots:8080"]
-    verbs: [get]
+    # The current bridge uses POST with a proof tied to a queued job.
+    verbs: [create]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

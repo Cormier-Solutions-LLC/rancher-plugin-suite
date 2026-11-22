@@ -4,6 +4,34 @@ import {defaultInventory} from '../../pkg/dns-manager/ui/default-inventory.js';
 import {markRaw} from 'vue';
 import {navigationState} from '../../pkg/dns-manager/navigation';
 
+it('preserves observed zone identifiers and labels as literal text', async () => {
+ const inventory = structuredClone(defaultInventory) as any;
+ const zone = inventory.zones[0];
+ const oldId = zone.id;
+ zone.id = 'east "blue" & west';
+ zone.kind = 'Primary <East> & West';
+ zone.replication = 'Synced <East> & West';
+ inventory.records[zone.id] = inventory.records[oldId];
+ delete inventory.records[oldId];
+ const state = {version:1,drafts:[],logs:[]};
+ const document = {data:{inventory,state}};
+ const source = markRaw({kind:'rancher',document,capabilities:{},loadState:()=>state,saveState:async()=>{},reload:async()=>document});
+ const app = await renderManager('zones',{previewShell:false,dataSource:source});
+ const row = getByRole(app.root,'row',{name:new RegExp(zone.name)});
+ const kind = row.querySelector('small');
+ const replication = row.querySelector('.dm-badge');
+ expect(kind?.textContent).toBe(zone.kind + ' · Secondary Copy');
+ expect(replication?.textContent).toBe(zone.replication);
+ expect(kind?.children).toHaveLength(0);
+ expect(replication?.children).toHaveLength(0);
+ const preview = await renderManager('zones',{dataSource:source});
+ const nav = [...preview.root.querySelectorAll('#dm-zone-navigation button')].find(button => button.getAttribute('title') === zone.name);
+ expect(nav?.getAttribute('data-page')).toBe('zone:' + zone.id);
+ fireEvent.click(nav!);
+ await flushPromises();
+ expect(getByRole(preview.root,'heading',{level:1,name:zone.name})).toBeTruthy();
+});
+
 it('renders observed record types and TTLs as text and keeps the TTL editor value intact', async () => {
  const inventory = structuredClone(defaultInventory) as any;
  const zone = inventory.zones[0].id;
@@ -14,6 +42,7 @@ it('renders observed record types and TTLs as text and keeps the TTL editor valu
  const document = {data:{inventory,state}};
  const source = markRaw({kind:'rancher',document,capabilities:{stageChanges:true},loadState:()=>state,saveState:async()=>{},reload:async()=>document});
  const app = await renderManager('zone:' + zone,{previewShell:false,dataSource:source});
+ expect(getByRole(app.root,'option',{name:type}).textContent).toBe(type);
  const row = getByRole(app.root,'row',{name:/encoding-check/});
  const cells = row.querySelectorAll('td');
  expect(cells[2].textContent).toBe(type);

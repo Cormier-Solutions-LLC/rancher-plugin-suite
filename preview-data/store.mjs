@@ -1,6 +1,7 @@
 import { readFile, writeFile, rename, open, unlink, mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { localRequestAllowed } from './local-http.mjs';
 
 export class PreviewDataError extends Error {
   constructor(message, status = 400) { super(message); this.status = status; }
@@ -56,13 +57,13 @@ export function previewDataMiddleware({ store, pluginId }) {
       res.end(JSON.stringify(value));
     };
     try {
+      if (!localRequestAllowed(req)) {
+        throw new PreviewDataError('Preview data is only available on its local origin.', 403);
+      }
       if (req.method === 'GET') return json(200, await store.load());
       if (req.method !== 'PUT') return json(405, { error: 'Use GET or PUT.' });
-      const host = req.headers.host;
       if (req.headers['x-preview-data'] !== '1' ||
-          req.headers['content-type']?.split(';')[0] !== 'application/json' ||
-          req.headers.origin && req.headers.origin !== `http://${host}` && req.headers.origin !== `https://${host}` ||
-          req.headers['sec-fetch-site'] === 'cross-site') {
+          req.headers['content-type']?.split(';')[0] !== 'application/json') {
         throw new PreviewDataError('Preview writes require a same-origin JSON request.', 403);
       }
       let size = 0;
