@@ -1,3 +1,4 @@
+import {localRequestAllowed, requestUrl} from '../../preview-data/local-http.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, rm, readFile } from 'node:fs/promises';
@@ -57,4 +58,15 @@ test('HTTP saves persist; cross-origin writes and unlisted paths are rejected',a
   const saved=await fetch(origin+'/api/review',{method:'PUT',headers:{'Content-Type':'application/json',Origin:origin},body:JSON.stringify({...input,generalComment:'HTTP choice'})});assert.equal(saved.status,200);
   assert.equal((await (await fetch(origin+'/api/review')).json()).generalComment,'HTTP choice');
   assert.equal((await fetch(origin+'/../package.json')).status,404);
+});
+
+test('preview request validation permits the local listener and its configured UI proxy', () => {
+  const request = (host, origin) => ({headers: {host, origin}, socket: {localPort: 5184}});
+  assert.equal(localRequestAllowed(request('127.0.0.1:5184')), true);
+  assert.equal(localRequestAllowed(request('localhost:5174', 'http://localhost:5174'), 5174), true);
+  assert.equal(localRequestAllowed(request('localhost:5174', 'http://localhost:5174')), false);
+  assert.equal(localRequestAllowed(request('preview.example:5184')), false);
+  assert.equal(localRequestAllowed(request('127.0.0.1:5184', 'https://example.test')), false);
+  assert.equal(requestUrl('/session').pathname, '/session');
+  assert.equal(requestUrl('invalid target'), null);
 });

@@ -1,5 +1,6 @@
+import {dnsSourceCatalogConfigMaps} from './snapshot-access.mjs';
 import {rancherSessionHeaders,rancherRecoveryRequest}from'./rancher-recovery-session.mjs';import{validateDnsSourceCatalog,validateDnsSourceBindings}from'./dns-source-catalog.mjs';
-const namespace='dns-system',catalogName='dns-manager-sources',registryName='dns-manager-source-bindings',base=`/api/v1/namespaces/${namespace}/configmaps/`;
+const namespace='dns-system',[catalogName,registryName]=dnsSourceCatalogConfigMaps,base=`/api/v1/namespaces/${namespace}/configmaps/`;
 const fail=status=>Object.assign(new Error('Source management authorization or API readback is unconfirmed.'),{status,code:'SOURCE_ACCESS_UNCONFIRMED'});
 // The pinned registry is supplied by the installed factory. Source request
 // bodies never select accounts, resource namespaces, queue paths or credentials.

@@ -7,7 +7,7 @@ export function localSnapshotService({pluginId,folder,port}) {
  let child;
  return {name:'rancher-suite-local-snapshot-service',async configureServer(server){
   const snapshotDirectory=process.env.RANCHER_SUITE_PREVIEW_SESSION?resolve(process.env.RANCHER_SUITE_PREVIEW_SESSION,'snapshots',pluginId):resolve(root,'.local/preview-snapshots',pluginId);
-  child=spawn(process.execPath,['container/server.mjs'],{cwd:resolve(root,folder),env:{...process.env,HOST:'127.0.0.1',SNAPSHOT_PREVIEW_MOCK_DATA:'true',PORT:String(port),STATIC_DIR:resolve(root,folder,'dist-preview'),SNAPSHOT_DIR:snapshotDirectory},windowsHide:true,stdio:['ignore','ignore','pipe','ipc']});
+  child=spawn(process.execPath,['container/server.mjs'],{cwd:resolve(root,folder),env:{...process.env,HOST:'127.0.0.1',SNAPSHOT_PREVIEW_MOCK_DATA:'true',PORT:String(port),SNAPSHOT_PREVIEW_UI_PORT:String(server.config.server.port),STATIC_DIR:resolve(root,folder,'dist-preview'),SNAPSHOT_DIR:snapshotDirectory},windowsHide:true,stdio:['ignore','ignore','pipe','ipc']});
   let error='';child.stderr.on('data',chunk=>{error+=chunk;});
   const stop=()=>{if(child?.exitCode===null)child.kill();};
   server.httpServer?.once('close',stop);process.once('exit',stop);

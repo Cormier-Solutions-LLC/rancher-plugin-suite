@@ -41,11 +41,31 @@ test('snapshot reads require the Rancher session and access to both inventory an
 
 test('network writes require same origin, state update, and all network inventory grants', async () => {
   const valid = fixture({manager: 'network', method: 'PUT'});
-  const session = await authorizeSnapshot(valid.options);
+  await authorizeSnapshot(valid.options);
   assert.ok(valid.reviewed.some(ref => ref.resource === 'services' && ref.verb === 'list' && ref.group === ''));
   assert.ok(valid.reviewed.some(ref => ref.resource === 'certificates' && ref.verb === 'list' && ref.group === 'cert-manager.io'));
   assert.ok(valid.reviewed.some(ref => ref.verb === 'update' && ref.name === 'network-manager-state-user-test'));
   await assert.rejects(authorizeSnapshot({...valid.options, headers: {cookie: headers.cookie}}), {status: 403});
   await assert.rejects(authorizeSnapshot(fixture({manager: 'network', method: 'PUT', allowed: ref => ref.verb !== 'update'}).options), {status: 403});
+});
+
+test('catalog backup access requires current Rancher grants for both catalog ConfigMaps', async () => {
+  const valid = fixture();
+  const session = await authorizeSnapshot(valid.options);
+  assert.equal(await session.canReadDnsSourceCatalog(), true);
+  assert.equal(await session.canReadDnsSourceCatalog(), true);
+  assert.deepEqual(valid.reviewed.slice(3).map(ref => [ref.namespace, ref.name, ref.verb]), [
+    ['dns-system', 'dns-manager-sources', 'get'],
+    ['dns-system', 'dns-manager-source-bindings', 'get']
+  ]);
+  for (const name of ['dns-manager-sources', 'dns-manager-source-bindings']) {
+    const revoked = fixture({allowed: ref => ref.name !== name});
+    assert.equal(await (await authorizeSnapshot(revoked.options)).canReadDnsSourceCatalog(), false);
+  }
+});
+
+test('a live Secret read is delegated through the reviewed session and honors current denial', async () => {
+  const {options} = fixture({manager: 'network', method: 'PUT'});
+  const session = await authorizeSnapshot(options);
   await assert.rejects(session.readSecret('/api/v1/namespaces/demo/secrets/cert'), {status: 403});
 });

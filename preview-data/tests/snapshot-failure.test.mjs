@@ -5,11 +5,16 @@ for(const folder of ['dns-manager-dev','simple-network-manager-dev'])test(folder
  // Inject a real rename failure into the child, keeping production code free of test hooks.
  await writeFile(preload,`import fs from 'node:fs';import {syncBuiltinESMExports} from 'node:module';const rename=fs.promises.rename;fs.promises.rename=async(from,to)=>{if(to.endsWith('.meta.json')&&fs.existsSync(${JSON.stringify(marker)}))throw Object.assign(new Error('Injected metadata commit failure'),{code:'EIO'});return rename(from,to);};syncBuiltinESMExports();`);
  const socket=net.createServer();await new Promise(r=>socket.listen(0,'127.0.0.1',r));const port=socket.address().port;await new Promise(r=>socket.close(r));
- const server=spawn(process.execPath,['--import',pathToFileURL(preload).href,'container/server.mjs'],{cwd:join(root,folder),env:{...process.env,SNAPSHOT_DIR:snapshots,STATIC_DIR:directory,HOST:'127.0.0.1',PORT:String(port),SNAPSHOT_STORAGE_LIMIT_BYTES:'8192',SNAPSHOT_PREVIEW_MOCK_DATA:'true',SNAPSHOT_FRESH_DNS:'false'},stdio:'pipe'});let errors='';server.stderr.on('data',b=>errors+=b);
+ const server=spawn(process.execPath,['--import',pathToFileURL(preload).href,'container/server.mjs'],{cwd:join(root,folder),env:{...process.env,SNAPSHOT_DIR:snapshots,STATIC_DIR:directory,HOST:'127.0.0.1',PORT:String(port),SNAPSHOT_STORAGE_LIMIT_BYTES:'8192',SNAPSHOT_PREVIEW_MOCK_DATA:'true',SNAPSHOT_FRESH_DNS:'false'},stdio:['ignore','ignore','pipe','ipc']});let errors='';server.stderr.on('data',b=>errors+=b);
  const base='http://127.0.0.1:'+port,current={configuration:{id:'failure-acceptance',name:'Failure acceptance',ports:[]},routeManifests:[],snapshotScope:{label:'Isolated failure test'}};
  const post=c=>fetch(base+'/api/snapshots',{method:'POST',headers:{'Content-Type':'application/json',Origin:base},body:JSON.stringify({current:c,scopeKey:'failure-acceptance'})});
  try{
-  let ready=false;for(let i=0;i<100;i++){try{if((await fetch(base+'/healthz')).ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,25));}assert.ok(ready,errors);
+  await new Promise((resolve,reject)=>{
+   const timer=setTimeout(()=>reject(new Error('Snapshot service startup timed out. '+errors)),15000);
+   server.once('error',error=>{clearTimeout(timer);reject(error);});
+   server.once('exit',()=>{clearTimeout(timer);reject(new Error('Snapshot service exited. '+errors));});
+   server.once('message',message=>{if(message.ready){clearTimeout(timer);resolve();}});
+  });
   const first=await post(current);assert.equal(first.status,201);const saved=await first.json(),original=await readFile(join(snapshots,saved.id+'.zip'));
   const before=await readdir(snapshots);await writeFile(marker,'fail');assert.equal((await post(current)).status,500);await rm(marker);
   assert.deepEqual((await readdir(snapshots)).sort(),before.sort(),'Metadata commit failure left an archive or temporary file.');assert.deepEqual(await readFile(join(snapshots,saved.id+'.zip')),original);

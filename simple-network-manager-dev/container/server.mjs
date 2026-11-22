@@ -1,3 +1,4 @@
+import {localRequestAllowed, requestUrl} from '../../preview-data/local-http.mjs';
 import {authorizeSnapshot, isSnapshotApi} from '../../live-management/snapshot-access.mjs';
 import { estimateSnapshotStorage } from '../pkg/simple-network-manager/config/storage-estimate.mjs';
 import { secretBackupStatus } from '../pkg/simple-network-manager/config/snapshot-secrets.mjs';
@@ -12,6 +13,9 @@ import { coverageEntries } from '../pkg/simple-network-manager/config/snapshot-c
 import { mergeInPriorityOrder } from '../pkg/simple-network-manager/config/snapshot-merge.mjs';
 import { mergeSnapshots, cleanupCandidates } from '../pkg/simple-network-manager/config/snapshot-items.mjs';
 import { encodeBackup, decodeBackup, passwordStrength, containsSecretValues, withoutSecretValues } from '../pkg/simple-network-manager/config/backup-zip.mjs';
+const previewMode = process.env.SNAPSHOT_PREVIEW_MOCK_DATA === 'true';
+const freshCapture = !previewMode && process.env.SNAPSHOT_FRESH_NETWORK === 'true';
+const authorizationRequired = 'Review and re-enable the protected schedule with a current Rancher session.';
 const staticRoot = resolve(process.env.STATIC_DIR || '/app/public');
 const snapshotRoot = resolve(process.env.SNAPSHOT_DIR || '/var/lib/simple-network-manager/snapshots');
 await mkdir(snapshotRoot, { recursive: true, mode: 0o700 });
@@ -72,7 +76,15 @@ const passwordSecrets=scheduleSecretStore(snapshotRoot,'network-snapshot-passwor
 const schedulePath = resolve(snapshotRoot, 'schedule.json');
 let schedule = { enabled: false, interval: 1, unit: 'days', nextRun: null, lastRun: null, lastError: '', current: null, sourceUpdatedAt: null };
 try { schedule = { ...schedule, ...JSON.parse(await readFile(schedulePath, 'utf8')) }; } catch (error) { if (error.code !== 'ENOENT') throw error; }
-if (schedule.enabled && !schedule.approvedBy && process.env.SNAPSHOT_PREVIEW_MOCK_DATA !== 'true') {
+// A vaulted ZIP password is not a credential for the Rancher session.
+let credentialSession;
+const reauthorizationRequired = () => Object.assign(new Error(authorizationRequired), {code: 'SCHEDULE_REAUTHORIZATION_REQUIRED'});
+const mustReauthorize = error => ['SCHEDULE_REAUTHORIZATION_REQUIRED','SNAPSHOT_ACCESS_DENIED'].includes(error.code) && error.status !== 503;
+if (schedule.enabled && schedule.includeSecrets && !previewMode) {
+  schedule.enabled = false;
+  schedule.nextRun = null;
+  schedule.lastError = authorizationRequired;
+} else if (schedule.enabled && !schedule.approvedBy && !previewMode) {
   schedule.enabled = false;
   schedule.nextRun = null;
   schedule.lastError = 'Review and re-enable this saved policy with an authorized Rancher session.';
@@ -94,19 +106,33 @@ function withSchedule(action) {
 }
 let running = false;
 async function runScheduled() {
+  if (!previewMode && schedule.includeSecrets && (!freshCapture || !credentialSession))
+    throw reauthorizationRequired();
   if (running || !schedule.current) throw new Error('Snapshot source is unavailable or already running.');
   running = true;
   try {
     const password=schedule.passwordSecret?await passwordSecrets.get(schedule.passwordSecret):'';
     let current=schedule.sourceArchive?(await decodeBackup(await readFile(resolve(snapshotRoot,schedule.sourceArchive)),password)).current:schedule.current;
     let observedAt=schedule.sourceUpdatedAt;
-    if (process.env.SNAPSHOT_FRESH_NETWORK === 'true') {
-      const read = path => {
-        if (path.includes('/secrets/') && !schedule.authorizedSecretPaths?.includes(path))
-          throw Object.assign(new Error('Review the changed Secret references before running the schedule.'), {status: 403});
-        return readNetworkSource(path);
+    if (freshCapture) {
+      const session = schedule.includeSecrets
+        ? await authorizeSnapshot({headers: credentialSession, method: 'PUT', manager: 'network', stateName: process.env.SNAPSHOT_NETWORK_STATE_CONFIGMAP})
+        : null;
+      if (session && session.userId !== schedule.approvedBy) throw reauthorizationRequired();
+      let permissionFailure;
+      const read = async path => {
+        if (!path.includes('/secrets/')) return readNetworkSource(path);
+        try {
+          if (!session || !schedule.authorizedSecretPaths?.includes(path)) throw reauthorizationRequired();
+          return await session.readSecret(path);
+        } catch (error) {
+          if (mustReauthorize(error)) permissionFailure = error;
+          throw error;
+        }
       };
-      const fresh = await freshNetworkSnapshot(current, read, Date.now(), {includeSecrets: !!schedule.includeSecrets});
+      let fresh;
+      try { fresh = await freshNetworkSnapshot(current, read, Date.now(), {includeSecrets: !!session}); }
+      catch (error) { throw permissionFailure || error; }
       current = fresh.current;
       observedAt = fresh.observedAt;
     }
@@ -117,20 +143,29 @@ async function runScheduled() {
   } finally { running = false; }
 }
 const tick = async () => {
-  if ((!schedule.approvedBy && process.env.SNAPSHOT_PREVIEW_MOCK_DATA !== 'true') || !schedule.enabled || running || !schedule.nextRun || Date.parse(schedule.nextRun) > Date.now()) return;
-  try { await runScheduled(); } catch (error) { schedule.lastError = error.code==='FRESH_SOURCE_UNAVAILABLE'?'Automatic snapshot source is unavailable. Check capture permissions and the configured manager owner.':error.status===503?'Automatic snapshot failed. Check password Secret storage and permissions.':'Automatic snapshot failed. Check persistent storage.'; schedule.nextRun = new Date(Date.now() + 60000).toISOString(); try { await writeAtomic(schedulePath, JSON.stringify(schedule, null, 2)); } catch {} }
+  if ((!schedule.approvedBy && !previewMode) || !schedule.enabled || running || !schedule.nextRun || Date.parse(schedule.nextRun) > Date.now()) return;
+  try { await runScheduled(); } catch (error) {
+    if (!previewMode && schedule.includeSecrets && mustReauthorize(error)) {
+      credentialSession = undefined;
+      schedule.enabled = false;
+      schedule.nextRun = null;
+      schedule.lastError = authorizationRequired;
+      try { await writeAtomic(schedulePath, JSON.stringify(schedule, null, 2)); } catch {}
+      return;
+    }
+    schedule.lastError = error.code==='FRESH_SOURCE_UNAVAILABLE'?'Automatic snapshot source is unavailable. Check capture permissions and the configured manager owner.':error.status===503?'Automatic snapshot failed. Check password Secret storage and permissions.':'Automatic snapshot failed. Check persistent storage.'; schedule.nextRun = new Date(Date.now() + 60000).toISOString(); try { await writeAtomic(schedulePath, JSON.stringify(schedule, null, 2)); } catch {} }
 };
 let tickPending = false;
 setInterval(() => {
   if (tickPending || !schedule.enabled || !schedule.nextRun || Date.parse(schedule.nextRun) > Date.now() ||
-      (!schedule.approvedBy && process.env.SNAPSHOT_PREVIEW_MOCK_DATA !== 'true')) return;
+      (!schedule.approvedBy && !previewMode)) return;
   tickPending = true;
   void withSchedule(tick).finally(() => { tickPending = false; });
 }, 1000).unref();
 const cleanupPath=resolve(snapshotRoot,'cleanup.json');
 let cleanup={enabled:false,interval:1,unit:'days',retention:30,retentionUnit:'days',nextRun:null,lastRun:null,lastDeleted:0,lastError:''};
 try{cleanup={...cleanup,...JSON.parse(await readFile(cleanupPath,'utf8'))};}catch(error){if(error.code!=='ENOENT')throw error;}
-if (cleanup.enabled && !cleanup.approvedBy && process.env.SNAPSHOT_PREVIEW_MOCK_DATA !== 'true') {
+if (cleanup.enabled && !cleanup.approvedBy && !previewMode) {
   cleanup.enabled = false;
   cleanup.nextRun = null;
   cleanup.lastError = 'Review and re-enable this saved policy with an authorized Rancher session.';
@@ -158,19 +193,22 @@ async function loadSnapshot(id, password = '') {
 }
 let cleaning=false;
 async function runCleanup(){if(cleaning)throw new Error('Cleanup already running.');cleaning=true;try{const list=await listSnapshots();const candidates=cleanupCandidates(list,{retention:cleanup.retention,unit:cleanup.retentionUnit});await removeSnapshots(candidates.map(record=>record.id));cleanup.lastRun=new Date().toISOString();cleanup.lastDeleted=candidates.length;cleanup.lastError='';cleanup.nextRun=cleanup.enabled?nextRun(Date.now(),cleanup.interval,cleanup.unit):null;await writeAtomic(cleanupPath,JSON.stringify(cleanup,null,2));return cleanup;}finally{cleaning=false;}}
-setInterval(()=>{if((process.env.SNAPSHOT_PREVIEW_MOCK_DATA==='true'||cleanup.approvedBy)&&cleanup.enabled&&!cleaning&&cleanup.nextRun&&Date.parse(cleanup.nextRun)<=Date.now())void runCleanup().catch(()=>{cleanup.lastError='Cleanup failed. Check persistent storage.';cleanup.nextRun=new Date(Date.now()+60000).toISOString();void writeAtomic(cleanupPath,JSON.stringify(cleanup,null,2)).catch(()=>{});});},1000).unref();
-function trustedOrigin(req){const origin=new URL(req.headers.origin);return process.env.SNAPSHOT_ALLOWED_ORIGIN ? origin.origin===process.env.SNAPSHOT_ALLOWED_ORIGIN : origin.host===req.headers.host;}
+setInterval(()=>{if((previewMode||cleanup.approvedBy)&&cleanup.enabled&&!cleaning&&cleanup.nextRun&&Date.parse(cleanup.nextRun)<=Date.now())void runCleanup().catch(()=>{cleanup.lastError='Cleanup failed. Check persistent storage.';cleanup.nextRun=new Date(Date.now()+60000).toISOString();void writeAtomic(cleanupPath,JSON.stringify(cleanup,null,2)).catch(()=>{});});},1000).unref();
+function trustedOrigin(req){if(previewMode)return localRequestAllowed(req, Number(process.env.SNAPSHOT_PREVIEW_UI_PORT));const origin=new URL(req.headers.origin);return process.env.SNAPSHOT_ALLOWED_ORIGIN ? origin.origin===process.env.SNAPSHOT_ALLOWED_ORIGIN : origin.host===req.headers.host;}
 http.createServer(async (req, res) => {
   try {
-    const url = new URL(req.url, 'http://localhost');
+    if (previewMode && !localRequestAllowed(req, Number(process.env.SNAPSHOT_PREVIEW_UI_PORT)))
+      return send(res, 403, {error: 'This preview is only available on its local address.'});
+    const url = requestUrl(req.url);
+    if (!url) return send(res, 400, {error: 'Invalid request target.'});
     if (url.pathname.startsWith('/api/') && (req.headers['sec-fetch-site']==='cross-site' || req.headers.origin && !trustedOrigin(req))) return send(res,403,{error:'Same-origin request required.'});
     if (url.pathname === '/healthz') return send(res, 200, {healthy: true});
-    const snapshotSession = isSnapshotApi(url.pathname) && process.env.SNAPSHOT_PREVIEW_MOCK_DATA !== 'true'
+    const snapshotSession = isSnapshotApi(url.pathname) && !previewMode
       ? await authorizeSnapshot({headers: req.headers, method: req.method, manager: 'network', stateName: process.env.SNAPSHOT_NETWORK_STATE_CONFIGMAP})
       : null;
     if (url.pathname === '/api/snapshot-storage' && req.method === 'GET') {
       const [space,records]=await Promise.all([statfs(await realpath(snapshotRoot)),listSnapshots()]);
-      const mockCapacity=!Number(process.env.SNAPSHOT_STORAGE_LIMIT_BYTES)&&process.env.SNAPSHOT_PREVIEW_MOCK_DATA==='true';
+      const mockCapacity=!Number(process.env.SNAPSHOT_STORAGE_LIMIT_BYTES)&&previewMode;
       const quotaBytes=Number(process.env.SNAPSHOT_STORAGE_LIMIT_BYTES)||(mockCapacity?1073741824:null);
       const usedBytes=(await Promise.all((await readdir(snapshotRoot)).map(name=>stat(resolve(snapshotRoot,name))))).reduce((sum,entry)=>sum+(entry.isFile()?entry.size:0),0);
       const filesystemAvailableBytes=space.bavail*space.bsize;
@@ -199,8 +237,11 @@ http.createServer(async (req, res) => {
         const previousSource=schedule.sourceArchive;let candidate={...schedule, approvedBy: snapshotSession?.userId};
         const updatingSettings = url.pathname === '/api/snapshot-schedule';
         const protectedCapture = (updatingSettings ? input.includeSecrets : undefined) ?? schedule.includeSecrets;
-        const editingSchedule = url.pathname !== '/api/snapshot-schedule/run';
-        if (process.env.SNAPSHOT_FRESH_NETWORK === 'true' && editingSchedule && (input.enabled || url.pathname === '/api/snapshot-source' || input.includeSecrets === true)) {
+        const editingSource = url.pathname === '/api/snapshot-source';
+        if (!previewMode && protectedCapture && (updatingSettings && input.enabled || editingSource) &&
+            (!freshCapture || editingSource && (!credentialSession || snapshotSession.userId !== schedule.approvedBy)))
+          return send(res, 403, {error: authorizationRequired});
+        if (freshCapture && (updatingSettings && input.enabled || editingSource)) {
           const authorizedSecretPaths = [];
           const read = async path => {
             if (!path.includes('/secrets/')) return readNetworkSource(path);
@@ -223,7 +264,7 @@ http.createServer(async (req, res) => {
         }
         if (url.pathname === '/api/snapshot-schedule/run') {
           if (!input.current) return send(res,400,{error:'Current configuration is required.'});
-          const fresh=process.env.SNAPSHOT_FRESH_NETWORK==='true'?await freshNetworkSnapshot(input.current):{current:input.current,observedAt:new Date().toISOString()};
+          const fresh=freshCapture?await freshNetworkSnapshot(input.current):{current:input.current,observedAt:new Date().toISOString()};
           return send(res,201,await saveSnapshot(fresh.current,JSON.stringify(fresh.current),'Manual',fresh.observedAt,input.password || ''));
         }
         if (input.current) {
@@ -237,9 +278,15 @@ http.createServer(async (req, res) => {
           }else candidate.sourceArchive=null;
           candidate.current=withoutSecretValues(input.current);candidate.sourceUpdatedAt=new Date().toISOString();
         }
+        if (updatingSettings) candidate.lastError = '';
         await writeAtomic(schedulePath, JSON.stringify(candidate, null, 2));
         const previousPassword = schedule.passwordSecret;
         schedule=candidate;
+        if (updatingSettings && !previewMode) {
+          credentialSession = candidate.enabled && candidate.includeSecrets
+            ? {cookie: req.headers.cookie, origin: req.headers.origin}
+            : undefined;
+        }
         if (previousPassword && previousPassword !== schedule.passwordSecret)
           await passwordSecrets.retain?.(schedule.passwordSecret).catch(() => {});
         if(previousSource&&previousSource!==schedule.sourceArchive&&/^schedule-source-[0-9a-f-]+\.zip$/.test(previousSource))await unlink(resolve(snapshotRoot,previousSource)).catch(()=>{});
@@ -333,4 +380,4 @@ http.createServer(async (req, res) => {
     const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml' };
     res.writeHead(200, { 'Content-Type': types[extname(path)] || 'application/octet-stream', 'Cache-Control': extname(path) === '.html' ? 'no-store' : 'public, max-age=3600', 'X-Content-Type-Options': 'nosniff' }); res.end(req.method === 'HEAD' ? undefined : bytes);
   } catch (error) { send(res, error.code === 'ENOENT' ? 404 : error.status || 500, { error: error.code==='SNAPSHOT_ACCESS_DENIED'?error.message:error.code==='FRESH_SOURCE_UNAVAILABLE'?'Fresh network capture is unavailable or incompatible with this scope. Check capture permissions and the configured manager owner.':error.code === 'ENOENT' ? 'Snapshot or asset not found.' : error.status === 422 ? 'Encrypted backup requires unlocking with its password.' : error.status === 507 ? 'Snapshot storage quota exhausted.' : error.status===503 ? 'Snapshot password Secret storage is unavailable. Check the backend namespace and service-account Secret permissions.' : 'Unable to save or read the snapshot.' }); }
-}).listen(Number(process.env.PORT || 8080), process.env.HOST || '127.0.0.1', () => process.send?.({ready:true}));
+}).listen(Number(process.env.PORT || 8080), previewMode ? '127.0.0.1' : process.env.HOST || '127.0.0.1', () => process.send?.({ready:true}));

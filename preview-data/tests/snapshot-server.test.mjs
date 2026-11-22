@@ -4,15 +4,17 @@ import {spawn} from 'node:child_process';
 import {mkdtemp,readFile,writeFile,rm,statfs,readdir,realpath} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {fileURLToPath, pathToFileURL} from 'node:url';
 import net from 'node:net';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 for(const [folder,config] of [['dns-manager-dev','pkg/dns-manager/snapshot-feature/config'],['simple-network-manager-dev','pkg/simple-network-manager/config']])test(`${folder}: encrypted recovery, verification, merge, mounted storage, restart and cleanup`,async()=>{
  const directory=await mkdtemp(join(tmpdir(),'suite-backups-')),snapshots=join(directory,'snapshots');
  const socket=net.createServer();await new Promise(done=>socket.listen(0,'127.0.0.1',done));const port=socket.address().port;await new Promise(done=>socket.close(done));
  const base=`http://127.0.0.1:${port}`;let server,error='';
- async function start(extra={}) {
-  server=spawn(process.execPath,['container/server.mjs'],{cwd:join(root,folder),env:{...process.env,SNAPSHOT_PREVIEW_MOCK_DATA:'true',SNAPSHOT_STORAGE_LIMIT_BYTES:'',PORT:String(port),HOST:'127.0.0.1',SNAPSHOT_DIR:snapshots,STATIC_DIR:directory,...extra},stdio:['ignore','ignore','pipe','ipc']});
+ const preload = join(directory, 'rancher-session-fixture.mjs');
+ async function start(extra={}, fixture=false) {
+  const args = fixture ? ['--import', pathToFileURL(preload).href, 'container/server.mjs'] : ['container/server.mjs'];
+  server=spawn(process.execPath,args,{cwd:join(root,folder),env:{...process.env,SNAPSHOT_PREVIEW_MOCK_DATA:'true',SNAPSHOT_STORAGE_LIMIT_BYTES:'',PORT:String(port),HOST:'127.0.0.1',SNAPSHOT_DIR:snapshots,STATIC_DIR:directory,...extra},stdio:['ignore','ignore','pipe','ipc']});
   error = '';
   server.stderr.on('data',chunk=>{error+=chunk;});
   await new Promise((ready,reject)=>{
@@ -72,7 +74,81 @@ for(const [folder,config] of [['dns-manager-dev','pkg/dns-manager/snapshot-featu
   assert.equal((await request('/api/snapshot-schedule',{...protectedSchedule,password:'Rotated-test-only-Password2026!'},'PUT')).status,200);
   await stop();await start();assert.equal((await fetch(base+`/api/snapshots/${automatic.id}`)).status,422);assert.equal((await request(`/api/snapshots/${automatic.id}/unlock`,{password})).status,200,'old archive remains recoverable with its original password after rotation');
   assert.equal((await request('/api/snapshot-schedule',{...schedule,includeSecrets:false},'PUT')).status,200);assert.equal((await (await fetch(base+'/api/snapshot-schedule')).json()).hasPassword,false);assert.equal((await fetch(base+`/api/snapshots/${automatic.id}`)).status,422);assert.equal((await request(`/api/snapshots/${automatic.id}/unlock`,{password})).status,200,'disabling secret inclusion preserves password-protected recovery');
-  await stop();await start({SNAPSHOT_PREVIEW_MOCK_DATA:'false'});
+  let catalogId;
+  if (folder === 'dns-manager-dev') {
+    const catalog = {id: 'sources/catalog', kind: 'DnsSourceCatalog', name: 'Test catalog', namespace: 'dns-system'};
+    const saved = await request('/api/snapshots', {current: {...current, relatedConfigurations: [catalog]}, scopeKey: 'older-merge'});
+    assert.equal(saved.status, 201);
+    const {id} = await saved.json();
+    catalogId = id;
+    const indexPath = join(snapshots, id + '.meta.json');
+    const index = JSON.parse(await readFile(indexPath, 'utf8'));
+    assert.equal(index.restrictedSourceCatalog, true);
+    delete index.restrictedSourceCatalog;
+    await writeFile(indexPath, JSON.stringify(index));
+    const history = await (await fetch(base + '/api/snapshots')).json();
+    assert.ok(!history.snapshots.some(record => record.id === id));
+    assert.equal((await fetch(base + '/api/snapshots/' + id)).status, 404);
+    assert.equal((await fetch(base + '/api/snapshots/' + id + '/backup.zip')).status, 404);
+    assert.equal((await request('/api/snapshots/' + id + '/unlock', {})).status, 404);
+    assert.equal((await request('/api/snapshots/merge', {ids: [id, automatic.id], authorityId: id})).status, 404);
+  }
+  await stop();
+  // Stub Rancher transport in the installed service process. No live upstream is used.
+  await writeFile(preload, `
+    import https from 'node:https';
+    import {EventEmitter} from 'node:events';
+    https.request = (options, callback) => {
+      const request = new EventEmitter();
+      request.end = body => {
+        const response = new EventEmitter();
+        const fixture = options.headers.Cookie?.match(/^R_SESS=(catalog|reader); CSRF=fixture$/)?.[1];
+        let result = {};
+        response.statusCode = fixture ? 201 : 403;
+        if (fixture && options.path.endsWith('/selfsubjectreviews')) {
+          result = {apiVersion: 'authentication.k8s.io/v1', kind: 'SelfSubjectReview', status: {userInfo: {username: 'user-test'}}};
+        }
+        if (fixture && options.path.endsWith('/selfsubjectaccessreviews')) {
+          const {name} = JSON.parse(body).spec.resourceAttributes;
+          result = {status: {allowed: name !== 'dns-manager-sources' || fixture === 'catalog'}};
+        }
+        callback(response);
+        queueMicrotask(() => {
+          response.emit('data', JSON.stringify(result));
+          response.emit('end');
+        });
+      };
+      return request;
+    };
+  `);
+  const previousSchedule = JSON.parse(await readFile(join(snapshots, 'schedule.json'), 'utf8'));
+  const priorArchives = (await readdir(snapshots)).filter(name => name.endsWith('.zip'));
+  await writeFile(join(snapshots, 'schedule.json'), JSON.stringify({
+    ...previousSchedule, enabled: true, approvedBy: 'user-test', includeSecrets: true,
+    nextRun: new Date(Date.now() - 1000).toISOString()
+  }));
+  const manager = folder === 'dns-manager-dev' ? 'DNS' : 'NETWORK';
+  await start({
+    SNAPSHOT_PREVIEW_MOCK_DATA: 'false',
+    SNAPSHOT_ALLOWED_ORIGIN: 'https://rancher.cormierconsulting.io',
+    [`SNAPSHOT_${manager}_STATE_CONFIGMAP`]: manager.toLowerCase() + '-manager-state-user-test',
+    [`SNAPSHOT_FRESH_${manager}`]: 'true'
+  }, true);
+  const rancherRead = (path, session) => fetch(base + path, {headers: {Cookie: 'R_SESS=' + session + '; CSRF=fixture'}});
+  const restarted = await rancherRead('/api/snapshot-schedule', 'reader');
+  assert.equal(restarted.status, 200);
+  const paused = await restarted.json();
+  assert.equal(paused.enabled, false);
+  assert.equal(paused.nextRun, null);
+  assert.match(paused.lastError, /current Rancher session/);
+  assert.deepEqual((await readdir(snapshots)).filter(name => name.endsWith('.zip')), priorArchives);
+  if (catalogId) {
+    const listed = async session => (await (await rancherRead('/api/snapshots', session)).json()).snapshots;
+    assert.ok((await listed('catalog')).some(record => record.id === catalogId));
+    assert.ok(!(await listed('reader')).some(record => record.id === catalogId));
+    assert.equal((await rancherRead('/api/snapshots/' + catalogId + '/backup.zip', 'catalog')).status, 200);
+    assert.equal((await rancherRead('/api/snapshots/' + catalogId + '/backup.zip', 'reader')).status, 404);
+  }
   assert.equal((await fetch(base+'/healthz')).status,200);
   for (const path of ['/api/snapshots','/api/snapshot-storage','/api/snapshot-schedule','/api/snapshot-cleanup'])
     assert.equal((await fetch(base+path)).status,403);

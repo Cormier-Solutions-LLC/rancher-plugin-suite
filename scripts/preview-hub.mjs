@@ -1,11 +1,14 @@
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
+import { localRequestAllowed, requestUrl } from '../preview-data/local-http.mjs';
 
 export function createPreviewHub({ plugins, session }) {
   return createServer(async (req, res) => {
-    const url = new URL(req.url, 'http://127.0.0.1:5172');
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
+    if (!localRequestAllowed(req)) { res.writeHead(403); res.end(); return; }
+    const url = requestUrl(req.url);
+    if (!url) { res.writeHead(400); res.end(); return; }
     if (req.method !== 'GET') { res.writeHead(405); res.end(); return; }
     if (url.pathname === '/session') {
       res.setHeader('Content-Type', 'application/json');

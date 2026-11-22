@@ -1,3 +1,5 @@
+import {hasDnsSourceCatalog, isDnsSourceCatalogIndex} from '../../live-management/dns-source-backup.mjs';
+import {localRequestAllowed, requestUrl} from '../../preview-data/local-http.mjs';
 import {bridgeSnapshot} from '../../live-management/dns-bridge-snapshot.mjs';
 import {authorizeSnapshot, isSnapshotApi} from '../../live-management/snapshot-access.mjs';
 import { estimateSnapshotStorage } from '../pkg/dns-manager/snapshot-feature/config/storage-estimate.mjs';
@@ -19,6 +21,9 @@ import { coverageEntries } from '../pkg/dns-manager/snapshot-feature/config/snap
 import { mergeInPriorityOrder } from '../pkg/dns-manager/snapshot-feature/config/snapshot-merge.mjs';
 import { mergeSnapshots, cleanupCandidates } from '../pkg/dns-manager/snapshot-feature/config/snapshot-items.mjs';
 import { encodeBackup, decodeBackup, passwordStrength, containsSecretValues, withoutSecretValues } from '../pkg/dns-manager/snapshot-feature/config/backup-zip.mjs';
+const previewMode = process.env.SNAPSHOT_PREVIEW_MOCK_DATA === 'true';
+const freshCapture = !previewMode && process.env.SNAPSHOT_FRESH_DNS === 'true';
+const authorizationRequired = 'Review and re-enable the protected schedule with a current Rancher session.';
 const staticRoot = resolve(process.env.STATIC_DIR || '/app/public');
 const snapshotRoot = resolve(process.env.SNAPSHOT_DIR || '/var/lib/dns-manager/snapshots');
 await mkdir(snapshotRoot, { recursive: true, mode: 0o700 });
@@ -55,7 +60,7 @@ async function saveSnapshotFile(current, scopeKey, generation, sourceUpdatedAt, 
         try { await decodeBackup(bytes, password + '-incorrect'); } catch { rejected = true; }
         if (!rejected) throw new Error('Backup encryption verification failed.');
       }
-      const info = { ...metadata({ ...snapshot, current: withoutSecretValues(snapshot.current) }), encrypted: !!password, ...(passwordSecret?{passwordSecret}:{}), archiveFormat: 'zip', sizeBytes: bytes.byteLength };
+      const info = { ...metadata({ ...snapshot, current: withoutSecretValues(snapshot.current) }), encrypted: !!password, ...(hasDnsSourceCatalog(snapshot.current) && {restrictedSourceCatalog: true}), ...(passwordSecret?{passwordSecret}:{}), archiveFormat: 'zip', sizeBytes: bytes.byteLength };
       const capturedSecretIds = new Set(snapshotManifests(snapshot.current).filter(resource => resource.kind==='Secret' && (resource.data!==undefined || resource.stringData!==undefined)).map(resource=>`resource/v1/Secret/${resource.metadata.namespace}/${resource.metadata.name}`));
       info.coverage = info.coverage.filter(entry=>!entry.id.startsWith('resource/v1/Secret/'));
       for (const id of capturedSecretIds) info.coverage.push({id, capturedValues:true, createdAt:snapshot.createdAt});
@@ -84,7 +89,15 @@ const passwordSecrets=scheduleSecretStore(snapshotRoot,'dns-snapshot-password');
 const schedulePath = resolve(snapshotRoot, 'schedule.json');
 let schedule = { enabled: false, interval: 1, unit: 'days', nextRun: null, lastRun: null, lastError: '', current: null, sourceUpdatedAt: null };
 try { schedule = { ...schedule, ...JSON.parse(await readFile(schedulePath, 'utf8')) }; } catch (error) { if (error.code !== 'ENOENT') throw error; }
-if (schedule.enabled && !schedule.approvedBy && process.env.SNAPSHOT_PREVIEW_MOCK_DATA !== 'true') {
+// A vaulted ZIP password is not a credential for the Rancher session.
+let credentialSession;
+const reauthorizationRequired = () => Object.assign(new Error(authorizationRequired), {code: 'SCHEDULE_REAUTHORIZATION_REQUIRED'});
+const mustReauthorize = error => ['SCHEDULE_REAUTHORIZATION_REQUIRED','DNS_CAPTURE_ACCESS_DENIED','RECOVERY_ACCESS_DENIED','SNAPSHOT_ACCESS_DENIED'].includes(error.code) && error.status !== 503;
+if (schedule.enabled && schedule.includeSecrets && !previewMode) {
+  schedule.enabled = false;
+  schedule.nextRun = null;
+  schedule.lastError = authorizationRequired;
+} else if (schedule.enabled && !schedule.approvedBy && !previewMode) {
   schedule.enabled = false;
   schedule.nextRun = null;
   schedule.lastError = 'Review and re-enable this saved policy with an authorized Rancher session.';
@@ -97,9 +110,9 @@ const nextRun = (from, interval, unit) => {
   } else date.setTime(date.getTime() + interval * ({ minutes: 60000, hours: 3600000, days: 86400000, weeks: 604800000 })[unit]);
   return date.toISOString();
 };
-const scheduleInfo = () => ({ ...schedule, approvedBy: undefined, current: undefined, sourceArchive:undefined, passwordSecret:undefined, hasPassword:!!schedule.passwordSecret, scope: schedule.current?.snapshotScope || null, hasSource: !!schedule.current });
+const scheduleInfo = () => ({ ...schedule, approvedBy: undefined, credentialCaptureAuthorizedBy: undefined, credentialCaptureAuthorizedAt: undefined, current: undefined, sourceArchive:undefined, passwordSecret:undefined, hasPassword:!!schedule.passwordSecret, scope: schedule.current?.snapshotScope || null, hasSource: !!schedule.current });
 async function freshForRequest(current,includeSecrets,req){
- if(process.env.SNAPSHOT_FRESH_DNS!=='true')return {current,observedAt:new Date().toISOString()};
+ if(!freshCapture)return {current,observedAt:new Date().toISOString()};
  return includeSecrets?captureDnsForRancher(current,{headers:req.headers}):freshDnsSnapshot(current);
 }
 let scheduleQueue = Promise.resolve();
@@ -110,14 +123,25 @@ function withSchedule(action) {
 }
 let running = false;
 async function runScheduled() {
+  if (!previewMode && schedule.includeSecrets && (!freshCapture || !credentialSession))
+    throw reauthorizationRequired();
   if (running || !schedule.current) throw new Error('Snapshot source is unavailable or already running.');
   running = true;
   try {
-    if(process.env.SNAPSHOT_FRESH_DNS==='true'&&schedule.includeSecrets&&!/^user-[a-z0-9-]+$/.test(schedule.credentialCaptureAuthorizedBy||''))throw Object.assign(new Error('Review protected schedule authorization again.'),{status:403});
     const password=schedule.passwordSecret?await passwordSecrets.get(schedule.passwordSecret):'';
     let current=schedule.sourceArchive?(await decodeBackup(await readFile(resolve(snapshotRoot,schedule.sourceArchive)),password)).current:schedule.current;
     let observedAt=schedule.sourceUpdatedAt;
-    if(process.env.SNAPSHOT_FRESH_DNS==='true'){const fresh=await freshDnsSnapshot(current,undefined,Date.now(),{includeSecrets:!!schedule.includeSecrets});current=fresh.current;observedAt=fresh.observedAt;}
+    if (freshCapture) {
+      if (schedule.includeSecrets) {
+        const session = await authorizeSnapshot({headers: credentialSession, method: 'PUT', manager: 'dns', stateName: process.env.SNAPSHOT_DNS_STATE_CONFIGMAP});
+        if (session.userId !== schedule.approvedBy) throw reauthorizationRequired();
+      }
+      const fresh = schedule.includeSecrets
+        ? await captureDnsForRancher(current, {headers: credentialSession, expectedUserId: schedule.approvedBy})
+        : await freshDnsSnapshot(current);
+      current = fresh.current;
+      observedAt = fresh.observedAt;
+    }
     const snapshot = await saveSnapshot(current, JSON.stringify(withoutSecretValues(current)), 'Automatic', observedAt,password,schedule.passwordSecret);
     schedule.lastRun = snapshot.createdAt; schedule.lastError = '';
     schedule.nextRun = schedule.enabled ? nextRun(Date.now(), schedule.interval, schedule.unit) : null;
@@ -125,36 +149,76 @@ async function runScheduled() {
   } finally { running = false; }
 }
 const tick = async () => {
-  if ((!schedule.approvedBy && process.env.SNAPSHOT_PREVIEW_MOCK_DATA !== 'true') || !schedule.enabled || running || !schedule.nextRun || Date.parse(schedule.nextRun) > Date.now()) return;
-  try { await runScheduled(); } catch (error) { schedule.lastError = error.code==='FRESH_SOURCE_UNAVAILABLE'?'Automatic snapshot source is stale or unavailable. Check the Windows bridge and capture permissions.':error.status===503?'Automatic snapshot failed. Check password Secret storage and permissions.':'Automatic snapshot failed. Check persistent storage.'; schedule.nextRun = new Date(Date.now() + 60000).toISOString(); try { await writeAtomic(schedulePath, JSON.stringify(schedule, null, 2)); } catch {} }
+  if ((!schedule.approvedBy && !previewMode) || !schedule.enabled || running || !schedule.nextRun || Date.parse(schedule.nextRun) > Date.now()) return;
+  try { await runScheduled(); } catch (error) {
+    if (!previewMode && schedule.includeSecrets && mustReauthorize(error)) {
+      credentialSession = undefined;
+      schedule.enabled = false;
+      schedule.nextRun = null;
+      schedule.lastError = authorizationRequired;
+      try { await writeAtomic(schedulePath, JSON.stringify(schedule, null, 2)); } catch {}
+      return;
+    }
+    schedule.lastError = error.code==='FRESH_SOURCE_UNAVAILABLE'?'Automatic snapshot source is stale or unavailable. Check the Windows bridge and capture permissions.':error.status===503?'Automatic snapshot failed. Check password Secret storage and permissions.':'Automatic snapshot failed. Check persistent storage.'; schedule.nextRun = new Date(Date.now() + 60000).toISOString(); try { await writeAtomic(schedulePath, JSON.stringify(schedule, null, 2)); } catch {} }
 };
 let tickPending = false;
 setInterval(() => {
   if (tickPending || !schedule.enabled || !schedule.nextRun || Date.parse(schedule.nextRun) > Date.now() ||
-      (!schedule.approvedBy && process.env.SNAPSHOT_PREVIEW_MOCK_DATA !== 'true')) return;
+      (!schedule.approvedBy && !previewMode)) return;
   tickPending = true;
   void withSchedule(tick).finally(() => { tickPending = false; });
 }, 1000).unref();
 const cleanupPath=resolve(snapshotRoot,'cleanup.json');
 let cleanup={enabled:false,interval:1,unit:'days',retention:30,retentionUnit:'days',nextRun:null,lastRun:null,lastDeleted:0,lastError:''};
 try{cleanup={...cleanup,...JSON.parse(await readFile(cleanupPath,'utf8'))};}catch(error){if(error.code!=='ENOENT')throw error;}
-if (cleanup.enabled && !cleanup.approvedBy && process.env.SNAPSHOT_PREVIEW_MOCK_DATA !== 'true') {
+if (cleanup.enabled && !cleanup.approvedBy && !previewMode) {
   cleanup.enabled = false;
   cleanup.nextRun = null;
   cleanup.lastError = 'Review and re-enable this saved policy with an authorized Rancher session.';
 }
-async function listSnapshots(){
-  const list=[];
-  for(const file of await readdir(snapshotRoot)){
-    if (file.endsWith('.meta.json')) { const info = JSON.parse(await readFile(resolve(snapshotRoot, file), 'utf8')); if (validId(info.id)) { await stat(resolve(snapshotRoot, `${info.id}.zip`)); list.push(info); } continue; }
-    const id=file.replace(/\.json$/,'');if(!validId(id))continue;
-    const path=resolve(snapshotRoot,file);
-    const snapshot=JSON.parse(await readFile(path,'utf8'));
-    const jsonBytes=(await stat(path)).size;
-    let yamlBytes=0;try{yamlBytes=(await stat(resolve(snapshotRoot,`${id}.yaml`))).size;}catch(error){if(error.code!=='ENOENT')throw error;}
-    list.push({...metadata(snapshot),sizeBytes:jsonBytes+yamlBytes,jsonBytes,yamlBytes});
+async function snapshotIndex(id) {
+  if (!validId(id)) throw Object.assign(new Error('Invalid snapshot reference.'), {status: 400});
+  const hasZip = await stat(resolve(snapshotRoot, `${id}.zip`)).then(() => true, error => {
+    if (error.code !== 'ENOENT') throw error;
+    return false;
+  });
+  if (hasZip) {
+    const info = JSON.parse(await readFile(resolve(snapshotRoot, `${id}.meta.json`), 'utf8'));
+    if (info.id !== id) throw new Error('Invalid snapshot index.');
+    return info;
   }
-  return list.sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+  const path = resolve(snapshotRoot, `${id}.json`);
+  const snapshot = JSON.parse(await readFile(path, 'utf8'));
+  const jsonBytes = (await stat(path)).size;
+  let yamlBytes = 0;
+  try { yamlBytes = (await stat(resolve(snapshotRoot, `${id}.yaml`))).size; }
+  catch (error) { if (error.code !== 'ENOENT') throw error; }
+  return {...metadata(snapshot), restrictedSourceCatalog: hasDnsSourceCatalog(snapshot.current), sizeBytes: jsonBytes + yamlBytes, jsonBytes, yamlBytes};
+}
+async function mayReadSnapshot(index, session) {
+  return !isDnsSourceCatalogIndex(index) || await session?.canReadDnsSourceCatalog() === true;
+}
+async function requireSnapshotAccess(id, session) {
+  if (!await mayReadSnapshot(await snapshotIndex(id), session))
+    throw Object.assign(new Error('Snapshot not found.'), {code: 'ENOENT'});
+}
+async function loadSharedSnapshot(id, session, password) {
+  await requireSnapshotAccess(id, session);
+  return loadSnapshot(id, password);
+}
+async function listSnapshots(session) {
+  const ids = new Set((await readdir(snapshotRoot)).map(file => file.replace(/(?:\.meta)?\.json$/, '')).filter(validId));
+  const list = [];
+  for (const id of ids) {
+    let index;
+    try { index = await snapshotIndex(id); }
+    catch (error) { if (error.code === 'ENOENT') continue; throw error; }
+    if (await mayReadSnapshot(index, session)) {
+      const {restrictedSourceCatalog, ...info} = index;
+      list.push(info);
+    }
+  }
+  return list.sort((a,b) => b.createdAt.localeCompare(a.createdAt));
 }
 async function removeSnapshots(ids){for(const id of ids){if(!validId(id))throw new Error('Invalid snapshot reference.');for(const extension of ['meta.json','zip','json','yaml'])try{await unlink(resolve(snapshotRoot,`${id}.${extension}`));}catch(error){if(error.code!=='ENOENT')throw error;}}}
 async function loadSnapshot(id, password = '') {
@@ -166,17 +230,20 @@ async function loadSnapshot(id, password = '') {
 }
 let cleaning=false;
 async function runCleanup(){if(cleaning)throw new Error('Cleanup already running.');cleaning=true;try{const list=await listSnapshots();const candidates=cleanupCandidates(list,{retention:cleanup.retention,unit:cleanup.retentionUnit});await removeSnapshots(candidates.map(record=>record.id));cleanup.lastRun=new Date().toISOString();cleanup.lastDeleted=candidates.length;cleanup.lastError='';cleanup.nextRun=cleanup.enabled?nextRun(Date.now(),cleanup.interval,cleanup.unit):null;await writeAtomic(cleanupPath,JSON.stringify(cleanup,null,2));return cleanup;}finally{cleaning=false;}}
-setInterval(()=>{if((process.env.SNAPSHOT_PREVIEW_MOCK_DATA==='true'||cleanup.approvedBy)&&cleanup.enabled&&!cleaning&&cleanup.nextRun&&Date.parse(cleanup.nextRun)<=Date.now())void runCleanup().catch(()=>{cleanup.lastError='Cleanup failed. Check persistent storage.';cleanup.nextRun=new Date(Date.now()+60000).toISOString();void writeAtomic(cleanupPath,JSON.stringify(cleanup,null,2)).catch(()=>{});});},1000).unref();
-function trustedOrigin(req){const origin=new URL(req.headers.origin);return process.env.SNAPSHOT_ALLOWED_ORIGIN ? origin.origin===process.env.SNAPSHOT_ALLOWED_ORIGIN : origin.host===req.headers.host;}
-const credentialApi=rancherCredentialRecovery({getRecovery:process.env.SNAPSHOT_FRESH_DNS==='true'?installedDnsCredentialRecovery({snapshotRoot,loadSnapshot,volumeUsedBytes:snapshotUsedBytes}):async()=>{throw Object.assign(new Error('Installed DNS recovery is unavailable.'),{status:503});},onDiagnostic:event=>console.warn(JSON.stringify({event:'dns-credential-recovery',...event}))});
+setInterval(()=>{if((previewMode||cleanup.approvedBy)&&cleanup.enabled&&!cleaning&&cleanup.nextRun&&Date.parse(cleanup.nextRun)<=Date.now())void runCleanup().catch(()=>{cleanup.lastError='Cleanup failed. Check persistent storage.';cleanup.nextRun=new Date(Date.now()+60000).toISOString();void writeAtomic(cleanupPath,JSON.stringify(cleanup,null,2)).catch(()=>{});});},1000).unref();
+function trustedOrigin(req){if(previewMode)return localRequestAllowed(req, Number(process.env.SNAPSHOT_PREVIEW_UI_PORT));const origin=new URL(req.headers.origin);return process.env.SNAPSHOT_ALLOWED_ORIGIN ? origin.origin===process.env.SNAPSHOT_ALLOWED_ORIGIN : origin.host===req.headers.host;}
+const credentialApi=rancherCredentialRecovery({getRecovery:freshCapture?installedDnsCredentialRecovery({snapshotRoot,loadSnapshot,volumeUsedBytes:snapshotUsedBytes}):async()=>{throw Object.assign(new Error('Installed DNS recovery is unavailable.'),{status:503});},onDiagnostic:event=>console.warn(JSON.stringify({event:'dns-credential-recovery',...event}))});
 const sourceTestApi=rancherDnsSourceTest({pins:{bindingUid:process.env.DNS_SOURCE_BINDINGS_UID,bindingDigest:process.env.DNS_SOURCE_BINDINGS_SHA256}});
-const sourceManagementApi=rancherDnsSourceManagement({getContext:process.env.SNAPSHOT_FRESH_DNS==='true'?installedDnsSourceManagement({snapshotRoot,loadSnapshot,volumeUsedBytes:snapshotUsedBytes,serializeVolumeWrite}):async()=>{throw Object.assign(new Error('Installed source management is unavailable.'),{status:503});},saveBackup:current=>saveSnapshot(current,'sources/catalog/'+current.snapshotScope.catalogUid,'Manual',new Date().toISOString())});
+const sourceManagementApi=rancherDnsSourceManagement({getContext:freshCapture?installedDnsSourceManagement({snapshotRoot,loadSnapshot,volumeUsedBytes:snapshotUsedBytes,serializeVolumeWrite}):async()=>{throw Object.assign(new Error('Installed source management is unavailable.'),{status:503});},saveBackup:current=>saveSnapshot(current,'sources/catalog/'+current.snapshotScope.catalogUid,'Manual',new Date().toISOString())});
 http.createServer(async (req, res) => {
   try {
-    const url = new URL(req.url, 'http://localhost');
+    if (previewMode && !localRequestAllowed(req, Number(process.env.SNAPSHOT_PREVIEW_UI_PORT)))
+      return send(res, 403, {error: 'This preview is only available on its local address.'});
+    const url = requestUrl(req.url);
+    if (!url) return send(res, 400, {error: 'Invalid request target.'});
     if (url.pathname.startsWith('/api/') && (req.headers['sec-fetch-site']==='cross-site' || req.headers.origin && !trustedOrigin(req))) return send(res,403,{error:'Same-origin request required.'});
     if(url.pathname==='/api/sources/test-connection'){
-      if(process.env.SNAPSHOT_FRESH_DNS!=='true')return send(res,503,{error:'Installed DNS source testing is unavailable.'});
+      if(!freshCapture)return send(res,503,{error:'Installed DNS source testing is unavailable.'});
       if(req.method!=='POST')return send(res,405,{error:'Use POST for source testing.'});
       if(!req.headers['content-type']?.startsWith('application/json'))return send(res,415,{error:'Use JSON.'});
       const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>8192)return send(res,413,{error:'Source test request exceeds its limit.'});chunks.push(chunk);}
@@ -200,6 +267,7 @@ http.createServer(async (req, res) => {
     }
     if (url.pathname === '/healthz') return send(res, 200, {healthy: true});
     if (url.pathname === '/api/snapshot-bridge-verify' && req.method === 'POST') {
+      if (previewMode) return send(res, 404, {error: 'API endpoint unavailable.'});
       const chunks = [];
       let size = 0;
       for await (const chunk of req) {
@@ -212,12 +280,12 @@ http.createServer(async (req, res) => {
       catch { return send(res, 400, {error: 'Invalid verification request.'}); }
       return send(res, 200, await bridgeSnapshot(input, {loadSnapshot}));
     }
-    const snapshotSession = isSnapshotApi(url.pathname) && process.env.SNAPSHOT_PREVIEW_MOCK_DATA !== 'true'
+    const snapshotSession = isSnapshotApi(url.pathname) && !previewMode
       ? await authorizeSnapshot({headers: req.headers, method: req.method, manager: 'dns', stateName: process.env.SNAPSHOT_DNS_STATE_CONFIGMAP})
       : null;
     if (url.pathname === '/api/snapshot-storage' && req.method === 'GET') {
-      const [space,records]=await Promise.all([statfs(await realpath(snapshotRoot)),listSnapshots()]);
-      const mockCapacity=!Number(process.env.SNAPSHOT_STORAGE_LIMIT_BYTES)&&process.env.SNAPSHOT_PREVIEW_MOCK_DATA==='true';
+      const [space,records]=await Promise.all([statfs(await realpath(snapshotRoot)),listSnapshots(snapshotSession)]);
+      const mockCapacity=!Number(process.env.SNAPSHOT_STORAGE_LIMIT_BYTES)&&previewMode;
       const quotaBytes=Number(process.env.SNAPSHOT_STORAGE_LIMIT_BYTES)||(mockCapacity?1073741824:null);
       const usedBytes=await snapshotUsedBytes();
       const filesystemAvailableBytes=space.bavail*space.bsize;
@@ -244,11 +312,15 @@ http.createServer(async (req, res) => {
       return await withSchedule(async () => {
         const updatingSettings = url.pathname === '/api/snapshot-schedule';
         const protectedCapture = !!((updatingSettings ? input.includeSecrets : undefined) ?? schedule.includeSecrets);
-        let captureReview;
-        if(process.env.SNAPSHOT_FRESH_DNS==='true' && (input.enabled || url.pathname==='/api/snapshot-source' || url.pathname==='/api/snapshot-schedule'&&input.includeSecrets===true))captureReview=await freshForRequest(input.current||schedule.current,protectedCapture,req);
+        const editingSource = url.pathname === '/api/snapshot-source';
+        if (!previewMode && protectedCapture && (updatingSettings && input.enabled || editingSource) &&
+            (!freshCapture || editingSource && (!credentialSession || snapshotSession.userId !== schedule.approvedBy)))
+          return send(res, 403, {error: authorizationRequired});
+        if (freshCapture && (updatingSettings && input.enabled || editingSource))
+          await freshForRequest(input.current || schedule.current, protectedCapture, req);
         const previousSource=schedule.sourceArchive;let candidate={...schedule, approvedBy: snapshotSession?.userId};
-        if(captureReview?.caller&&protectedCapture){candidate.credentialCaptureAuthorizedBy=captureReview.caller.userId;candidate.credentialCaptureAuthorizedAt=new Date().toISOString();}
-        if(updatingSettings && input.includeSecrets===false){delete candidate.credentialCaptureAuthorizedBy;delete candidate.credentialCaptureAuthorizedAt;}
+        delete candidate.credentialCaptureAuthorizedBy;
+        delete candidate.credentialCaptureAuthorizedAt;
         let nextPasswordSecret=candidate.passwordSecret,sourceArchive=candidate.sourceArchive;
         if (updatingSettings) {
           if(input.includeSecrets && !passwordStrength(input.password).acceptable)return send(res,400,{error:'Including Secrets requires a strong password.'});
@@ -274,9 +346,15 @@ http.createServer(async (req, res) => {
           }else candidate.sourceArchive=null;
           candidate.current=withoutSecretValues(input.current);candidate.sourceUpdatedAt=new Date().toISOString();
         }
+        if (updatingSettings) candidate.lastError = '';
         await writeAtomic(schedulePath, JSON.stringify(candidate, null, 2));
         const previousPassword = schedule.passwordSecret;
         schedule=candidate;
+        if (updatingSettings && !previewMode) {
+          credentialSession = candidate.enabled && candidate.includeSecrets
+            ? {cookie: req.headers.cookie, origin: req.headers.origin}
+            : undefined;
+        }
         if (previousPassword && previousPassword !== schedule.passwordSecret)
           await passwordSecrets.retain?.(schedule.passwordSecret).catch(() => {});
         if(previousSource&&previousSource!==schedule.sourceArchive&&/^schedule-source-[0-9a-f-]+\.zip$/.test(previousSource))await unlink(resolve(snapshotRoot,previousSource)).catch(()=>{});
@@ -295,7 +373,7 @@ http.createServer(async (req, res) => {
       }
       if(!Array.isArray(input.ids)||!input.ids.length||input.ids.length>100||new Set(input.ids).size!==input.ids.length||input.ids.some(id=>!validId(id)))return send(res,400,{error:'Choose valid distinct snapshots.'});
       if(url.pathname.endsWith('/merge')){
-        const sources=await Promise.all(input.ids.map(id=>loadSnapshot(id, input.passwords?.[id] || '')));
+        const sources=await Promise.all(input.ids.map(id=>loadSharedSnapshot(id, snapshotSession, input.passwords?.[id] || '')));
         const protectedSources=await Promise.all(input.ids.map(async id=>{try{return JSON.parse(await readFile(resolve(snapshotRoot,`${id}.meta.json`),'utf8')).encrypted===true;}catch(error){if(error.code==='ENOENT')return false;throw error;}}));
         if(protectedSources.some(Boolean)&&!passwordStrength(input.password).acceptable)return send(res,400,{error:'Merging protected sources requires a strong password for the merged backup.'});
         let result;
@@ -312,7 +390,8 @@ http.createServer(async (req, res) => {
         const snapshot=await saveSnapshot(result.current,JSON.stringify(result.current),'Manual',new Date().toISOString(),input.password || '');return send(res,201,snapshot);
       }
       if(!validId(input.backupId)||input.ids.includes(input.backupId))return send(res,400,{error:'Save a recovery snapshot before deleting originals.'});
-      const backup=await loadSnapshot(input.backupId,input.backupPassword || '');const age=Date.now()-Date.parse(backup.createdAt);
+      await Promise.all(input.ids.map(id => requireSnapshotAccess(id, snapshotSession)));
+      const backup=await loadSharedSnapshot(input.backupId,snapshotSession,input.backupPassword || '');const age=Date.now()-Date.parse(backup.createdAt);
       if(age<0||age>86400000)return send(res,400,{error:'Recovery snapshot must be less than 24 hours old.'});
       if(input.merged&&backup.current?.mergeOmittedItems)return send(res,400,{error:'Keep originals when the merged snapshot excludes items.'});
       if(input.merged&&input.ids.some(id=>!backup.current?.mergedFrom?.includes(id)))return send(res,400,{error:'Merged snapshot does not include the selected originals.'});
@@ -324,10 +403,10 @@ http.createServer(async (req, res) => {
       let size = 0; const chunks = [];
       for await (const chunk of req) { size += chunk.length; if (size > 4096) return send(res, 413, { error: 'Unlock request exceeds the limit.' }); chunks.push(chunk); }
       const input = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-      return send(res, 200, await loadSnapshot(unlock[1], input.password || ''));
+      return send(res, 200, await loadSharedSnapshot(unlock[1], snapshotSession, input.password || ''));
     }
     if (url.pathname === '/api/snapshots' && req.method === 'GET') {
-      return send(res, 200, { storage: snapshotRoot, snapshots: await listSnapshots() });
+      return send(res, 200, { storage: snapshotRoot, snapshots: await listSnapshots(snapshotSession) });
     }
     if (url.pathname === '/api/snapshots' && req.method === 'POST') {
       if (!req.headers['content-type']?.startsWith('application/json')) return send(res, 415, { error: 'Use a JSON snapshot.' });
@@ -340,7 +419,7 @@ http.createServer(async (req, res) => {
       try { validateSource(input.current, !!input.password); } catch { return send(res, 400, { error: 'Invalid backup manifests or unprotected Secret values.' }); }
       if(input.includeSecrets!==undefined&&typeof input.includeSecrets!=='boolean')return send(res,400,{error:'Choose whether to include Secrets.'});
       if(input.includeSecrets&&!passwordStrength(input.password).acceptable)return send(res,400,{error:'Including Secrets requires a strong password.'});
-      const fresh=input.includeSecrets&&process.env.SNAPSHOT_FRESH_DNS==='true'?await freshForRequest(input.current,true,req):{current:input.current,observedAt:new Date().toISOString()};
+      const fresh=input.includeSecrets&&freshCapture?await freshForRequest(input.current,true,req):{current:input.current,observedAt:new Date().toISOString()};
       const snapshot = await saveSnapshot(fresh.current, input.scopeKey, 'Manual', fresh.observedAt, input.password || '');
       return send(res, 201, snapshot);
     }
@@ -348,6 +427,7 @@ http.createServer(async (req, res) => {
       const zipMatch = url.pathname.match(/^\/api\/snapshots\/([^/]+)\/backup.zip$/);
       if (zipMatch) {
         if (!validId(zipMatch[1])) return send(res, 400, { error: 'Invalid snapshot reference.' });
+        await requireSnapshotAccess(zipMatch[1], snapshotSession);
         const bytes = await readFile(resolve(snapshotRoot, `${zipMatch[1]}.zip`));
         res.writeHead(200, { 'Content-Type': 'application/zip', 'Content-Disposition': 'attachment; filename="dns-manager-backup.zip"', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
         return res.end(bytes);
@@ -355,13 +435,14 @@ http.createServer(async (req, res) => {
       const yamlMatch = url.pathname.match(/^\/api\/snapshots\/([^/]+)\/manifests\.yaml$/);
       if (yamlMatch) {
         if (!validId(yamlMatch[1])) return send(res, 400, { error: 'Invalid snapshot reference.' });
+        await requireSnapshotAccess(yamlMatch[1], snapshotSession);
         const bytes = await readFile(resolve(snapshotRoot, `${yamlMatch[1]}.yaml`));
         res.writeHead(200, { 'Content-Type': 'application/yaml; charset=utf-8', 'Content-Disposition': 'attachment; filename="routing-configuration-backup.yaml"', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
         return res.end(bytes);
       }
       const id = url.pathname.slice('/api/snapshots/'.length);
       if (!validId(id)) return send(res, 400, { error: 'Invalid snapshot reference.' });
-      return send(res, 200, await loadSnapshot(id));
+      return send(res, 200, await loadSharedSnapshot(id, snapshotSession));
     }
     if (url.pathname.startsWith('/api/')) return send(res, 404, { error: 'API endpoint unavailable.' });
     if (!['GET', 'HEAD'].includes(req.method)) return send(res, 405, { error: 'Unsupported method.' });
@@ -373,4 +454,4 @@ http.createServer(async (req, res) => {
     const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml' };
     res.writeHead(200, { 'Content-Type': types[extname(path)] || 'application/octet-stream', 'Cache-Control': extname(path) === '.html' ? 'no-store' : 'public, max-age=3600', 'X-Content-Type-Options': 'nosniff' }); res.end(req.method === 'HEAD' ? undefined : bytes);
   } catch (error) { send(res, error.code === 'ENOENT' ? 404 : error.status || 500, { error: ['SNAPSHOT_ACCESS_DENIED','BRIDGE_SNAPSHOT_DENIED'].includes(error.code)?error.message:error.code==='DNS_CAPTURE_ACCESS_DENIED'?'DNS credential capture requires your Rancher Secret read permissions.':error.code==='FRESH_SOURCE_UNAVAILABLE'?'Fresh DNS observations are unavailable or incompatible with the schedule scope. Check the Windows bridge and capture permissions.':error.code === 'ENOENT' ? 'Snapshot or asset not found.' : error.status === 422 ? 'Encrypted backup requires unlocking with its password.' : error.status === 507 ? 'Snapshot storage quota exhausted.' : error.status===503 ? 'Snapshot password Secret storage is unavailable. Check the backend namespace and service-account Secret permissions.' : 'Unable to save or read the snapshot.' }); }
-}).listen(Number(process.env.PORT || 8080), process.env.HOST || '127.0.0.1', () => process.send?.({ready:true}));
+}).listen(Number(process.env.PORT || 8080), previewMode ? '127.0.0.1' : process.env.HOST || '127.0.0.1', () => process.send?.({ready:true}));
