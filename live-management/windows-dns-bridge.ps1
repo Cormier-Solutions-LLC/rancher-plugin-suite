@@ -202,8 +202,18 @@ function Process-Job($job) {
  try {
   if([DateTime]::UtcNow - [DateTime]::Parse($job.createdAt).ToUniversalTime() -gt [TimeSpan]::FromMinutes(10)){throw 'Review expired; refresh and review again'}
   if($job.snapshotId -notmatch '^[0-9a-f-]{36}$'){throw 'A durable pre-change snapshot is required'}
-  $path='/api/v1/namespaces/manager-system/services/http:dns-manager-snapshots:8080/proxy/api/snapshots/'+$job.snapshotId
-  $raw=& $kubectl --kubeconfig $kubeconfig get --raw $path 2>$null
+  $path='/api/v1/namespaces/manager-system/services/http:dns-manager-snapshots:8080/proxy/api/snapshot-bridge-verify'
+  $bridgeConfig=Get-Content -LiteralPath $kubeconfig -Raw | ConvertFrom-Json
+  $context=$bridgeConfig.contexts | Where-Object {$_.name -ceq $bridgeConfig.'current-context'}
+  $bridgeUser=$bridgeConfig.users | Where-Object {$_.name -ceq $context.context.user}
+  if(!$bridgeUser.user.token){throw 'Snapshot verification requires the installed bridge credential'}
+  $expiry=[DateTimeOffset]::UtcNow.AddSeconds(45).ToUnixTimeMilliseconds()
+  $signatureInput="dns-bridge-snapshot-v1`n$($job.id)`n$($job.snapshotId)`n$expiry"
+  $hmac=[Security.Cryptography.HMACSHA256]::new([Text.Encoding]::UTF8.GetBytes($bridgeUser.user.token))
+  try {$proof=[BitConverter]::ToString($hmac.ComputeHash([Text.Encoding]::UTF8.GetBytes($signatureInput))).Replace('-','').ToLowerInvariant()}
+  finally {$hmac.Dispose()}
+  $payload=@{jobId=$job.id;snapshotId=$job.snapshotId;expires=$expiry;proof=$proof}|ConvertTo-Json -Compress
+  $raw=$payload | & $kubectl --kubeconfig $kubeconfig create --raw $path -f - 2>$null
   if($LASTEXITCODE -ne 0){throw 'Pre-change snapshot cannot be read or unlocked'}
   $snapshot=$raw|ConvertFrom-Json
   if([DateTime]::UtcNow - [DateTime]::Parse($snapshot.createdAt).ToUniversalTime() -gt [TimeSpan]::FromHours(24)){throw 'Pre-change snapshot is too old'}

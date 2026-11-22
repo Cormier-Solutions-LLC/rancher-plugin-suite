@@ -11,7 +11,17 @@ for(const [folder,config] of [['dns-manager-dev','pkg/dns-manager/snapshot-featu
  const directory=await mkdtemp(join(tmpdir(),'suite-backups-')),snapshots=join(directory,'snapshots');
  const socket=net.createServer();await new Promise(done=>socket.listen(0,'127.0.0.1',done));const port=socket.address().port;await new Promise(done=>socket.close(done));
  const base=`http://127.0.0.1:${port}`;let server,error='';
- async function start(extra={}){server=spawn(process.execPath,['container/server.mjs'],{cwd:join(root,folder),env:{...process.env,SNAPSHOT_PREVIEW_MOCK_DATA:'true',SNAPSHOT_STORAGE_LIMIT_BYTES:'',PORT:String(port),HOST:'127.0.0.1',SNAPSHOT_DIR:snapshots,STATIC_DIR:directory,...extra},stdio:'pipe'});server.stderr.on('data',chunk=>{error+=chunk;});for(let i=0;i<100;i++){if(server.exitCode!==null)throw new Error(error);try{if((await fetch(base+'/healthz')).ok)return;}catch{}await new Promise(done=>setTimeout(done,25));}throw new Error('Startup timeout');}
+ async function start(extra={}) {
+  server=spawn(process.execPath,['container/server.mjs'],{cwd:join(root,folder),env:{...process.env,SNAPSHOT_PREVIEW_MOCK_DATA:'true',SNAPSHOT_STORAGE_LIMIT_BYTES:'',PORT:String(port),HOST:'127.0.0.1',SNAPSHOT_DIR:snapshots,STATIC_DIR:directory,...extra},stdio:['ignore','ignore','pipe','ipc']});
+  error = '';
+  server.stderr.on('data',chunk=>{error+=chunk;});
+  await new Promise((ready,reject)=>{
+   const timer=setTimeout(()=>reject(new Error('Snapshot service startup timed out. '+error)),15000);
+   server.once('error',failure=>{clearTimeout(timer);reject(failure);});
+   server.once('exit',()=>{clearTimeout(timer);reject(new Error('Snapshot service exited. '+error));});
+   server.once('message',message=>{if(message.ready){clearTimeout(timer);ready();}});
+  });
+ }
  async function stop(){if(server?.exitCode===null){const ended=new Promise(done=>server.once('exit',done));server.kill();await ended;}}
  const request=(path,body,method='POST',origin=base)=>fetch(base+path,{method,headers:{'Content-Type':'application/json',Origin:origin},body:JSON.stringify(body)});
  const password='Test-only-Strong-Password-2026';
@@ -62,7 +72,10 @@ for(const [folder,config] of [['dns-manager-dev','pkg/dns-manager/snapshot-featu
   assert.equal((await request('/api/snapshot-schedule',{...protectedSchedule,password:'Rotated-test-only-Password2026!'},'PUT')).status,200);
   await stop();await start();assert.equal((await fetch(base+`/api/snapshots/${automatic.id}`)).status,422);assert.equal((await request(`/api/snapshots/${automatic.id}/unlock`,{password})).status,200,'old archive remains recoverable with its original password after rotation');
   assert.equal((await request('/api/snapshot-schedule',{...schedule,includeSecrets:false},'PUT')).status,200);assert.equal((await (await fetch(base+'/api/snapshot-schedule')).json()).hasPassword,false);assert.equal((await fetch(base+`/api/snapshots/${automatic.id}`)).status,422);assert.equal((await request(`/api/snapshots/${automatic.id}/unlock`,{password})).status,200,'disabling secret inclusion preserves password-protected recovery');
-  await stop();await start({SNAPSHOT_PREVIEW_MOCK_DATA:'false'});const liveStorage=await (await fetch(base+'/api/snapshot-storage')).json();assert.equal(liveStorage.mockCapacity,false);assert.equal(liveStorage.effectiveAvailableBytes,null);assert.equal(liveStorage.effectiveTotalBytes,null);assert.match(liveStorage.reason,/quota is unknown/);
-  const missingSecretStore=await request('/api/snapshot-schedule',protectedSchedule,'PUT');assert.equal(missingSecretStore.status,503);assert.match((await missingSecretStore.json()).error,/Secret storage is unavailable/);assert.equal((await (await fetch(base+'/api/snapshot-schedule')).json()).hasPassword,false,'failed credential persistence leaves the schedule unchanged');
+  await stop();await start({SNAPSHOT_PREVIEW_MOCK_DATA:'false'});
+  assert.equal((await fetch(base+'/healthz')).status,200);
+  for (const path of ['/api/snapshots','/api/snapshot-storage','/api/snapshot-schedule','/api/snapshot-cleanup'])
+    assert.equal((await fetch(base+path)).status,403);
+  assert.equal((await request('/api/snapshot-schedule',protectedSchedule,'PUT')).status,403);
  }finally{await stop();await rm(directory,{recursive:true,force:true});}
 });

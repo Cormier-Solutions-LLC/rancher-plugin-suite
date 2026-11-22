@@ -1,11 +1,40 @@
+import https from 'node:https';
+import {readFile} from 'node:fs/promises';
+
 const failure=(replica,code='ENGINE_API_UNAVAILABLE',status=503)=>Object.assign(new Error(`DNS engine ${replica} ${code==='ENGINE_AUTH_REJECTED'?'authentication was rejected':'API operation was not confirmed'}.`),{code,status});
-const installedBase=replica=>`http://dns-manager-api-${replica}.dns-system.svc:5380/api/`;
+const installedBase=replica=>`https://dns-manager-api-${replica}.dns-system.svc:53443/api/`;
 const checkReplica=replica=>{if(!Number.isInteger(replica)||replica<0||replica>2)throw failure('unknown','ENGINE_INVALID_REFERENCE',400);};
 const checkPath=(replica,path)=>{if(!/^[a-zA-Z]+(?:\/[a-zA-Z]+)*$/.test(path))throw failure(replica,'ENGINE_INVALID_REFERENCE',400);};
 const checkPassword=password=>{if(typeof password!=='string'||!password||password.length>4096)throw failure('unknown','ENGINE_INVALID_CREDENTIAL',422);return password;};
+async function requestEngine(url, {method, body, headers, signal}) {
+ const ca = await readFile('/run/dns-engine-ca/ca.crt');
+ const form = body.toString();
+ return new Promise((resolve, reject) => {
+  const request = https.request(url, {
+   method, ca, signal, rejectUnauthorized: true, minVersion: 'TLSv1.2',
+   headers: {...headers, 'Content-Length': Buffer.byteLength(form)}
+  }, response => {
+   const chunks = [];
+   let size = 0;
+   response.on('data', chunk => {
+    size += chunk.length;
+    if (size > 2 * 1024 * 1024) request.destroy(new Error('DNS engine response exceeds its size limit.'));
+    else chunks.push(chunk);
+   });
+   response.on('error', reject);
+   response.on('end', () => resolve({
+    ok: response.statusCode >= 200 && response.statusCode < 300,
+    text: () => Buffer.concat(chunks).toString('utf8')
+   }));
+  });
+  request.on('error', reject);
+  request.end(form);
+ });
+}
+
 // Endpoints are installed dependencies. Tests inject an isolated transport;
 // no endpoint or username is accepted from a recovery request.
-export function dnsEngineApi({readPassword,fetchImpl=fetch,baseForReplica=installedBase}={}){
+export function dnsEngineApi({readPassword,fetchImpl=requestEngine,baseForReplica=installedBase}={}){
  const sessions=new Map();let mountedPassword;
  async function request(replica,path,values={},token){
   checkReplica(replica);checkPath(replica,path);

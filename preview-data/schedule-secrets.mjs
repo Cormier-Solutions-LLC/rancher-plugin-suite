@@ -4,6 +4,8 @@ import { randomUUID, randomBytes, createCipheriv, createDecipheriv } from 'node:
 import https from 'node:https';
 
 const valid = name => /^[a-z0-9][a-z0-9-]{0,252}$/.test(name);
+const validVersion = key => /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(key || '');
+export const validSchedulePassword = password => typeof password === 'string' && password.length > 0 && Buffer.byteLength(password) <= 512;
 async function atomic(path, bytes) {
   const temp=`${path}.${randomUUID()}.tmp`, file=await open(temp,'wx',0o600);
   try{await file.writeFile(bytes);await file.sync();}finally{await file.close();}
@@ -24,18 +26,39 @@ export function kubernetesSecretStore({prefix, namespace, request, vaultName}) {
   if(vaultName) {
     if(!valid(vaultName))throw new Error('Invalid snapshot password vault.');
     const path=`${collection}/${vaultName}`;
-    return {
-      async put(password) {
-        const key=randomUUID();
-        for(let attempt=0;attempt<3;attempt++) {
-          const current=await request('GET',path);
-          const next={apiVersion:'v1',kind:'Secret',type:'Opaque',metadata:{name:vaultName,namespace,resourceVersion:current.metadata.resourceVersion},data:{...current.data,[key]:Buffer.from(password).toString('base64')}};
-          try {await request('PUT',path,next);return {provider:'kubernetes-vault',namespace,name:vaultName,key};}
-          catch(error){if(error.status!==409 || attempt===2)throw error;}
+    const matches = ref => ref?.provider === 'kubernetes-vault' && ref.namespace === namespace && ref.name === vaultName && validVersion(ref.key);
+
+    async function update(active, additions = {}) {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const current = await request('GET', path);
+        // Archived ZIPs are unlocked with their original user-supplied
+        // password. Only the persisted schedule needs a vault entry.
+        const data = Object.fromEntries(Object.entries(current.data || {})
+          .filter(([key]) => !validVersion(key) || (matches(active) && key === active.key)));
+        const next = {
+          apiVersion: 'v1', kind: 'Secret', type: 'Opaque',
+          metadata: {name: vaultName, namespace, resourceVersion: current.metadata.resourceVersion},
+          data: {...data, ...additions}
+        };
+        try {
+          await request('PUT', path, next);
+          return;
+        } catch (error) {
+          if (error.status !== 409 || attempt === 2) throw error;
         }
+      }
+    }
+
+    return {
+      async put(password, active) {
+        if (!validSchedulePassword(password)) throw new Error('Invalid schedule password.');
+        const key = randomUUID();
+        await update(active, {[key]: Buffer.from(password).toString('base64')});
+        return {provider: 'kubernetes-vault', namespace, name: vaultName, key};
       },
+      retain: active => update(active),
       async get(ref) {
-        if(ref?.provider!=='kubernetes-vault'||ref.namespace!==namespace||ref.name!==vaultName||!/^[0-9a-f-]{36}$/.test(ref.key || ''))throw new Error('Invalid password vault reference.');
+        if(!matches(ref))throw new Error('Invalid password vault reference.');
         const secret=await request('GET',path);
         if(!secret.data?.[ref.key])throw new Error('Snapshot password version unavailable.');
         return Buffer.from(secret.data[ref.key],'base64').toString('utf8');
@@ -57,5 +80,9 @@ export function scheduleSecretStore(directory, prefix) {
     return client=kubernetesSecretStore({prefix,namespace,request,vaultName});
   }
   const safely=async action=>{try{return await action(await initialize());}catch{throw Object.assign(new Error('Snapshot password Secret storage is unavailable. Check the backend namespace and service-account Secret permissions.'),{status:503});}};
-  return {put:password=>safely(client=>client.put(password)),get:ref=>safely(client=>client.get(ref))};
+  return {
+    put: (password, active) => safely(client => client.put(password, active)),
+    get: ref => safely(client => client.get(ref)),
+    retain: active => safely(client => client.retain?.(active))
+  };
 }

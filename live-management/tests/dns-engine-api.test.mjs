@@ -27,3 +27,10 @@ test('invalid replica/path/credential, rejected authentication and transport err
 test('mounted credential proof rejects an old password even when a cached inventory session remains usable',async()=>{
  const f=fixture();await f.api.api(0,'zones/list');f.engine('Synthetic-restored');assert.deepEqual(await f.api.api(0,'zones/list'),{zones:[]});await assert.rejects(f.api.verifyMountedPassword(0),e=>e.code==='ENGINE_AUTH_REJECTED');f.mount('Synthetic-restored');assert.deepEqual(await f.api.verifyMountedPassword(0),{replica:0,authenticated:true});assert.equal(f.calls.filter(c=>c.url.endsWith('user/login')).at(-1).body.get('pass'),'Synthetic-restored');
 });
+test('all installed replica management URLs use HTTPS and the replica service hostname', async () => {
+ const f = fixture();
+ for (let replica = 0; replica < 3; replica++) {
+  await f.api.verifyPassword(replica, 'Synthetic-before');
+  assert.ok(f.calls.slice(-3).every(call => call.url.startsWith(`https://dns-manager-api-${replica}.dns-system.svc:53443/api/`)));
+ }
+});

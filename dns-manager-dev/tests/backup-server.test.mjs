@@ -12,9 +12,15 @@ test('backup server persists ZIP, merges items, enforces quota, and unlocks encr
   const port=await new Promise(done=>{const socket=net.createServer();socket.listen(0,'127.0.0.1',()=>{const port=socket.address().port;socket.close(()=>done(port));});});
   const origin=`http://127.0.0.1:${port}`;
   async function start(quota=1048576) {
-    child=spawn(process.execPath,[resolve(root,'dns-manager-dev/container/server.mjs')],{cwd:root,windowsHide:true,stdio:'ignore',env:{...process.env,HOST:'127.0.0.1',PORT:String(port),SNAPSHOT_DIR:directory,SNAPSHOT_STORAGE_LIMIT_BYTES:String(quota)}});
-    for(let i=0;i<100;i++){try{if((await fetch(origin+'/healthz')).ok)return;}catch{}await new Promise(done=>setTimeout(done,25));}
-    throw new Error('Isolated backup test service did not start.');
+    child=spawn(process.execPath,[resolve(root,'dns-manager-dev/container/server.mjs')],{cwd:root,windowsHide:true,stdio:['ignore','ignore','pipe','ipc'],env:{...process.env,HOST:'127.0.0.1',PORT:String(port),SNAPSHOT_DIR:directory,SNAPSHOT_PREVIEW_MOCK_DATA:'true',SNAPSHOT_STORAGE_LIMIT_BYTES:String(quota)}});
+    let errors = '';
+    child.stderr.on('data', chunk => { errors += chunk; });
+    await new Promise((ready, reject) => {
+      const timer = setTimeout(() => reject(new Error('Isolated backup test service did not start. ' + errors)), 15000);
+      child.once('error', error => { clearTimeout(timer); reject(error); });
+      child.once('exit', () => { clearTimeout(timer); reject(new Error('Isolated backup test service exited. ' + errors)); });
+      child.once('message', message => { if (message.ready) { clearTimeout(timer); ready(); } });
+    });
   }
   async function stop(){if(child && child.exitCode===null){const stopped=new Promise(done=>child.once('exit',done));child.kill();await stopped;}}
   async function api(path,body){const response=await fetch(origin+'/api/'+path,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return {status:response.status,data:await response.json()};}
