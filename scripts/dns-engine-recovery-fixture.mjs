@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';import {readFile,writeFile} from 'node:fs/promises';import {join} from 'node:path';import {randomUUID} from 'node:crypto';
 import {dnsEngineApi} from './dns-engine-api.mjs';import {dnsEngineRecovery} from './dns-engine-recovery.mjs';
 const directory='/fixture',input=JSON.parse(await readFile(join(directory,'test-input.json'),'utf8')),phase=process.argv[2],{id,before,target,names}=input;
-const baseForReplica=replica=>'http://'+names[replica]+':5380/api/',plain=dnsEngineApi({baseForReplica}),mountedFile=join(directory,'mounted-password');
+const baseForReplica=replica=>'http://'+names[replica]+':5380/api/',plain=dnsEngineApi({baseForReplica,fetchImpl:fetch}),mountedFile=join(directory,'mounted-password');
 const secret=value=>({kind:'Secret',type:'Opaque',metadata:{name:'dns-manager-engine-admin',namespace:'dns-system'},data:{'admin-password':Buffer.from(value).toString('base64')}});
 const request={id,before:secret(before),target:secret(target)};
 async function ready(value){for(const replica of [0,1,2]){let accepted=false;for(let n=0;n<40;n++){try{await plain.verifyPassword(replica,value);accepted=true;break;}catch{await new Promise(r=>setTimeout(r,500));}}assert.equal(accepted,true,'Isolated engine authentication');}}

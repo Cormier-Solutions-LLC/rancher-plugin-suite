@@ -12,7 +12,7 @@ test('backup server persists ZIP, merges items, enforces quota, and unlocks encr
   const port=await new Promise(done=>{const socket=net.createServer();socket.listen(0,'127.0.0.1',()=>{const port=socket.address().port;socket.close(()=>done(port));});});
   const origin=`http://127.0.0.1:${port}`;
   async function start(quota=1048576) {
-    child=spawn(process.execPath,[resolve(root,'dns-manager-dev/container/server.mjs')],{cwd:root,windowsHide:true,stdio:'ignore',env:{...process.env,HOST:'127.0.0.1',PORT:String(port),SNAPSHOT_DIR:directory,SNAPSHOT_STORAGE_LIMIT_BYTES:String(quota)}});
+    child=spawn(process.execPath,[resolve(root,'dns-manager-dev/container/server.mjs')],{cwd:root,windowsHide:true,stdio:'ignore',env:{...process.env,HOST:'127.0.0.1',PORT:String(port),SNAPSHOT_DIR:directory,SNAPSHOT_PREVIEW_MOCK_DATA:'true',SNAPSHOT_STORAGE_LIMIT_BYTES:String(quota)}});
     for(let i=0;i<100;i++){try{if((await fetch(origin+'/healthz')).ok)return;}catch{}await new Promise(done=>setTimeout(done,25));}
     throw new Error('Isolated backup test service did not start.');
   }

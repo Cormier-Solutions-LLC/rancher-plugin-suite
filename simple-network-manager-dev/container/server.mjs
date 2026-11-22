@@ -1,8 +1,9 @@
+import {authorizeSnapshot, isSnapshotApi} from '../../live-management/snapshot-access.mjs';
 import { estimateSnapshotStorage } from '../pkg/simple-network-manager/config/storage-estimate.mjs';
 import { secretBackupStatus } from '../pkg/simple-network-manager/config/snapshot-secrets.mjs';
 import http from 'node:http';
-import {scheduleSecretStore} from '../../preview-data/schedule-secrets.mjs';
-import {freshNetworkSnapshot} from '../../preview-data/fresh-network-source.mjs';
+import {scheduleSecretStore, validSchedulePassword} from '../../preview-data/schedule-secrets.mjs';
+import {freshNetworkSnapshot, readNetworkSource} from '../../preview-data/fresh-network-source.mjs';
 import { mkdir, readdir, readFile, rename, open, unlink, stat, statfs, realpath } from 'node:fs/promises';
 import { resolve, extname, sep } from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
@@ -71,6 +72,11 @@ const passwordSecrets=scheduleSecretStore(snapshotRoot,'network-snapshot-passwor
 const schedulePath = resolve(snapshotRoot, 'schedule.json');
 let schedule = { enabled: false, interval: 1, unit: 'days', nextRun: null, lastRun: null, lastError: '', current: null, sourceUpdatedAt: null };
 try { schedule = { ...schedule, ...JSON.parse(await readFile(schedulePath, 'utf8')) }; } catch (error) { if (error.code !== 'ENOENT') throw error; }
+if (schedule.enabled && !schedule.approvedBy && process.env.SNAPSHOT_PREVIEW_MOCK_DATA !== 'true') {
+  schedule.enabled = false;
+  schedule.nextRun = null;
+  schedule.lastError = 'Review and re-enable this saved policy with an authorized Rancher session.';
+}
 const nextRun = (from, interval, unit) => {
   const date = new Date(from);
   if (unit === 'months') {
@@ -79,7 +85,13 @@ const nextRun = (from, interval, unit) => {
   } else date.setTime(date.getTime() + interval * ({ minutes: 60000, hours: 3600000, days: 86400000, weeks: 604800000 })[unit]);
   return date.toISOString();
 };
-const scheduleInfo = () => ({ ...schedule, current: undefined, sourceArchive:undefined, passwordSecret:undefined, hasPassword:!!schedule.passwordSecret, scope: schedule.current?.snapshotScope || null, hasSource: !!schedule.current });
+const scheduleInfo = () => ({ ...schedule, approvedBy: undefined, authorizedSecretPaths: undefined, current: undefined, sourceArchive:undefined, passwordSecret:undefined, hasPassword:!!schedule.passwordSecret, scope: schedule.current?.snapshotScope || null, hasSource: !!schedule.current });
+let scheduleQueue = Promise.resolve();
+function withSchedule(action) {
+  const result = scheduleQueue.then(action);
+  scheduleQueue = result.catch(() => {});
+  return result;
+}
 let running = false;
 async function runScheduled() {
   if (running || !schedule.current) throw new Error('Snapshot source is unavailable or already running.');
@@ -88,7 +100,16 @@ async function runScheduled() {
     const password=schedule.passwordSecret?await passwordSecrets.get(schedule.passwordSecret):'';
     let current=schedule.sourceArchive?(await decodeBackup(await readFile(resolve(snapshotRoot,schedule.sourceArchive)),password)).current:schedule.current;
     let observedAt=schedule.sourceUpdatedAt;
-    if(process.env.SNAPSHOT_FRESH_NETWORK==='true'){const fresh=await freshNetworkSnapshot(current,undefined,Date.now(),{includeSecrets:!!schedule.includeSecrets});current=fresh.current;observedAt=fresh.observedAt;}
+    if (process.env.SNAPSHOT_FRESH_NETWORK === 'true') {
+      const read = path => {
+        if (path.includes('/secrets/') && !schedule.authorizedSecretPaths?.includes(path))
+          throw Object.assign(new Error('Review the changed Secret references before running the schedule.'), {status: 403});
+        return readNetworkSource(path);
+      };
+      const fresh = await freshNetworkSnapshot(current, read, Date.now(), {includeSecrets: !!schedule.includeSecrets});
+      current = fresh.current;
+      observedAt = fresh.observedAt;
+    }
     const snapshot = await saveSnapshot(current, JSON.stringify(withoutSecretValues(current)), 'Automatic', observedAt,password,schedule.passwordSecret);
     schedule.lastRun = snapshot.createdAt; schedule.lastError = '';
     schedule.nextRun = schedule.enabled ? nextRun(Date.now(), schedule.interval, schedule.unit) : null;
@@ -96,13 +117,24 @@ async function runScheduled() {
   } finally { running = false; }
 }
 const tick = async () => {
-  if (!schedule.enabled || running || !schedule.nextRun || Date.parse(schedule.nextRun) > Date.now()) return;
+  if ((!schedule.approvedBy && process.env.SNAPSHOT_PREVIEW_MOCK_DATA !== 'true') || !schedule.enabled || running || !schedule.nextRun || Date.parse(schedule.nextRun) > Date.now()) return;
   try { await runScheduled(); } catch (error) { schedule.lastError = error.code==='FRESH_SOURCE_UNAVAILABLE'?'Automatic snapshot source is unavailable. Check capture permissions and the configured manager owner.':error.status===503?'Automatic snapshot failed. Check password Secret storage and permissions.':'Automatic snapshot failed. Check persistent storage.'; schedule.nextRun = new Date(Date.now() + 60000).toISOString(); try { await writeAtomic(schedulePath, JSON.stringify(schedule, null, 2)); } catch {} }
 };
-setInterval(() => { void tick(); }, 1000).unref();
+let tickPending = false;
+setInterval(() => {
+  if (tickPending || !schedule.enabled || !schedule.nextRun || Date.parse(schedule.nextRun) > Date.now() ||
+      (!schedule.approvedBy && process.env.SNAPSHOT_PREVIEW_MOCK_DATA !== 'true')) return;
+  tickPending = true;
+  void withSchedule(tick).finally(() => { tickPending = false; });
+}, 1000).unref();
 const cleanupPath=resolve(snapshotRoot,'cleanup.json');
 let cleanup={enabled:false,interval:1,unit:'days',retention:30,retentionUnit:'days',nextRun:null,lastRun:null,lastDeleted:0,lastError:''};
 try{cleanup={...cleanup,...JSON.parse(await readFile(cleanupPath,'utf8'))};}catch(error){if(error.code!=='ENOENT')throw error;}
+if (cleanup.enabled && !cleanup.approvedBy && process.env.SNAPSHOT_PREVIEW_MOCK_DATA !== 'true') {
+  cleanup.enabled = false;
+  cleanup.nextRun = null;
+  cleanup.lastError = 'Review and re-enable this saved policy with an authorized Rancher session.';
+}
 async function listSnapshots(){
   const list=[];
   for(const file of await readdir(snapshotRoot)){
@@ -126,12 +158,16 @@ async function loadSnapshot(id, password = '') {
 }
 let cleaning=false;
 async function runCleanup(){if(cleaning)throw new Error('Cleanup already running.');cleaning=true;try{const list=await listSnapshots();const candidates=cleanupCandidates(list,{retention:cleanup.retention,unit:cleanup.retentionUnit});await removeSnapshots(candidates.map(record=>record.id));cleanup.lastRun=new Date().toISOString();cleanup.lastDeleted=candidates.length;cleanup.lastError='';cleanup.nextRun=cleanup.enabled?nextRun(Date.now(),cleanup.interval,cleanup.unit):null;await writeAtomic(cleanupPath,JSON.stringify(cleanup,null,2));return cleanup;}finally{cleaning=false;}}
-setInterval(()=>{if(cleanup.enabled&&!cleaning&&cleanup.nextRun&&Date.parse(cleanup.nextRun)<=Date.now())void runCleanup().catch(()=>{cleanup.lastError='Cleanup failed. Check persistent storage.';cleanup.nextRun=new Date(Date.now()+60000).toISOString();void writeAtomic(cleanupPath,JSON.stringify(cleanup,null,2)).catch(()=>{});});},1000).unref();
+setInterval(()=>{if((process.env.SNAPSHOT_PREVIEW_MOCK_DATA==='true'||cleanup.approvedBy)&&cleanup.enabled&&!cleaning&&cleanup.nextRun&&Date.parse(cleanup.nextRun)<=Date.now())void runCleanup().catch(()=>{cleanup.lastError='Cleanup failed. Check persistent storage.';cleanup.nextRun=new Date(Date.now()+60000).toISOString();void writeAtomic(cleanupPath,JSON.stringify(cleanup,null,2)).catch(()=>{});});},1000).unref();
 function trustedOrigin(req){const origin=new URL(req.headers.origin);return process.env.SNAPSHOT_ALLOWED_ORIGIN ? origin.origin===process.env.SNAPSHOT_ALLOWED_ORIGIN : origin.host===req.headers.host;}
 http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, 'http://localhost');
     if (url.pathname.startsWith('/api/') && (req.headers['sec-fetch-site']==='cross-site' || req.headers.origin && !trustedOrigin(req))) return send(res,403,{error:'Same-origin request required.'});
+    if (url.pathname === '/healthz') return send(res, 200, {healthy: true});
+    const snapshotSession = isSnapshotApi(url.pathname) && process.env.SNAPSHOT_PREVIEW_MOCK_DATA !== 'true'
+      ? await authorizeSnapshot({headers: req.headers, method: req.method, manager: 'network', stateName: process.env.SNAPSHOT_NETWORK_STATE_CONFIGMAP})
+      : null;
     if (url.pathname === '/api/snapshot-storage' && req.method === 'GET') {
       const [space,records]=await Promise.all([statfs(await realpath(snapshotRoot)),listSnapshots()]);
       const mockCapacity=!Number(process.env.SNAPSHOT_STORAGE_LIMIT_BYTES)&&process.env.SNAPSHOT_PREVIEW_MOCK_DATA==='true';
@@ -150,41 +186,65 @@ http.createServer(async (req, res) => {
       let size = 0; const chunks = [];
       for await (const chunk of req) { size += chunk.length; if (size > 2 * 1024 * 1024) return send(res, 413, { error: 'Snapshot source exceeds the 2 MiB limit.' }); chunks.push(chunk); }
       let input; try { input = JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { return send(res, 400, { error: 'Invalid JSON.' }); }
+      if (input.includeSecrets !== undefined && typeof input.includeSecrets !== 'boolean')
+        return send(res, 400, {error: 'Choose whether to include Secrets.'});
+      if (input.password !== undefined && input.password !== '' && !validSchedulePassword(input.password))
+        return send(res, 400, {error: 'Schedule passwords must be no more than 512 UTF-8 bytes.'});
       if (input.current) {
         if (typeof input.current !== 'object' || Array.isArray(input.current)) return send(res, 400, { error: 'Invalid snapshot source.' });
         try { validateSource(input.current, !!input.password || url.pathname==='/api/snapshot-source' && !!schedule.passwordSecret); } catch { return send(res, 400, { error: 'Invalid backup manifests or Secret values.' }); }
       }
-      if(process.env.SNAPSHOT_FRESH_NETWORK==='true' && (input.enabled || url.pathname==='/api/snapshot-schedule/run' || url.pathname==='/api/snapshot-source'))await freshNetworkSnapshot(input.current||schedule.current,undefined,Date.now(),{includeSecrets:!!(input.includeSecrets??schedule.includeSecrets)&&url.pathname!=='/api/snapshot-schedule/run'});
-      const previousSource=schedule.sourceArchive;let candidate={...schedule};
-      let nextPasswordSecret=candidate.passwordSecret,sourceArchive=candidate.sourceArchive;
-      if (url.pathname === '/api/snapshot-schedule') {
-        if(input.includeSecrets!==undefined&&typeof input.includeSecrets!=='boolean')return send(res,400,{error:'Choose whether to include Secrets.'});
-        if(input.includeSecrets && !passwordStrength(input.password).acceptable)return send(res,400,{error:'Including Secrets requires a strong password.'});
-        if (typeof input.enabled !== 'boolean' || !Number.isInteger(input.interval) || input.interval < 1 || input.interval > 365 || !['minutes', 'hours', 'days', 'weeks', 'months'].includes(input.unit)) return send(res, 400, { error: 'Choose an interval from 1 to 365 and a supported unit.' });
-        if (input.enabled && !input.current && !candidate.current) return send(res, 400, { error: 'Choose a configuration scope before enabling.' });
-        if(input.includeSecrets!==undefined){nextPasswordSecret=input.includeSecrets?await passwordSecrets.put(input.password):null;sourceArchive=null;}
-        candidate = { ...candidate, ...(input.includeSecrets!==undefined?{includeSecrets:input.includeSecrets}:{}), passwordSecret:nextPasswordSecret, sourceArchive, enabled: input.enabled, interval: input.interval, unit: input.unit, nextRun: input.enabled ? nextRun(Date.now(), input.interval, input.unit) : null };
-      }
-      if (url.pathname === '/api/snapshot-schedule/run') {
-        if (!input.current) return send(res,400,{error:'Current configuration is required.'});
-        const fresh=process.env.SNAPSHOT_FRESH_NETWORK==='true'?await freshNetworkSnapshot(input.current):{current:input.current,observedAt:new Date().toISOString()};
-        return send(res,201,await saveSnapshot(fresh.current,JSON.stringify(fresh.current),'Manual',fresh.observedAt,input.password || ''));
-      }
-      if (input.current) {
-        if(candidate.includeSecrets){
-          if(!candidate.passwordSecret)throw new Error('Schedule password Secret is missing.');
-          const password=input.password||await passwordSecrets.get(candidate.passwordSecret);
-          const sourceArchive=`schedule-source-${randomUUID()}.zip`;
-          const source={schemaVersion:1,createdAt:new Date().toISOString(),current:input.current};
-          await writeAtomic(resolve(snapshotRoot,sourceArchive),await encodeBackup(source,password));
-          candidate.sourceArchive=sourceArchive;
-        }else candidate.sourceArchive=null;
-        candidate.current=withoutSecretValues(input.current);candidate.sourceUpdatedAt=new Date().toISOString();
-      }
-      await writeAtomic(schedulePath, JSON.stringify(candidate, null, 2));
-      schedule=candidate;
-      if(previousSource&&previousSource!==schedule.sourceArchive&&/^schedule-source-[0-9a-f-]+\.zip$/.test(previousSource))await unlink(resolve(snapshotRoot,previousSource)).catch(()=>{});
-      return send(res, 200, scheduleInfo());
+
+      return await withSchedule(async () => {
+        const previousSource=schedule.sourceArchive;let candidate={...schedule, approvedBy: snapshotSession?.userId};
+        const updatingSettings = url.pathname === '/api/snapshot-schedule';
+        const protectedCapture = (updatingSettings ? input.includeSecrets : undefined) ?? schedule.includeSecrets;
+        const editingSchedule = url.pathname !== '/api/snapshot-schedule/run';
+        if (process.env.SNAPSHOT_FRESH_NETWORK === 'true' && editingSchedule && (input.enabled || url.pathname === '/api/snapshot-source' || input.includeSecrets === true)) {
+          const authorizedSecretPaths = [];
+          const read = async path => {
+            if (!path.includes('/secrets/')) return readNetworkSource(path);
+            if (!snapshotSession) throw Object.assign(new Error('A Rancher session is required for live Secret capture.'), {status: 403});
+            const secret = await snapshotSession.readSecret(path);
+            authorizedSecretPaths.push(path);
+            return secret;
+          };
+          await freshNetworkSnapshot(input.current || schedule.current, read, Date.now(), {includeSecrets: !!protectedCapture});
+          candidate.authorizedSecretPaths = authorizedSecretPaths;
+        }
+        if (updatingSettings && input.includeSecrets === false) delete candidate.authorizedSecretPaths;
+        let nextPasswordSecret=candidate.passwordSecret,sourceArchive=candidate.sourceArchive;
+        if (updatingSettings) {
+          if(input.includeSecrets && !passwordStrength(input.password).acceptable)return send(res,400,{error:'Including Secrets requires a strong password.'});
+          if (typeof input.enabled !== 'boolean' || !Number.isInteger(input.interval) || input.interval < 1 || input.interval > 365 || !['minutes', 'hours', 'days', 'weeks', 'months'].includes(input.unit)) return send(res, 400, { error: 'Choose an interval from 1 to 365 and a supported unit.' });
+          if (input.enabled && !input.current && !candidate.current) return send(res, 400, { error: 'Choose a configuration scope before enabling.' });
+          if(input.includeSecrets!==undefined){nextPasswordSecret=input.includeSecrets?await passwordSecrets.put(input.password, schedule.passwordSecret):null;sourceArchive=null;}
+          candidate = { ...candidate, ...(input.includeSecrets!==undefined?{includeSecrets:input.includeSecrets}:{}), passwordSecret:nextPasswordSecret, sourceArchive, enabled: input.enabled, interval: input.interval, unit: input.unit, nextRun: input.enabled ? nextRun(Date.now(), input.interval, input.unit) : null };
+        }
+        if (url.pathname === '/api/snapshot-schedule/run') {
+          if (!input.current) return send(res,400,{error:'Current configuration is required.'});
+          const fresh=process.env.SNAPSHOT_FRESH_NETWORK==='true'?await freshNetworkSnapshot(input.current):{current:input.current,observedAt:new Date().toISOString()};
+          return send(res,201,await saveSnapshot(fresh.current,JSON.stringify(fresh.current),'Manual',fresh.observedAt,input.password || ''));
+        }
+        if (input.current) {
+          if(candidate.includeSecrets){
+            if(!candidate.passwordSecret)throw new Error('Schedule password Secret is missing.');
+            const password=await passwordSecrets.get(candidate.passwordSecret);
+            const sourceArchive=`schedule-source-${randomUUID()}.zip`;
+            const source={schemaVersion:1,createdAt:new Date().toISOString(),current:input.current};
+            await writeAtomic(resolve(snapshotRoot,sourceArchive),await encodeBackup(source,password));
+            candidate.sourceArchive=sourceArchive;
+          }else candidate.sourceArchive=null;
+          candidate.current=withoutSecretValues(input.current);candidate.sourceUpdatedAt=new Date().toISOString();
+        }
+        await writeAtomic(schedulePath, JSON.stringify(candidate, null, 2));
+        const previousPassword = schedule.passwordSecret;
+        schedule=candidate;
+        if (previousPassword && previousPassword !== schedule.passwordSecret)
+          await passwordSecrets.retain(schedule.passwordSecret).catch(() => {});
+        if(previousSource&&previousSource!==schedule.sourceArchive&&/^schedule-source-[0-9a-f-]+\.zip$/.test(previousSource))await unlink(resolve(snapshotRoot,previousSource)).catch(()=>{});
+        return send(res, 200, scheduleInfo());
+      });
     }
     if(url.pathname==='/api/snapshot-cleanup'&&req.method==='GET')return send(res,200,cleanup);
     if(['/api/snapshot-cleanup','/api/snapshot-cleanup/run','/api/snapshots/merge','/api/snapshots/delete'].includes(url.pathname)&&['PUT','POST'].includes(req.method)){
@@ -194,7 +254,7 @@ http.createServer(async (req, res) => {
       if(url.pathname.startsWith('/api/snapshot-cleanup')){
         if(url.pathname.endsWith('/run'))return send(res,200,await runCleanup());
         if(typeof input.enabled!=='boolean'||!Number.isInteger(input.interval)||input.interval<1||input.interval>365||!Number.isInteger(input.retention)||input.retention<1||input.retention>365||![input.unit,input.retentionUnit].every(u=>['minutes','hours','days','weeks','months'].includes(u)))return send(res,400,{error:'Invalid cleanup interval or retention.'});
-        cleanup={...cleanup,enabled:input.enabled,interval:input.interval,unit:input.unit,retention:input.retention,retentionUnit:input.retentionUnit,nextRun:input.enabled?nextRun(Date.now(),input.interval,input.unit):null};await writeAtomic(cleanupPath,JSON.stringify(cleanup,null,2));return send(res,200,cleanup);
+        cleanup={...cleanup,approvedBy:snapshotSession?.userId,enabled:input.enabled,interval:input.interval,unit:input.unit,retention:input.retention,retentionUnit:input.retentionUnit,nextRun:input.enabled?nextRun(Date.now(),input.interval,input.unit):null};await writeAtomic(cleanupPath,JSON.stringify(cleanup,null,2));return send(res,200,cleanup);
       }
       if(!Array.isArray(input.ids)||!input.ids.length||input.ids.length>100||new Set(input.ids).size!==input.ids.length||input.ids.some(id=>!validId(id)))return send(res,400,{error:'Choose valid distinct snapshots.'});
       if(url.pathname.endsWith('/merge')){
@@ -221,7 +281,6 @@ http.createServer(async (req, res) => {
       if(input.merged&&input.ids.some(id=>!backup.current?.mergedFrom?.includes(id)))return send(res,400,{error:'Merged snapshot does not include the selected originals.'});
       await removeSnapshots(input.ids);return send(res,200,{deleted:input.ids.length});
     }
-    if (url.pathname === '/healthz') return send(res, 200, { healthy: true });
     const unlock = url.pathname.match(/^\/api\/snapshots\/([^/]+)\/unlock$/);
     if (unlock && req.method === 'POST') {
       if (!validId(unlock[1]) || req.headers.origin && !trustedOrigin(req) || req.headers['sec-fetch-site'] === 'cross-site') return send(res, 403, { error: 'Invalid same-origin unlock request.' });
@@ -273,5 +332,5 @@ http.createServer(async (req, res) => {
     try { bytes = await readFile(path); } catch (error) { if (extname(path)) throw error; path = resolve(staticRoot, 'index.html'); bytes = await readFile(path); }
     const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml' };
     res.writeHead(200, { 'Content-Type': types[extname(path)] || 'application/octet-stream', 'Cache-Control': extname(path) === '.html' ? 'no-store' : 'public, max-age=3600', 'X-Content-Type-Options': 'nosniff' }); res.end(req.method === 'HEAD' ? undefined : bytes);
-  } catch (error) { send(res, error.code === 'ENOENT' ? 404 : error.status || 500, { error: error.code==='FRESH_SOURCE_UNAVAILABLE'?'Fresh network capture is unavailable or incompatible with this scope. Check capture permissions and the configured manager owner.':error.code === 'ENOENT' ? 'Snapshot or asset not found.' : error.status === 422 ? 'Encrypted backup requires unlocking with its password.' : error.status === 507 ? 'Snapshot storage quota exhausted.' : error.status===503 ? 'Snapshot password Secret storage is unavailable. Check the backend namespace and service-account Secret permissions.' : 'Unable to save or read the snapshot.' }); }
+  } catch (error) { send(res, error.code === 'ENOENT' ? 404 : error.status || 500, { error: error.code==='SNAPSHOT_ACCESS_DENIED'?error.message:error.code==='FRESH_SOURCE_UNAVAILABLE'?'Fresh network capture is unavailable or incompatible with this scope. Check capture permissions and the configured manager owner.':error.code === 'ENOENT' ? 'Snapshot or asset not found.' : error.status === 422 ? 'Encrypted backup requires unlocking with its password.' : error.status === 507 ? 'Snapshot storage quota exhausted.' : error.status===503 ? 'Snapshot password Secret storage is unavailable. Check the backend namespace and service-account Secret permissions.' : 'Unable to save or read the snapshot.' }); }
 }).listen(Number(process.env.PORT || 8080), process.env.HOST || '127.0.0.1', () => process.send?.({ready:true}));
