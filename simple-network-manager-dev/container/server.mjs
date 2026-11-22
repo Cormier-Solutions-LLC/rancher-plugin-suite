@@ -241,7 +241,7 @@ http.createServer(async (req, res) => {
         const previousPassword = schedule.passwordSecret;
         schedule=candidate;
         if (previousPassword && previousPassword !== schedule.passwordSecret)
-          await passwordSecrets.retain(schedule.passwordSecret).catch(() => {});
+          await passwordSecrets.retain?.(schedule.passwordSecret).catch(() => {});
         if(previousSource&&previousSource!==schedule.sourceArchive&&/^schedule-source-[0-9a-f-]+\.zip$/.test(previousSource))await unlink(resolve(snapshotRoot,previousSource)).catch(()=>{});
         return send(res, 200, scheduleInfo());
       });
