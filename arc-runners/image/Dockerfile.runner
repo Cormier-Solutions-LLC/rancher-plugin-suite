@@ -1,0 +1,15 @@
+# syntax=docker/dockerfile:1
+ARG TOOLS_IMAGE=harbor.cormierconsulting.io/automation/arc-runner-linux@sha256:aff611469abff1f2b001dbfdca57610c4c2ff830a289f72c3e15e7ec697c60f1
+ARG RUNNER_IMAGE=ghcr.io/actions/actions-runner@sha256:4037925f16bd0626196684aff1853dabd242675c82efe08f0a2d376694738d19
+FROM ${RUNNER_IMAGE} AS upstream
+
+FROM ${TOOLS_IMAGE}
+USER root
+RUN rm -rf /home/runner/bin /home/runner/externals
+COPY --from=upstream --chown=runner:runner /home/runner/bin/ /home/runner/bin/
+COPY --from=upstream --chown=runner:runner /home/runner/externals/ /home/runner/externals/
+COPY --from=upstream --chown=runner:runner /home/runner/*.sh /home/runner/*.template /home/runner/
+USER runner
+RUN bash -euo pipefail -c '/home/runner/bin/Runner.Listener --version | grep -Fx 2.338.2'
+LABEL org.opencontainers.image.title="Cormier prebuilt ARC runner" \
+      org.opencontainers.image.description="Actions runner 2.338.2 with the existing Cormier Linux CI toolchains"

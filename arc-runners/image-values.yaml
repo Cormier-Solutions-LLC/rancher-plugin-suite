@@ -8,7 +8,7 @@ template:
         value: unix:///var/run/docker.sock
       - name: RUNNER_WAIT_FOR_DOCKER_IN_SECONDS
         value: '120'
-      image: harbor.cormierconsulting.io/automation/arc-runner-linux@sha256:aff611469abff1f2b001dbfdca57610c4c2ff830a289f72c3e15e7ec697c60f1
+      image: harbor.cormierconsulting.io/automation/arc-runner-linux@sha256:47487de25bed200195b2a718e1316959c2f0effe35a9fe25c96b8270c7005ef9
       name: runner
       resources:
         limits:

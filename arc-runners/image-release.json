@@ -1,58 +1,77 @@
 {
-  "tag": "precompiled-shared-20261121-r2",
-  "image": "harbor.cormierconsulting.io/automation/arc-runner-linux@sha256:aff611469abff1f2b001dbfdca57610c4c2ff830a289f72c3e15e7ec697c60f1",
-  "previousImage": "harbor.cormierconsulting.io/automation/arc-runner-linux@sha256:cacbd0adafb78ff675e72217e704f064664c04b9bb5fccc5887f17ab436fb835",
+  "tag": "runner-2.338.2-20261123",
+  "image": "harbor.cormierconsulting.io/automation/arc-runner-linux@sha256:47487de25bed200195b2a718e1316959c2f0effe35a9fe25c96b8270c7005ef9",
+  "initExternalsImage": "ghcr.io/actions/actions-runner@sha256:4037925f16bd0626196684aff1853dabd242675c82efe08f0a2d376694738d19",
+  "actionsRunnerVersion": "2.338.2",
+  "previousImage": "harbor.cormierconsulting.io/automation/arc-runner-linux@sha256:aff611469abff1f2b001dbfdca57610c4c2ff830a289f72c3e15e7ec697c60f1",
+  "helmRevision": 12,
   "status": "deployed and verified",
-  "helmRevision": 11,
-  "sourcePullRequest": "https://github.com/Cormier-Solutions-LLC/rancher-plugin-suite/pull/8",
-  "sourceCommit": "fd4c2cb13d81bf09d1644704b37c729f7da43e45",
-  "prewarmedWorkers": 15,
   "capacity": {
-    "maxRunners": 48,
-    "minRunners": 16
+    "minRunners": 16,
+    "maxRunners": 48
   },
-  "profiles": {
-    "proofing": "harbor.cormierconsulting.io/automation/arc-runner-linux@sha256:2b5f32ee4cc75bedb44d2bac9e071e40638f5e06685750cf34024c8a9968cfdb",
-    "realtimestack": "harbor.cormierconsulting.io/automation/arc-runner-linux@sha256:888dcde7e98365baf46a4bc50a0ef6521438df3073966b161e5906ecc9cfdb7c",
-    "codeqlPrivate": "harbor.cormierconsulting.io/ci-toolchains/codeql-runner-linux@sha256:442453975ef8658caea430bfd4a786965bffdbe451425588a91cea664ef451eb"
-  },
+  "recipe": "arc-runners/image/Dockerfile.runner",
   "validation": {
-    "nativeAot": "restored offline, compiled, and executed",
-    "browsers": [
-      "Playwright 1.64.1 Chromium",
-      "Playwright 1.63.0 Chromium",
-      "Playwright 1.63.0 Firefox",
-      "Playwright 1.63.0 WebKit"
-    ],
-    "kubernetesDockerAndSharedWorkspace": "passed",
-    "privateCodeQl": "https://github.com/Cormier-Solutions-LLC/ProofingEngine/actions/runs/44951323862",
-    "realtimeStackFullCi": "https://github.com/Cormier-Solutions-LLC/RealtimeStack/actions/runs/44948270398/attempts/2",
-    "proofingFullCi": "https://github.com/Cormier-Solutions-LLC/ProofingEngine/actions/runs/44955847300",
-    "fullCiComparison": {
-      "realtimeStack": {
-        "baseline": "https://github.com/Cormier-Solutions-LLC/RealtimeStack/actions/runs/44941034718",
-        "baselineEvent": "push",
-        "candidateEvent": "workflow_dispatch",
-        "sourceCommit": "23020d78af7a69c531dd0da4d660e9c7ce796dbe",
-        "jobCount": 25,
-        "executedJobs": 24,
-        "jobSpanSeconds": {
-          "before": 3096.0,
-          "after": 3002.0
+    "kubernetesCanary": "passed",
+    "githubActionsOnUpdatedPool": "passed",
+    "dockerBuildWithoutNetwork": "passed"
+  },
+  "retainedToolchainRelease": {
+    "tag": "precompiled-shared-20261121-r2",
+    "image": "harbor.cormierconsulting.io/automation/arc-runner-linux@sha256:aff611469abff1f2b001dbfdca57610c4c2ff830a289f72c3e15e7ec697c60f1",
+    "previousImage": "harbor.cormierconsulting.io/automation/arc-runner-linux@sha256:cacbd0adafb78ff675e72217e704f064664c04b9bb5fccc5887f17ab436fb835",
+    "status": "deployed and verified",
+    "helmRevision": 11,
+    "sourcePullRequest": "https://github.com/Cormier-Solutions-LLC/rancher-plugin-suite/pull/8",
+    "sourceCommit": "fd4c2cb13d81bf09d1644704b37c729f7da43e45",
+    "prewarmedWorkers": 15,
+    "capacity": {
+      "maxRunners": 48,
+      "minRunners": 16
+    },
+    "profiles": {
+      "proofing": "harbor.cormierconsulting.io/automation/arc-runner-linux@sha256:2b5f32ee4cc75bedb44d2bac9e071e40638f5e06685750cf34024c8a9968cfdb",
+      "realtimestack": "harbor.cormierconsulting.io/automation/arc-runner-linux@sha256:888dcde7e98365baf46a4bc50a0ef6521438df3073966b161e5906ecc9cfdb7c",
+      "codeqlPrivate": "harbor.cormierconsulting.io/ci-toolchains/codeql-runner-linux@sha256:442453975ef8658caea430bfd4a786965bffdbe451425588a91cea664ef451eb"
+    },
+    "validation": {
+      "nativeAot": "restored offline, compiled, and executed",
+      "browsers": [
+        "Playwright 1.64.1 Chromium",
+        "Playwright 1.63.0 Chromium",
+        "Playwright 1.63.0 Firefox",
+        "Playwright 1.63.0 WebKit"
+      ],
+      "kubernetesDockerAndSharedWorkspace": "passed",
+      "privateCodeQl": "https://github.com/Cormier-Solutions-LLC/ProofingEngine/actions/runs/44951323862",
+      "realtimeStackFullCi": "https://github.com/Cormier-Solutions-LLC/RealtimeStack/actions/runs/44948270398/attempts/2",
+      "proofingFullCi": "https://github.com/Cormier-Solutions-LLC/ProofingEngine/actions/runs/44955847300",
+      "fullCiComparison": {
+        "realtimeStack": {
+          "baseline": "https://github.com/Cormier-Solutions-LLC/RealtimeStack/actions/runs/44941034718",
+          "baselineEvent": "push",
+          "candidateEvent": "workflow_dispatch",
+          "sourceCommit": "23020d78af7a69c531dd0da4d660e9c7ce796dbe",
+          "jobCount": 25,
+          "executedJobs": 24,
+          "jobSpanSeconds": {
+            "before": 3096.0,
+            "after": 3002.0
+          },
+          "elapsedFromRunStartSeconds": {
+            "before": 3098.0,
+            "after": 3170.0
+          }
         },
-        "elapsedFromRunStartSeconds": {
-          "before": 3098.0,
-          "after": 3170.0
-        }
-      },
-      "proofingEngine": {
-        "baseline": "https://github.com/Cormier-Solutions-LLC/ProofingEngine/actions/runs/44948270011/attempts/1",
-        "sourceCommit": "07e43643cb7235ca3688dab186c530acc9231e9e",
-        "baselineFailingCheck": "Browser storage unit test timeout",
-        "candidateFailingCheck": "CockroachDB fixture pull received Docker Hub HTTP 429",
-        "buildNodeSetupSeconds": {
-          "before": 85,
-          "after": 17
+        "proofingEngine": {
+          "baseline": "https://github.com/Cormier-Solutions-LLC/ProofingEngine/actions/runs/44948270011/attempts/1",
+          "sourceCommit": "07e43643cb7235ca3688dab186c530acc9231e9e",
+          "baselineFailingCheck": "Browser storage unit test timeout",
+          "candidateFailingCheck": "CockroachDB fixture pull received Docker Hub HTTP 429",
+          "buildNodeSetupSeconds": {
+            "before": 85,
+            "after": 17
+          }
         }
       }
     }
