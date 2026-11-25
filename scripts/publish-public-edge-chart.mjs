@@ -32,6 +32,8 @@ function field(name) {
   return match[1].trim();
 }
 const version = field('version');
+const appVersion = field('appVersion');
+await readFile(`charts/public-edge/templates/deployment-v${appVersion}.yaml`, 'utf8');
 await run(helm, ['lint', 'charts/public-edge']);
 await run(helm, ['package', 'charts/public-edge', '--destination', root]);
 const filename = `public-edge-${version}.tgz`;
@@ -41,7 +43,7 @@ const prefix = `/public-edge-charts/${archiveDigest}`;
 const assetOrigin = 'http://manager-extension-assets.cattle-ui-plugin-system.svc.cluster.local:8080';
 const url = assetOrigin + prefix;
 // JSON is valid YAML; the content-addressed index can safely use immutable caching.
-const metadata = {apiVersion: 'v2', name: 'public-edge', version, appVersion: field('appVersion'),
+const metadata = {apiVersion: 'v2', name: 'public-edge', version, appVersion,
   description: field('description'), type: 'application',
   annotations: {'catalog.cattle.io/display-name': 'Public Web Access', 'catalog.cattle.io/namespace': 'public-edge',
     'catalog.cattle.io/ui-source-repo': 'public-web-access', 'catalog.cattle.io/ui-source-repo-type': 'cluster'}};

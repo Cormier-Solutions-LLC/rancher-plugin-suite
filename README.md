@@ -48,6 +48,13 @@ Merges begin by testing protected snapshots individually or together, support Ap
 
 Local ZIP archives, scheduling, and cleanup state are stored under `.local/preview-snapshots/<plugin>/`, excluded from Git. Storage measurements use that destination's actual filesystem and configured quota. Estimates beyond one year display ∞. Built static previews retain in-memory editing; use the npm development preview for durable project data saves.
 
+## Deployment filenames
+
+The Rancher workload templates use the `appVersion` from their chart. Standalone
+application manifests and Helm overlays use the version of the workload or chart
+they configure. Rename the file and update its script or runbook references when
+updating the corresponding version.
+
 ## Standards and charts
 
 The [page-by-page UI comparison report](docs/ui-comparison-2026-10-11/report.html)

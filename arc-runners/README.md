@@ -4,7 +4,7 @@ Target: `arc-runners/cormier-runners`, ARC chart/controller `0.14.2`.
 
 ## Prebuilt Linux image
 
-`image-values.yaml` and `image-release.json` record the deployed image digest.
+`image-values-v2.338.2.yaml` and `image-release.json` record the deployed image digest.
 `image/Dockerfile.profiles` builds the shared profile with Node 24.22.3,
 Playwright 1.64.1 Chromium, and the Linux x64 .NET 10.0.15 Native AOT packs.
 The existing Playwright 1.63.0 Chromium, Firefox, and WebKit remain available.
@@ -29,7 +29,7 @@ when applying the overlay with Helm. The prior digest is in `image-release.json`
 
 ## Capacity and idle policy
 
-`scaling-values.yaml` raises capacity from 8 to 16. Apply it as an overlay on
+`scaling-values-v0.14.2.yaml` raises capacity from 8 to 16. Apply it as an overlay on
 the existing Helm release so the authentication reference, runner image,
 Docker sidecar, placement, priority, and resource settings are preserved.
 `quota.yaml` raises the matching runner quota to 16 pods, 16 requested CPU,
@@ -63,7 +63,7 @@ verified TLS, a non-root user, and a read-only root filesystem.
 ```powershell
 python arc-runners/test_idle_policy.py
 kubectl apply --dry-run=server -k arc-runners
-.tools/helm/windows-amd64/helm.exe upgrade cormier-runners oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set --version 0.14.2 -n arc-runners --reuse-values -f arc-runners/scaling-values.yaml --dry-run=server --hide-secret
+.tools/helm/windows-amd64/helm.exe upgrade cormier-runners oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set --version 0.14.2 -n arc-runners --reuse-values -f arc-runners/scaling-values-v0.14.2.yaml --dry-run=server --hide-secret
 ```
 
 ## Apply
@@ -73,7 +73,7 @@ backups for this change are in ignored `.local/arc-runners-2026-10-11/`.
 
 ```powershell
 kubectl apply -f arc-runners/quota.yaml
-.tools/helm/windows-amd64/helm.exe upgrade cormier-runners oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set --version 0.14.2 -n arc-runners --reuse-values -f arc-runners/scaling-values.yaml --wait --timeout 3m
+.tools/helm/windows-amd64/helm.exe upgrade cormier-runners oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set --version 0.14.2 -n arc-runners --reuse-values -f arc-runners/scaling-values-v0.14.2.yaml --wait --timeout 3m
 kubectl apply -k arc-runners
 kubectl create job arc-runner-idle-policy-initial --from=cronjob/arc-runner-idle-policy -n arc-runners
 kubectl logs -n arc-runners job/arc-runner-idle-policy-initial
@@ -91,7 +91,7 @@ previous quota. Removing policy jobs prevents a last concurrent write.
 ```powershell
 kubectl delete cronjob arc-runner-idle-policy -n arc-runners --cascade=foreground
 kubectl delete job arc-runner-idle-policy-initial -n arc-runners --ignore-not-found
-kubectl delete -f arc-runners/idle-policy.yaml --ignore-not-found
+kubectl delete -f arc-runners/idle-policy-v0.14.2.yaml --ignore-not-found
 kubectl delete configmap arc-runner-idle-policy -n arc-runners --ignore-not-found
 .tools/helm/windows-amd64/helm.exe rollback cormier-runners 8 -n arc-runners --wait --timeout 3m
 kubectl apply -f .local/arc-runners-2026-10-11/quota-rollback.json

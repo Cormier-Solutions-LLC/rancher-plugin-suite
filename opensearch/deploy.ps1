@@ -83,11 +83,11 @@ try {
 
     Invoke-Checked kubectl @('apply', '--dry-run=server', '-f', 'opensearch/prerequisites.yaml')
     Invoke-Checked kubectl @('apply', '-f', 'opensearch/prerequisites.yaml')
-    Invoke-Checked $Helm @('lint', $chart, '-f', 'opensearch/operator-values.yaml')
+    Invoke-Checked $Helm @('lint', $chart, '-f', 'opensearch/operator-values-v3.0.14.yaml')
     Invoke-Checked $Helm @('upgrade', '--install', 'opensearch-operator', $chart,
-        '-n', 'opensearch', '-f', 'opensearch/operator-values.yaml', '--wait', '--timeout', '5m')
+        '-n', 'opensearch', '-f', 'opensearch/operator-values-v3.0.14.yaml', '--wait', '--timeout', '5m')
 
-    foreach ($manifest in @('cluster.yaml', 'private-access.yaml', 'index-defaults.yaml')) {
+    foreach ($manifest in @('cluster-v3.9.0.yaml', 'private-access.yaml', 'index-defaults.yaml')) {
         Invoke-Checked kubectl @('apply', '--dry-run=server', '-f', "opensearch/$manifest")
         Invoke-Checked kubectl @('apply', '-f', "opensearch/$manifest")
     }

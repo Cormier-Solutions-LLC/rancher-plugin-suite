@@ -184,7 +184,7 @@ and snapshot data, without Rancher, a kubeconfig, or cluster API access. The
 development preview remains at http://127.0.0.1:5173.
 
 For Kubernetes preview hosting, build/push the image to your chosen registry,
-replace the image reference in `deploy/preview.yaml`, and apply that manifest
+replace the image reference in `deploy/preview-v0.1.0.yaml`, and apply that manifest
 when requested. Access it using
 `kubectl -n simple-network-manager-preview port-forward service/simple-network-manager-preview 8088:8080`.
 The Service is ClusterIP; no public Ingress or LoadBalancer is created.
