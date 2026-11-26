@@ -143,3 +143,35 @@ and service startup, or reports a pending Windows reboot.
 For a package-only preflight, run Debian with `WAZUH_VALIDATE_ONLY=1`
 and Windows with `-ValidateOnly`. When the manager is upgraded, update
 the target versions and SHA-512 digests from the Wazuh package list.
+
+## Deploy from Proxmox
+
+`proxmox/deploy-guest.py` uses the Proxmox QEMU Guest Agent to run the same
+Windows or Debian installer against a single running VM. It looks up the
+VM owner in the cluster and uses the owner's Proxmox-managed SSH host key
+when forwarding through another node. The workstation needs Python and
+OpenSSH with a trusted Proxmox entry point. The guest needs an enabled,
+responding QEMU Guest Agent and outbound access to the package repository
+and Wazuh manager.
+
+Set `$ProxmoxEntry` to a trusted SSH target and `$TargetVm` to the VMID you
+intend to deploy. The default mode validates the package inside the
+guest without changing the installed agent, firewall, or enrollment file.
+
+```powershell
+python wazuh-indexer/proxmox/deploy-guest.py --entry $ProxmoxEntry --vmid $TargetVm
+```
+
+For an already configured agent, use the same command with `--apply`.
+For a fresh agent, pipe the current Kubernetes enrollment secret into an
+explicit apply. Proxmox forwards the credential through guest stdin and
+the script stages it in a protected `authd.pass` file inside the guest.
+
+```powershell
+kubectl -n opensearch get secret wazuh-manager-credentials -o 'jsonpath={.data.enrollment-password}' |
+    python wazuh-indexer/proxmox/deploy-guest.py --entry $ProxmoxEntry --vmid $TargetVm --apply --enrollment-stdin
+```
+
+Verify the VM is active in the Wazuh dashboard after applying. If the
+launcher reports a guest execution timeout, check the guest process
+status on the owning node before retrying.
