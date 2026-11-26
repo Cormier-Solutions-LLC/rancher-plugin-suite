@@ -5,6 +5,8 @@ version=4.14.11-1
 manager=${WAZUH_TARGET_MANAGER:-wazah.cormierconsulting.io}
 validate_only=${WAZUH_VALIDATE_ONLY:-0}
 
+enrollment_file=/var/ossec/etc/authd.pass
+
 if (( EUID != 0 )); then
     echo "Run as root." >&2
     exit 1
@@ -39,6 +41,37 @@ if [[ "$(dpkg-query -W -f='${db:Status-Status}' wazuh-agent 2>/dev/null || true)
     fi
 fi
 
+fresh_install=0
+if [[ -z "$installed_version" && ! -f /var/ossec/etc/ossec.conf ]]; then
+    fresh_install=1
+fi
+
+if (( fresh_install )) && [[ "$validate_only" != 1 ]]; then
+    mapfile -t manager_addresses < <(getent ahosts "$manager" | awk '$2 == "STREAM" && !seen[$1]++ {print $1}')
+    if (( ${#manager_addresses[@]} == 0 )); then
+        echo "Wazuh manager '$manager' did not resolve to an IP address." >&2
+        exit 1
+    fi
+
+    if command -v ufw >/dev/null && [[ "$(LC_ALL=C ufw status)" == 'Status: active'* ]]; then
+        for address in "${manager_addresses[@]}"; do
+            ufw allow out proto tcp to "$address" port 1514:1515 comment 'Wazuh agent manager'
+        done
+    fi
+
+    for port in 1514 1515; do
+        if ! timeout 5 bash -c 'exec 3<>"/dev/tcp/$1/$2"' _ "$manager" "$port" 2>/dev/null; then
+            echo "Wazuh manager '$manager' is unreachable on TCP $port. Check the endpoint firewall and the manager's private listener." >&2
+            exit 1
+        fi
+    done
+
+    if [[ ! -f "$enrollment_file" || ! -s "$enrollment_file" || -L "$enrollment_file" ]]; then
+        echo "Stage the Wazuh enrollment credential at '$enrollment_file' through a secure channel before installing." >&2
+        exit 1
+    fi
+fi
+
 package="wazuh-agent_${version}_${architecture}.deb"
 package_url="https://packages.wazuh.com/4.x/apt/pool/main/w/wazuh-agent/$package"
 work_dir=$(mktemp -d)
@@ -57,7 +90,7 @@ if [[ "$validate_only" == 1 ]]; then
 fi
 
 apt_options=(--yes --no-remove -o DPkg::Lock::Timeout=60 -o Dpkg::Options::=--force-confold)
-if [[ -z "$installed_version" && ! -f /var/ossec/etc/ossec.conf ]]; then
+if (( fresh_install )); then
     WAZUH_MANAGER="$manager" DEBIAN_FRONTEND=noninteractive apt-get "${apt_options[@]}" install "$work_dir/$package"
 else
     DEBIAN_FRONTEND=noninteractive apt-get "${apt_options[@]}" install "$work_dir/$package"
@@ -69,6 +102,10 @@ if [[ "$actual_version" != "$version" ]]; then
     exit 1
 fi
 
+if (( fresh_install )); then
+    chown root:wazuh "$enrollment_file"
+    chmod 0640 "$enrollment_file"
+fi
 systemctl enable wazuh-agent
 systemctl restart wazuh-agent
 systemctl is-active --quiet wazuh-agent

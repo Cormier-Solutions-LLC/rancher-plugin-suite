@@ -114,13 +114,22 @@ agent to 4.14.11. They leave equal or newer installed versions in place.
 Existing agents keep their manager and enrollment settings. New agents
 use `wazah.cormierconsulting.io` by default.
 
-Before running the scripts on a pilot, verify private reachability to
-the manager on TCP 1514 for events and TCP 1515 for automatic enrollment.
-New agents also need the manager's enrollment credential delivered
-separately through an approved secret channel. Keep it out of Action1
-script bodies, arguments, output, and Git. Verify the agent is active in
-Wazuh after installation. An Action1 success result verifies local
-installation and service startup, or reports a pending Windows reboot.
+Fresh installations open outbound TCP 1514 (events) and 1515 (enrollment)
+to the manager IPs in Windows Defender Firewall or in UFW when it is
+active. The Debian script relies on the existing egress policy when
+another firewall manages the host. Both scripts test the two connections
+before running the installer. The private manager listener must be
+reachable from each endpoint.
+
+Stage a nonempty enrollment password file on each fresh endpoint through
+an approved secret channel. On Windows use `%ProgramFiles(x86)%\ossec-agent\authd.pass`
+(`%ProgramFiles%` on 32-bit Windows) and restrict access to SYSTEM and
+administrators. On Debian, stage a root-owned file at
+`/var/ossec/etc/authd.pass` with mode 0600. The installer grants the Wazuh
+group read access before starting the service. Keep the password out of
+Action1 script bodies, arguments, output, and Git. Verify agent check-in
+in Wazuh after installation. Action1 success verifies local installation
+and service startup, or reports a pending Windows reboot.
 
 For a package-only preflight, run Debian with `WAZUH_VALIDATE_ONLY=1`
 and Windows with `-ValidateOnly`. When the manager is upgraded, update

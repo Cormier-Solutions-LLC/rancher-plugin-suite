@@ -46,10 +46,62 @@ function Get-WazuhAgentVersion {
     $versions | Sort-Object -Descending | Select-Object -First 1
 }
 
+function Initialize-WazuhEnrollment {
+    param([string]$ManagerName)
+
+    $addresses = @([Net.Dns]::GetHostAddresses($ManagerName) | ForEach-Object { $_.IPAddressToString })
+    if (-not $addresses) { throw "Wazuh manager '$ManagerName' did not resolve to an IP address." }
+
+    $ports = '1514', '1515'
+    $rule = @{
+        Name = 'WazuhAgent-Action1-Egress'
+        PolicyStore = 'PersistentStore'
+        Direction = 'Outbound'
+        Enabled = 'True'
+        Action = 'Allow'
+        Profile = 'Any'
+        Protocol = 'TCP'
+        RemoteAddress = $addresses
+        RemotePort = $ports
+    }
+    if (Get-NetFirewallRule -Name $rule.Name -PolicyStore $rule.PolicyStore -ErrorAction SilentlyContinue) {
+        Set-NetFirewallRule @rule
+    } else {
+        New-NetFirewallRule @rule -DisplayName 'Wazuh Agent to Manager (Action1)' | Out-Null
+    }
+
+    foreach ($port in $ports) {
+        $client = [Net.Sockets.TcpClient]::new()
+        try {
+            $connected = $client.ConnectAsync($ManagerName, [int]$port).Wait(5000) -and $client.Connected
+        } catch {
+            $connected = $false
+        } finally {
+            $client.Dispose()
+        }
+        if (-not $connected) {
+            throw "Wazuh manager '$ManagerName' is unreachable on TCP $port. Check the endpoint firewall and the manager's private listener."
+        }
+    }
+
+    $programFiles = [Environment]::GetFolderPath('ProgramFilesX86')
+    if (-not $programFiles) { $programFiles = $env:ProgramFiles }
+    $credentialPath = Join-Path $programFiles 'ossec-agent\authd.pass'
+    $credential = Get-Item -LiteralPath $credentialPath -ErrorAction SilentlyContinue
+    if (-not $credential -or $credential.PSIsContainer -or $credential.Length -eq 0) {
+        throw "Stage the Wazuh enrollment credential at '$credentialPath' through a secure channel before installing."
+    }
+}
+
 $installedVersion = Get-WazuhAgentVersion
 if ($installedVersion -and $installedVersion -ge $targetVersion) {
     Write-Output "Wazuh Agent $installedVersion is already installed. Target is $targetVersion."
     exit 0
+}
+
+$freshInstall = -not $installedVersion -and -not (Get-Service -Name WazuhSvc -ErrorAction SilentlyContinue)
+if ($freshInstall -and -not $ValidateOnly) {
+    Initialize-WazuhEnrollment -ManagerName $Manager
 }
 
 $workDir = Join-Path ([System.IO.Path]::GetTempPath()) ([guid]::NewGuid().ToString('N'))
@@ -71,7 +123,7 @@ try {
     }
 
     $msiArguments = "/i `"$msiPath`" /qn /norestart"
-    if (-not $installedVersion -and -not (Get-Service -Name WazuhSvc -ErrorAction SilentlyContinue)) {
+    if ($freshInstall) {
         $msiArguments += " WAZUH_MANAGER=$Manager"
     }
     $install = Start-Process -FilePath "$env:SystemRoot\System32\msiexec.exe" `
