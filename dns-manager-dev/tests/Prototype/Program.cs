@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Text.Json;
 using Cormier.Dns.LookupPolicy;
 using TechnitiumLibrary.Net.Dns;
@@ -59,7 +60,9 @@ try
 
     var packageDir = Path.Combine(root, "artifacts");
     Directory.CreateDirectory(packageDir);
-    var package = Path.Combine(packageDir, "LookupPolicy.zip");
+    var packageVersion = typeof(App).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!
+        .InformationalVersion.Split('+', 2)[0];
+    var package = Path.Combine(packageDir, $"LookupPolicy-{packageVersion}.zip");
     var assembly = typeof(App).Assembly.Location;
     using (var zip = new ZipArchive(File.Create(package), ZipArchiveMode.Create))
     {
@@ -317,7 +320,7 @@ sealed class Api(int port, string password)
         using var form = new MultipartFormDataContent();
         var data = new StreamContent(File.OpenRead(path));
         data.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
-        form.Add(data, "file", "LookupPolicy.zip");
+        form.Add(data, "file", Path.GetFileName(path));
         using var response = await _client.PostAsync("apps/install?name=Cormier%20Lookup%20Policy", form);
         using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         if (json.RootElement.GetProperty("status").GetString() != "ok")
