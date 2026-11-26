@@ -1,7 +1,8 @@
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 $build=Join-Path $root 'dns-manager-dev/src/LookupPolicy/bin/Release/net10.0'
-$output=Join-Path $root '.local/manager-installation/LookupPolicy.zip'
+$output=& (Join-Path $PSScriptRoot 'get-dns-policy-package-path.ps1')
+[IO.Directory]::CreateDirectory((Split-Path $output -Parent)) | Out-Null
 $zip=[IO.Compression.ZipArchive]::new([IO.File]::Create($output),[IO.Compression.ZipArchiveMode]::Create)
 try {
  foreach($file in @('Cormier.Dns.LookupPolicy.dll','Cormier.Dns.LookupPolicy.deps.json')){
@@ -10,4 +11,4 @@ try {
  $writer=[IO.StreamWriter]::new($zip.CreateEntry('dnsApp.config').Open())
  try {$writer.Write((@{Enabled=$true;SourceServer='10.99.3.2';PublicServer='8.8.8.8';ValidatePublicDnssec=$true;QueryTimeoutMilliseconds=1500;TotalTimeoutMilliseconds=10000}|ConvertTo-Json -Compress))}finally{$writer.Dispose()}
 }finally{$zip.Dispose()}
-Write-Output 'Production lookup package created with public DNSSEC validation.'
+Write-Output "Created $(Split-Path $output -Leaf) with public DNSSEC validation."

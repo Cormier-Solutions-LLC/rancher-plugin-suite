@@ -2,6 +2,7 @@ param([switch]$UpdateApps)
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 $folder=Join-Path $root '.local/manager-installation'
+$package=& (Join-Path $PSScriptRoot 'get-dns-policy-package-path.ps1')
 $password=[IO.File]::ReadAllText((Join-Path $folder 'dns-admin-password.txt'))
 $zones=@('_msdcs.cormierconsulting.com','99.10.in-addr.arpa','cormierconsulting.com','cormierconsulting.io')
 # Administrators approve transfers only to this Kubernetes cluster's known nodes;
@@ -43,7 +44,6 @@ for($i=0;$i -lt 3;$i++){
    if($zone -notin $known){Call-Dns 'zones/create' @{zone=$zone;type='Secondary';primaryNameServerAddresses='10.99.3.2';zoneTransferProtocol='Tcp'}|Out-Null}
   }
   # Install only the owned lookup-policy package; preserve all transferred records.
-  $package=Join-Path $folder 'LookupPolicy.zip'
   if(Test-Path $package){
    $apps=(Call-Dns 'apps/list' @{}).response.apps.name
    if('Cormier Lookup Policy' -notin $apps -or $UpdateApps){
