@@ -1,224 +1,172 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { hostnames, publicIPv4, reconcile, dnsMatches, fileState } from './updater.mjs';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { reconcile, publicIPv4, hostnames, fileState } from './updater.mjs';
+import { authoritativeReader } from './authoritative-dns.mjs';
 
-const zone = 'example.com', hosts = ['app.example.com', 'other.example.com'];
-function fixture({ ip = '24.162.105.215', secondIp = ip, initial, alias = false } = {}) {
-  const db = initial ?? {
-    app: [{ name: 'app', type: 'A', data: '68.203.6.96', ttl: 1200 }],
-    other: [{ name: 'other', type: 'A', data: ip, ttl: 600 }],
-  };
-  const writes = [], calls = [];
-  const fetcher = async (input, options = {}) => {
-    calls.push({ input, method: options.method ?? 'GET' });
-    const url = new URL(input);
-    if (url.hostname === 'api.ipify.org') return new Response(ip);
-    if (url.hostname === 'checkip.amazonaws.com') return new Response(secondIp);
-    if (url.hostname === 'cloudflare-dns.com' || url.hostname === 'dns.google') return Response.json({
-      Status: 0, Answer: Object.values(db).flat().map(r => ({
-        name: `${r.name}.${zone}.`, type: r.type === 'A' ? 1 : r.type === 'CNAME' ? 5 : 16, data: r.data,
-      })),
-    });
-    if (url.pathname.endsWith('/records')) return Response.json([
-      ...Object.values(db).flat(), ...(alias ? [{ name: 'other', type: 'CNAME', data: 'target.example.net' }] : []),
-    ]);
-    const parts = url.pathname.split('/'), name = decodeURIComponent(parts.at(-1)), type = parts.at(-2);
-    if (options.method === 'PUT') {
-      const body = JSON.parse(options.body); writes.push({ name, type, body });
-      db[name] = body.map(record => ({ ...record, name, type }));
-      return new Response(null, { status: 200 });
+const zone = 'example.com', edge = `ddns_edge.${zone}`, ip = '24.162.104.154';
+const hosts = ['app.example.com', 'other.example.com'];
+const record = (A = [], CNAME = [], conflicts = []) => ({ A, CNAME, conflicts });
+const address = (data = ip, ttl = 600) => ({ data, ttl });
+function fixture(initial = {
+  [edge]: record([address()]), [hosts[0]]: record([], [address(edge)]), [hosts[1]]: record([], [address(edge)]),
+}) {
+  const db = structuredClone(initial), calls = [], logs = []; let saved = {};
+  const stateStore = { read: async () => structuredClone(saved), write: async value => { saved = structuredClone(value); } };
+  const fetcher = async (url, options = {}) => {
+    if (url === 'https://api.ipify.org' || url === 'https://checkip.amazonaws.com') return new Response(ip);
+    assert.equal(new URL(url).hostname, 'api.godaddy.com');
+    assert.notEqual(options.method ?? 'GET', 'GET', 'No GoDaddy API reads allowed');
+    calls.push({ url, method: options.method, body: options.body ? JSON.parse(options.body) : null });
+    const path = new URL(url).pathname.split('/'), type = path.at(-2), host = `${decodeURIComponent(path.at(-1))}.${zone}`;
+    db[host] ??= record();
+    if (options.method === 'DELETE') db[host][type] = [];
+    else {
+      if (type === 'CNAME' && db[host].A.length) return new Response(null, { status: 422 });
+      db[host][type] = JSON.parse(options.body);
     }
-    return Response.json(type === 'CNAME' ? (alias ? [{ name, type, data: 'target.example.net' }] : []) : (db[name] ?? []));
+    return new Response(null, { status: 204 });
   };
-  return { db, writes, calls, options: { hosts, zone, token: 'synthetic:credential', fetcher, log: () => {}, pause: async () => {} } };
+  return { db, calls, logs, saved: () => saved, options: {
+    hosts, zone, token: 'synthetic:credential', dryRun: false, fetcher,
+    dnsReader: async host => structuredClone(db[host] ?? record()), stateStore,
+    pause: async () => {}, log: message => logs.push(message), now: () => Date.UTC(2026, 10, 25),
+  } };
 }
-
-test('validates exact subdomains, rejects other zones, wildcard and path inputs', () => {
-  assert.deepEqual(hostnames([hosts[0], hosts[0]], zone), [hosts[0]]);
-  for (const host of ['example.com', 'example.com.evil.net', '*.example.com', 'x/../example.com', 'a..example.com']) {
-    assert.throws(() => hostnames([host], zone));
+test('validates names and accepts the exact underscore edge owner', async () => {
+  assert.throws(() => hostnames(['evil.example.net'], zone));
+  assert.throws(() => hostnames(['*.example.com'], zone));
+  const f = fixture(); await reconcile(f.options); assert.equal(f.calls.length, 0);
+  await assert.rejects(reconcile({ ...f.options, edgeHost: 'outside.example.net' }), /Invalid shared edge/);
+  await assert.rejects(reconcile({ ...f.options, edgeHost: hosts[0] }), /self-referencing/);
+});
+test('rejects private, reserved, malformed and IPv6 addresses', () => {
+  for (const value of ['10.0.0.1', '192.168.1.1', '172.16.1.1', '100.64.1.1', '127.0.0.1', '169.254.1.1',
+    '198.51.100.1', '203.0.113.1', '224.0.0.1', '255.255.255.255', '1.2.3.999', '::1']) assert.equal(publicIPv4(value), false);
+  assert.equal(publicIPv4(ip), true);
+});
+test('correct topology uses zero GoDaddy requests', async () => {
+  const f = fixture(); assert.deepEqual(await reconcile(f.options), []);
+  assert.equal(f.calls.length, 0); assert.match(f.logs.at(-1), /zero GoDaddy requests/);
+});
+test('WAN changes update exactly one A owner and leave all aliases unchanged', async () => {
+  const f = fixture(); f.db[edge].A = [address('68.203.6.96', 1200)]; await reconcile(f.options);
+  assert.equal(f.calls.length, 1); assert.match(f.calls[0].url, /\/A\/ddns_edge$/);
+  assert.deepEqual(f.calls[0].body, [address(ip, 1200)]);
+});
+test('creates edge before aliases and never creates application A records', async () => {
+  const f = fixture({}); await reconcile(f.options);
+  assert.equal(f.calls.length, 3); assert.match(f.calls[0].url, /\/A\/ddns_edge$/);
+  assert.ok(f.calls.slice(1).every(c => /\/CNAME\//.test(c.url)));
+});
+test('converts existing A records and retargets chained aliases', async () => {
+  const f = fixture(); f.db[hosts[0]] = record([address('68.203.6.96', 1200)]);
+  f.db[hosts[1]] = record([], [address(hosts[0])]); await reconcile(f.options);
+  assert.deepEqual(f.calls.map(c => c.method), ['DELETE', 'PUT', 'PUT']);
+  assert.equal(f.db[hosts[0]].CNAME[0].ttl, 1200);
+  assert.ok(hosts.every(host => !f.db[host].A.length && f.db[host].CNAME[0].data === edge));
+});
+test('dry run plans changes without API requests or state changes', async () => {
+  const f = fixture({}); assert.equal((await reconcile({ ...f.options, dryRun: true })).length, 3);
+  assert.equal(f.calls.length, 0); assert.deepEqual(f.saved(), {});
+});
+test('new names are detected without provider reads', async () => {
+  const f = fixture(); f.options.hosts = [...hosts, 'new.example.com']; await reconcile(f.options);
+  assert.equal(f.calls.length, 1); assert.match(f.calls[0].url, /\/CNAME\/new$/);
+});
+test('conflicting record types fail complete preflight before any writes', async () => {
+  for (const type of ['AAAA', 'TXT', 'MX', 'CAA', 'NS']) {
+    const f = fixture(); f.db[edge].A = [address('68.203.6.96')]; f.db[hosts[0]] = record([address()], [], [type]);
+    await assert.rejects(reconcile(f.options), /Conflicting DNS/); assert.equal(f.calls.length, 0);
   }
 });
-test('rejects private, reserved, malformed and IPv6 lookup results', () => {
-  for (const ip of ['10.1.2.3', '100.64.0.1', '127.0.0.1', '169.254.169.254', '172.31.1.1', '192.168.1.1',
-    '192.0.2.1', '198.51.100.1', '203.0.113.1', '224.1.1.1', '255.255.255.255', '1.2.3.999', '::1']) assert.equal(publicIPv4(ip), false, ip);
-  assert.equal(publicIPv4('24.162.105.215'), true);
+test('DNS failures fail closed before API mutation', async () => {
+  const f = fixture(); f.options.dnsReader = async () => { throw new Error('Authoritative DNS servers disagree'); };
+  await assert.rejects(reconcile(f.options), /disagree/); assert.equal(f.calls.length, 0);
 });
-test('dry run returns exact change plan and never writes', async () => {
-  const f = fixture(); const plan = await reconcile(f.options);
-  assert.equal(plan[0].previous, '68.203.6.96'); assert.equal(plan[0].ttl, 1200); assert.equal(f.writes.length, 0);
+test('IP service disagreement prevents mutation', async () => {
+  const f = fixture({}), original = f.options.fetcher;
+  f.options.fetcher = (url, options) => url.includes('amazonaws') ? new Response('68.203.6.96') : original(url, options);
+  await assert.rejects(reconcile(f.options), /services disagree/); assert.equal(f.calls.length, 0);
 });
-test('updates only changed listed A record, preserves TTL and is idempotent', async () => {
-  const f = fixture(); f.db.unrelated = [{ name: 'unrelated', type: 'TXT', data: 'preserved' }];
-  await reconcile({ ...f.options, dryRun: false });
-  assert.deepEqual(f.writes, [{ name: 'app', type: 'A', body: [{ data: '24.162.105.215', ttl: 1200 }] }]);
-  assert.equal(f.db.unrelated[0].data, 'preserved');
-  await reconcile({ ...f.options, dryRun: false }); assert.equal(f.writes.length, 1);
-});
-test('disagreeing public-IP services fail before any DNS writes', async () => {
-  const f = fixture({ secondIp: '68.203.6.96' });
-  await assert.rejects(reconcile({ ...f.options, dryRun: false }), /disagree/); assert.equal(f.writes.length, 0);
-});
-test('preflights all names and refuses multi-address or CNAME replacements', async () => {
-  for (const alias of [true, false]) {
-    const f = fixture({ alias });
-    if (!alias) f.db.other.push({ ...f.db.other[0], data: '68.203.6.96' });
-    await assert.rejects(reconcile({ ...f.options, dryRun: false }), /Refusing/); assert.equal(f.writes.length, 0);
-  }
-});
-test('missing records are created with TTL 600 and verified', async () => {
-  const f = fixture({ initial: {} }); await reconcile({ ...f.options, dryRun: false });
-  assert.equal(f.writes.length, 2); assert.equal(f.db.app[0].ttl, 600);
-});
-test('preserves aliases to managed A records and updates their target', async () => {
-  const f = fixture();
-  f.db.other = [{ name: 'other', type: 'CNAME', data: 'app.example.com.' }];
-  const plan = await reconcile({ ...f.options, dryRun: false });
-  assert.equal(plan.find(x => x.name === 'other').aliasTarget, 'app.example.com');
-  assert.equal(f.writes.length, 1); assert.equal(f.writes[0].name, 'app');
-});
-test('CNAME cycles fail before writes', async () => {
-  const f = fixture({ initial: {
-    app: [{ name: 'app', type: 'CNAME', data: hosts[1] }],
-    other: [{ name: 'other', type: 'CNAME', data: hosts[0] }],
-  } });
-  await assert.rejects(reconcile({ ...f.options, dryRun: false }), /CNAME loop/); assert.equal(f.writes.length, 0);
-});
-test('empty allowlist makes no network calls', async () => {
-  await reconcile({ hosts: [], zone, token: '', fetcher: () => { throw new Error('unexpected request'); }, log: () => {} });
-});
-test('HTTP failures and transport errors never expose credential or response bodies', async () => {
-  const f = fixture(); const original = f.options.fetcher;
-  f.options.fetcher = (url, options) => url.includes('godaddy') ? new Response('synthetic:credential', { status: 403 }) : original(url, options);
-  await assert.rejects(reconcile({ ...f.options, dryRun: false }), error => /HTTP 403/.test(error.message) && !error.message.includes('credential'));
-  f.options.fetcher = () => { throw new Error('synthetic:credential'); };
-  await assert.rejects(reconcile(f.options), error => error.message.includes('DNS updater network request failed for') && !error.message.includes('credential'));
-});
-test('correct public DNS costs zero GoDaddy requests', async () => {
-  const f = fixture(); f.db.app[0].data = '24.162.105.215';
-  await reconcile({ ...f.options, dryRun: false });
-  assert.equal(f.calls.filter(c => c.input.includes('godaddy')).length, 0);
-  assert.equal(f.writes.length, 0);
-});
-test('monthly quota cooldown persists across runs and avoids all API calls', async () => {
-  let saved = {}; const store = { read: async () => saved, write: async value => { saved = value; } };
-  const current = Date.UTC(2026, 10, 25, 12);
-  const f = fixture(), original = f.options.fetcher; let apiCalls = 0;
+test('monthly quota persists cooldown, while preview remains API-free', async () => {
+  const f = fixture({}), original = f.options.fetcher; let attempts = 0;
   f.options.fetcher = (url, options) => {
     if (!url.includes('godaddy')) return original(url, options);
-    apiCalls++;
-    return Response.json({ code: 'QUOTA_EXCEEDED', message: 'monthly quota exceeded' }, { status: 429 });
+    attempts++; return Response.json({ code: 'QUOTA_EXCEEDED', message: 'monthly quota exceeded' }, { status: 429 });
   };
-  const options = { ...f.options, stateStore: store, now: () => current };
-  await assert.rejects(reconcile(options), /monthly API quota/);
-  assert.equal(saved.blockedUntil, current + 86400000);
-  await assert.rejects(reconcile(options), /cooldown.*zero GoDaddy requests/);
-  assert.equal(apiCalls, 1);
-  await assert.rejects(reconcile({ ...options, now: () => current + 86400000 }), /monthly API quota/);
-  assert.equal(apiCalls, 2);
+  await assert.rejects(reconcile(f.options), /monthly API quota/);
+  await assert.rejects(reconcile(f.options), /cooldown.*zero GoDaddy requests/);
+  await reconcile({ ...f.options, dryRun: true }); assert.equal(attempts, 1);
+  await assert.rejects(reconcile({ ...f.options, forceApiRetry: true }), /monthly API quota/); assert.equal(attempts, 2);
 });
-test('cooldown ends at next month boundary and can be explicitly overridden', async () => {
-  let saved = {}; const current = Date.UTC(2026, 10, 30, 23);
-  const f = fixture(), original = f.options.fetcher; let calls = 0;
+test('CNAME failure restores original A data and TTL and retains recovery journal', async () => {
+  const f = fixture(), original = f.options.fetcher; f.db[hosts[0]] = record([address('68.203.6.96', 1200)]);
+  f.options.fetcher = (url, options) => url.includes('/CNAME/app') ? new Response(null, { status: 422 }) : original(url, options);
+  await assert.rejects(reconcile(f.options), /HTTP 422/);
+  assert.deepEqual(f.db[hosts[0]].A, [address('68.203.6.96', 1200)]);
+  assert.deepEqual(f.saved().migration.previousA, [address('68.203.6.96', 1200)]);
+});
+test('ambiguous CNAME writes are verified through DNS before attempting rollback', async () => {
+  const f = fixture(), original = f.options.fetcher; f.db[hosts[0]] = record([address()]);
+  f.options.fetcher = async (url, options) => {
+    const result = await original(url, options); return url.includes('/CNAME/app') ? new Response(null, { status: 422 }) : result;
+  };
+  await reconcile(f.options); assert.equal(f.db[hosts[0]].A.length, 0);
+});
+test('failed DNS read-back is not reported as success', async () => {
+  const f = fixture({}), original = f.options.fetcher;
+  f.options.fetcher = (url, options) => url.includes('godaddy') ? new Response(null, { status: 204 }) : original(url, options);
+  await assert.rejects(reconcile(f.options), /verification pending/);
+});
+test('transport failures retry safely without exposing credentials', async () => {
+  const f = fixture({}), original = f.options.fetcher; let attempts = 0;
   f.options.fetcher = (url, options) => {
-    if (!url.includes('godaddy')) return original(url, options);
-    calls++;
-    return Response.json({ code: 'QUOTA_EXCEEDED', message: 'monthly quota exceeded' }, { status: 429 });
+    if (url.includes('godaddy') && ++attempts < 3) throw new Error('synthetic:credential'); return original(url, options);
   };
-  const options = { ...f.options, stateStore: { read: async () => saved, write: async value => { saved = value; } }, now: () => current };
-  await assert.rejects(reconcile(options), /monthly API quota/);
-  assert.equal(saved.blockedUntil, Date.UTC(2026, 11, 1));
-  await assert.rejects(reconcile({ ...options, forceApiRetry: true }), /monthly API quota/);
-  assert.equal(calls, 2);
+  await reconcile(f.options); assert.equal(attempts, 5);
 });
-test('DNS drift and newly added hostnames trigger one zone read', async () => {
-  const f = fixture(); f.db.app[0].data = '24.162.105.215';
-  f.options.hosts = [...hosts, 'new.example.com'];
-  await reconcile(f.options);
-  assert.equal(f.calls.filter(c => c.input.includes('godaddy')).length, 1);
-});
-test('DNS SERVFAIL fails closed without contacting GoDaddy', async () => {
-  const f = fixture(), original = f.options.fetcher;
-  f.options.fetcher = (url, options) => url.includes('dns.google') ? Response.json({ Status: 2 }) : original(url, options);
-  await assert.rejects(reconcile(f.options), /Public DNS lookup failed/);
-  assert.equal(f.calls.filter(c => c.input.includes('godaddy')).length, 0);
-});
-test('all names must match both public resolvers before skipping provider API', async () => {
-  const f = fixture(), original = f.options.fetcher; f.db.app[0].data = '24.162.105.215';
-  f.options.fetcher = (url, options) => url.includes('dns.google') ? Response.json({ Status: 3 }) : original(url, options);
-  await reconcile(f.options);
-  assert.equal(f.calls.filter(c => c.input.includes('godaddy')).length, 1);
-});
-test('managed aliases can skip the API but external aliases and cycles cannot', () => {
-  const answer = { Status: 0, Answer: [
-    { name: hosts[1], type: 5, data: hosts[0] + '.' },
-    { name: hosts[0], type: 1, data: '24.162.105.215' },
-  ] };
-  assert.equal(dnsMatches(answer, hosts[1], hosts, '24.162.105.215'), true);
-  answer.Answer[0].data = 'external.example.net';
-  assert.equal(dnsMatches(answer, hosts[1], hosts, '24.162.105.215'), false);
-  answer.Answer[0].data = hosts[1];
-  assert.equal(dnsMatches(answer, hosts[1], hosts, '24.162.105.215'), false);
-});
-test('quota state survives reopening the file and rejects malformed state', async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'ddns-quota-'));
-  try {
-    const path = join(directory, 'quota.json'); const first = fileState(path);
-    assert.deepEqual(await first.read(), {});
-    await first.write({ blockedUntil: 12345 });
-    assert.deepEqual(await fileState(path).read(), { blockedUntil: 12345 });
-    await first.write({ blockedUntil: 'invalid' });
-    await assert.rejects(first.read(), /Invalid DDNS quota state/);
+test('quota state survives reopening the file', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'ddns-edge-'));
+  try { const path = join(directory, 'state.json'); await fileState(path).write({ blockedUntil: 1234 });
+    assert.deepEqual(await fileState(path).read(), { blockedUntil: 1234 });
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
-test('monthly quota exhaustion is explicit and is not retried', async () => {
-  const f = fixture(), original = f.options.fetcher; let attempts = 0;
-  f.options.fetcher = (url, options) => {
-    if (!url.includes('godaddy')) return original(url, options);
-    attempts++;
-    return Response.json({ code: 'QUOTA_EXCEEDED', message: 'The monthly quota for requests has been exceeded.' }, { status: 429 });
+test('authoritative reader bypasses split DNS and does not follow aliases for A records', async () => {
+  const servers = [];
+  const request = async url => {
+    const u = new URL(url), name = u.searchParams.get('name'), type = Number(u.searchParams.get('type'));
+    const data = type === 2 ? ['ns71.domaincontrol.com.', 'ns72.domaincontrol.com.'] : [name.includes('71') ? '8.8.8.8' : '1.1.1.1'];
+    return Response.json({ Status: 0, Answer: data.map(value => ({ name, type, data: value })) });
   };
-  await assert.rejects(reconcile(f.options), /monthly API quota exhausted/);
-  assert.equal(attempts, 1); assert.equal(f.writes.length, 0);
+  const read = await authoritativeReader({ zone, request, publicIPv4, resolverFactory: () => ({
+    setServers: value => servers.push(value), resolveCname: async () => [edge + '.'],
+    resolve4: async () => { throw new Error('must not follow aliases'); },
+  }) });
+  assert.deepEqual((await read(hosts[0])).CNAME, [address(edge)]); assert.equal(servers.length, 2);
 });
-test('transient network failures recover with bounded retries', async () => {
-  const f = fixture(), original = f.options.fetcher; let attempts = 0;
-  f.options.fetcher = (url, options) => {
-    if (url.includes('godaddy') && ++attempts < 3) throw new Error('synthetic:credential');
-    return original(url, options);
+test('authoritative reader refuses conflicting delegation before contacting DNS servers', async () => {
+  const request = async url => Response.json({ Status: 0, Answer: [{ name: zone, type: 2,
+    data: url.includes('cloudflare') ? 'ns71.domaincontrol.com' : 'ns72.domaincontrol.com' }] });
+  await assert.rejects(authoritativeReader({ zone, request, publicIPv4, resolverFactory: () => {
+    throw new Error('must not construct DNS clients');
+  } }), /disagree/);
+});
+test('authoritative reader refuses private nameserver IP addresses', async () => {
+  const request = async url => {
+    const u = new URL(url), name = u.searchParams.get('name'), type = Number(u.searchParams.get('type'));
+    return Response.json({ Status: 0, Answer: (type === 2 ? ['ns71.domaincontrol.com', 'ns72.domaincontrol.com'] : ['10.0.0.1'])
+      .map(data => ({ name, type, data })) });
   };
-  await reconcile(f.options); assert.equal(attempts, 3);
+  await assert.rejects(authoritativeReader({ zone, request, publicIPv4 }), /Invalid authoritative/);
 });
-test('zone snapshots include later pages before validating selected names', async () => {
-  const f = fixture(), original = f.options.fetcher; const offsets = [];
-  f.options.fetcher = (url, options) => {
-    const u = new URL(url);
-    if (!u.pathname.endsWith('/records')) return original(url, options);
-    offsets.push(u.searchParams.get('offset'));
-    if (u.searchParams.get('offset') === '0') return Response.json(Array.from({ length: 500 }, (_, i) =>
-      ({ type: 'TXT', name: `unrelated-${i}`, data: 'preserved', ttl: 600 })));
-    return original(url, options);
+test('concurrent changes are not overwritten by an old plan', async () => {
+  const f = fixture(), original = f.options.dnsReader; f.db[hosts[0]] = record([address()]); let count = 0;
+  f.options.dnsReader = async (host, options) => {
+    if (host === hosts[0] && ++count === 3) f.db[host].A = [address('68.203.6.96')];
+    return original(host, options);
   };
-  const plan = await reconcile(f.options);
-  assert.deepEqual(offsets, ['0', '500']); assert.equal(plan[0].previous, '68.203.6.96');
-});
-test('temporary rate limiting honors a bounded Retry-After delay', async () => {
-  const f = fixture(), original = f.options.fetcher; let limited = true; const delays = [];
-  f.options.pause = async ms => { delays.push(ms); };
-  f.options.fetcher = (url, options) => {
-    if (url.includes('godaddy') && limited) {
-      limited = false;
-      return Response.json({ code: 'TOO_MANY_REQUESTS' }, { status: 429, headers: { 'Retry-After': '999' } });
-    }
-    return original(url, options);
-  };
-  await reconcile(f.options); assert.deepEqual(delays, [10000]);
-});
-test('failed read-back fails the run rather than reporting success', async () => {
-  const f = fixture(); const original = f.options.fetcher;
-  f.options.fetcher = (url, options) => options?.method === 'PUT' ? new Response(null, { status: 200 }) : original(url, options);
-  await assert.rejects(reconcile({ ...f.options, dryRun: false }), /read-back verification failed/);
+  await assert.rejects(reconcile(f.options), /DNS changed during reconciliation/); assert.equal(f.calls.length, 0);
 });

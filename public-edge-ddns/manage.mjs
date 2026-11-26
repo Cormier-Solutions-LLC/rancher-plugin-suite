@@ -29,7 +29,10 @@ try {
     console.log('GoDaddy credential provisioned from cert-manager Secret (value hidden)');
     console.log(apply({ apiVersion: 'v1', kind: 'ConfigMap',
       metadata: { name: 'public-edge-ddns-script', namespace: 'public-edge' },
-      data: { 'updater.mjs': readFileSync(directory + 'updater.mjs', 'utf8') } }).trim());
+      data: {
+        'updater.mjs': readFileSync(directory + 'updater.mjs', 'utf8'),
+        'authoritative-dns.mjs': readFileSync(directory + 'authoritative-dns.mjs', 'utf8'),
+      } }).trim());
     console.log(apply(JSON.parse(readFileSync(directory + 'resources.json', 'utf8'))).trim());
     console.log('Installed with schedule suspended; run preview, then run, then enable');
   } else if (operation === 'preview' || operation === 'run') {

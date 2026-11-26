@@ -1,30 +1,10 @@
 import { readFile, realpath, writeFile, rename } from 'node:fs/promises';
 import { isIP } from 'node:net';
 import { pathToFileURL } from 'node:url';
+import { authoritativeReader } from './authoritative-dns.mjs';
 
 const apiBase = 'https://api.godaddy.com/v1/domains';
 const ipServices = ['https://api.ipify.org', 'https://checkip.amazonaws.com'];
-const dnsServices = ['https://cloudflare-dns.com/dns-query', 'https://dns.google/resolve'];
-
-export function dnsMatches(response, host, names, ip) {
-  if (response.Status !== 0 || response.TC === true) return false;
-  const answers = response.Answer ?? [];
-  const normalize = value => typeof value === 'string' ? value.toLowerCase().replace(/\.$/, '') : '';
-  const seen = new Set();
-  let current = host;
-  while (!seen.has(current)) {
-    seen.add(current);
-    const records = answers.filter(r => normalize(r.name) === current);
-    const addresses = records.filter(r => r.type === 1);
-    const aliases = records.filter(r => r.type === 5);
-    if (!aliases.length) return addresses.length === 1 && addresses[0].data === ip;
-    if (addresses.length || aliases.length !== 1) return false;
-    current = normalize(aliases[0].data);
-    if (!names.includes(current)) return false;
-  }
-  return false;
-}
-
 export function fileState(path) {
   return {
     async read() {
@@ -69,9 +49,14 @@ export function hostnames(value, zone) {
 
 export async function reconcile({ hosts, zone, token, dryRun = true, fetcher = fetch, log = console.log,
   pause = ms => new Promise(resolve => setTimeout(resolve, ms)), stateStore,
-  now = Date.now, forceApiRetry = false }) {
+  now = Date.now, forceApiRetry = false, dnsReader, edgeHost = `ddns_edge.${zone}` }) {
   const names = hostnames(hosts, zone);
   if (!names.length) { log('No public hostnames configured; no DNS changes'); return []; }
+  if (!edgeHost.endsWith(`.${zone}`) || !edgeHost.split('.').every(label => /^[a-z0-9_](?:[a-z0-9_-]{0,61}[a-z0-9_])?$/.test(label)) || names.includes(edgeHost)) {
+    throw new Error('Invalid shared edge DNS name or self-referencing public hostname');
+  }
+  let state = stateStore ? await stateStore.read() : {};
+  const save = async patch => { state = { ...state, ...patch }; if (stateStore) await stateStore.write(state); };
   if (!token || /[\r\n]/.test(token)) throw new Error('Invalid GoDaddy credential');
   const authorization = token.startsWith('gd_pat_') ? `Bearer ${token}` : `sso-key ${token}`;
   let apiRequests = 0;
@@ -96,7 +81,7 @@ export async function reconcile({ hosts, zone, token, dryRun = true, fetcher = f
           const nextMonth = new Date(now());
           const blockedUntil = Math.min(now() + 86400000,
             Date.UTC(nextMonth.getUTCFullYear(), nextMonth.getUTCMonth() + 1, 1));
-          if (stateStore) await stateStore.write({ blockedUntil });
+          await save({ blockedUntil });
           throw new Error('GoDaddy monthly API quota exhausted (QUOTA_EXCEEDED); restore account quota');
         }
       }
@@ -117,103 +102,95 @@ export async function reconcile({ hosts, zone, token, dryRun = true, fetcher = f
   }));
   if (addresses[0] !== addresses[1]) throw new Error('Public IPv4 services disagree; refusing DNS changes');
   const ip = addresses[0];
-  // Query public resolvers through HTTPS, bypassing private split-horizon DNS.
-  // Check every name, so added names and record drift are not hidden by an IP cache.
-  const dnsChecks = await Promise.all(names.map(async host => {
-    const matches = await Promise.all(dnsServices.map(async base => {
-      const url = `${base}?name=${encodeURIComponent(host)}&type=A`;
-      const response = await request(url, { headers: { Accept: 'application/dns-json' } });
-      if (!response.ok) throw new Error(`Public DNS lookup returned HTTP ${response.status}`);
-      let body;
-      try { body = await response.json(); } catch { throw new Error('Invalid public DNS response'); }
-      if (![0, 3].includes(body.Status) || body.TC === true ||
-        (body.Answer !== undefined && !Array.isArray(body.Answer))) throw new Error('Public DNS lookup failed; refusing API changes');
-      return dnsMatches(body, host, names, ip);
-    }));
-    return matches.every(Boolean);
-  }));
-  if (dnsChecks.every(Boolean)) {
-    log(`Completed public DNS verification: ${names.length} hostnames, public IPv4 ${ip}; zero GoDaddy requests`);
+  const read = dnsReader ?? await authoritativeReader({ zone, request, publicIPv4 });
+  const desired = [
+    { host: edgeHost, type: 'A', data: ip },
+    ...names.map(host => ({ host, type: 'CNAME', data: edgeHost })),
+  ];
+  const observed = await Promise.all(desired.map(async item => ({ ...item, records: await read(item.host) })));
+  const correct = item => item.records[item.type].length === 1 &&
+    item.records[item.type][0].data === item.data &&
+    (item.type === 'A' ? item.records.CNAME.length === 0 : item.records.A.length === 0);
+  const plan = observed.filter(item => !correct(item));
+  if (!plan.length) {
+    log(`Completed public DNS verification: ${names.length} CNAMEs -> ${edgeHost} -> ${ip}; zero GoDaddy requests`);
     return [];
   }
-  const state = stateStore ? await stateStore.read() : {};
+  // Check all names before modifying anything. Never remove unrelated record types.
+  for (const item of plan) {
+    item.records = await read(item.host, { conflicts: true });
+    if (item.type === 'A' && (item.records.CNAME.length || item.records.A.length > 1)) {
+      throw new Error(`Shared edge ${edgeHost} must have one A record and no CNAME`);
+    }
+    if (item.records.CNAME.length > 1 || (item.records.A.length && item.records.CNAME.length) ||
+      item.records.conflicts?.length) throw new Error(`Conflicting DNS records prevent conversion for ${item.host}`);
+    item.name = item.host.slice(0, -(zone.length + 1));
+    item.ttl = item.records.A[0]?.ttl ?? item.records.CNAME[0]?.ttl ?? 600;
+    if (!Number.isInteger(item.ttl) || item.ttl < 600 || item.ttl > 86400) throw new Error(`Unexpected authoritative TTL for ${item.host}`);
+    log(`PLAN ${item.host}: ${item.type} ${item.data}; ttl=${item.ttl}`);
+  }
+  if (dryRun) {
+    log(`Completed dry run: ${plan.length} changes; zero GoDaddy requests`);
+    return plan;
+  }
   if (!forceApiRetry && state.blockedUntil > now()) {
     throw new Error(`Public DNS needs updating; GoDaddy quota cooldown until ${new Date(state.blockedUntil).toISOString()}; zero GoDaddy requests`);
   }
-  const headers = { Authorization: authorization, Accept: 'application/json' };
-  async function records(type, name) {
+  await save({ recovery: { recordedAt: new Date(now()).toISOString(),
+    records: plan.map(item => ({ host: item.host, previous: item.records })) } });
+  const headers = { Authorization: authorization, Accept: 'application/json', 'Content-Type': 'application/json' };
+  async function put(type, name, records) {
     const url = `${apiBase}/${encodeURIComponent(zone)}/records/${type}/${encodeURIComponent(name)}`;
-    const response = await request(url, { headers });
-    if (!response.ok) throw new Error(`GoDaddy ${type} read returned HTTP ${response.status}`);
-    let data;
-    try { data = await response.json(); } catch { throw new Error('Invalid GoDaddy DNS response'); }
-    if (!Array.isArray(data) || data.some(r => r.type !== type || r.name !== name || typeof r.data !== 'string')) {
-      throw new Error('Unexpected GoDaddy DNS record identity');
-    }
-    return data;
+    const response = await request(url, { method: 'PUT', headers, body: JSON.stringify(records) });
+    if (!response.ok) throw new Error(`GoDaddy ${type} update returned HTTP ${response.status}`);
   }
-  // One paginated zone snapshot replaces two API reads per hostname on every run.
-  // An unchanged zone with fewer than 500 records costs only one GoDaddy request.
-  const snapshot = [];
-  for (let offset = 0; ; offset += 500) {
-    const response = await request(`${apiBase}/${encodeURIComponent(zone)}/records?limit=500&offset=${offset}`, { headers });
-    if (!response.ok) throw new Error(`GoDaddy zone read returned HTTP ${response.status}`);
-    let page;
-    try { page = await response.json(); } catch { throw new Error('Invalid GoDaddy DNS response'); }
-    if (!Array.isArray(page) || page.some(r => typeof r.name !== 'string' || typeof r.type !== 'string' || typeof r.data !== 'string')) {
-      throw new Error('Unexpected GoDaddy zone snapshot');
+  async function verify(item) {
+    for (let attempt = 0; attempt < 6; attempt++) {
+      const records = await read(item.host);
+      if (correct({ ...item, records })) return;
+      if (attempt < 5) await pause(2000);
     }
-    snapshot.push(...page);
-    if (page.length < 500) break;
-    if (offset >= 9500) throw new Error('GoDaddy zone exceeds snapshot safety limit');
+    throw new Error(`Authoritative DNS verification pending for ${item.host}`);
   }
-  // Validate every selected name before making any writes.
-  const plan = [];
-  for (const host of names) {
-    const name = host.slice(0, -(zone.length + 1));
-    const existing = snapshot.filter(r => r.type === 'A' && r.name === name);
-    const aliases = snapshot.filter(r => r.type === 'CNAME' && r.name === name);
-    if (aliases.length) {
-      const aliasTarget = aliases[0].data.toLowerCase().replace(/\.$/, '');
-      if (aliases.length !== 1 || existing.length || !names.includes(aliasTarget)) {
-        throw new Error(`Refusing to replace CNAME for ${host}; target must be another managed hostname`);
-      }
-      plan.push({ host, name, aliasTarget });
+  // The shared A record is first: aliases are never directed to a missing target.
+  for (const item of plan) {
+    const fresh = await read(item.host, { conflicts: true });
+    if (correct({ ...item, records: fresh })) {
+      log(`${item.host} already has the desired ${item.type}; zero writes for this name`);
       continue;
     }
-    if (existing.length > 1) throw new Error(`Refusing to replace multiple A records for ${host}`);
-    const ttl = existing[0]?.ttl ?? 600;
-    if (!Number.isInteger(ttl) || ttl < 600 || ttl > 86400) throw new Error(`Unexpected DNS TTL for ${host}`);
-    plan.push({ host, name, previous: existing[0]?.data ?? null, ip, ttl });
-  }
-  for (const item of plan.filter(item => item.aliasTarget)) {
-    const seen = new Set([item.host]);
-    let target = item.aliasTarget;
-    while (target) {
-      if (seen.has(target)) throw new Error('CNAME loop in managed public hostnames');
-      seen.add(target);
-      target = plan.find(candidate => candidate.host === target)?.aliasTarget;
+    if (JSON.stringify(fresh) !== JSON.stringify(item.records)) {
+      throw new Error(`DNS changed during reconciliation for ${item.host}; retry with a fresh plan`);
     }
-  }
-  for (const item of plan) {
-    if (item.aliasTarget) { log(`${item.host} preserved as CNAME -> ${item.aliasTarget} (managed target)`); continue; }
-    if (item.previous === ip) { log(`${item.host} already points to ${ip}`); continue; }
-    if (dryRun) { log(`DRY RUN ${item.host}: ${item.previous ?? '(missing)'} -> ${ip}; ttl=${item.ttl}`); continue; }
-    // PUT atomically replaces only the A record set for this exact hostname.
-    const url = `${apiBase}/${encodeURIComponent(zone)}/records/A/${encodeURIComponent(item.name)}`;
-    const response = await request(url, {
-      method: 'PUT', headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify([{ data: ip, ttl: item.ttl }]),
-    });
-    if (!response.ok) throw new Error(`GoDaddy update for ${item.host} returned HTTP ${response.status}`);
-    const verified = await records('A', item.name);
-    if (verified.length !== 1 || verified[0].data !== ip || verified[0].ttl !== item.ttl) {
-      throw new Error(`GoDaddy read-back verification failed for ${item.host}`);
+    if (item.type === 'CNAME' && item.records.A.length) {
+      // GoDaddy cannot hold A and CNAME at the same owner. Journal the exact old
+      // A records before deleting them, then restore them if CNAME creation fails.
+      const previous = item.records.A.map(r => ({ data: r.data, ttl: r.ttl }));
+      await save({ migration: { host: item.host, previousA: previous } });
+      const url = `${apiBase}/${encodeURIComponent(zone)}/records/A/${encodeURIComponent(item.name)}`;
+      const response = await request(url, { method: 'DELETE', headers });
+      if (!response.ok) throw new Error(`GoDaddy A removal returned HTTP ${response.status}`);
+      try { await put('CNAME', item.name, [{ data: edgeHost, ttl: item.ttl }]); }
+      catch (error) {
+        const current = await read(item.host);
+        if (current.CNAME.length === 1 && current.CNAME[0].data === edgeHost) {
+          log(`CNAME write confirmed by authoritative DNS despite API error for ${item.host}`);
+        } else if (!current.CNAME.length) {
+          try { await put('A', item.name, previous); log(`Restored previous A records for ${item.host}`); }
+          catch { throw new Error(`CNAME migration failed for ${item.host}; saved A-record recovery is in quota state`); }
+          throw error;
+        } else throw error;
+      }
+    } else {
+      await put(item.type, item.name, [{ data: item.data, ttl: item.ttl }]);
     }
-    log(`UPDATED ${item.host}: ${item.previous ?? '(missing)'} -> ${ip}; ttl=${item.ttl}; verified`);
+    await verify(item);
+    await save({ migration: null });
+    log(`UPDATED ${item.host}: ${item.type} ${item.data}; verified through authoritative DNS`);
   }
-  if (stateStore) await stateStore.write({});
-  log(`Completed ${dryRun ? 'dry run' : 'reconciliation'}: ${plan.length} hostnames, public IPv4 ${ip}; ${apiRequests} GoDaddy requests`);
+  if (stateStore) await stateStore.write({ recovery: state.recovery });
+  log(`Completed reconciliation: ${plan.length} changes; shared A ${edgeHost} -> ${ip}; ${apiRequests} GoDaddy write requests, zero API reads`);
+
   return plan;
 }
 

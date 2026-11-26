@@ -1,5 +1,15 @@
 # Public application dynamic DNS
 
+Current layout:
+
+```text
+application hostname --CNAME--> ddns_edge.cormierconsulting.io --A--> current WAN IPv4
+```
+
+Only `ddns_edge` changes its A-record address when the WAN IP changes. Application
+records are created or repaired as direct CNAMEs to it. DNS verification does not
+use GoDaddy's domain/zone API.
+
 `public-edge/public-edge-ddns` is a Kubernetes CronJob that reconciles the public
 IPv4 address every five minutes. It reads `public-hosts.json` directly from the
 existing `public-edge-config` ConfigMap at the start of each Job. Continue managing
@@ -10,43 +20,44 @@ separate Secret in `public-edge`. Credentials are mounted as a read-only file;
 the Job has no Kubernetes API token or RBAC permissions. When that credential is
 rotated, refresh the copied Secret using the installation command below.
 
-## Behavior
+## Shared edge model
 
-- Requires agreement between ipify and AWS Check IP on a public IPv4 address.
-- Manages only exact subdomains of the configured `cormierconsulting.io` zone.
-- Reads and validates all selected records before making writes.
-- Checks every configured hostname through Cloudflare and Google public DNS over
-  HTTPS before accessing GoDaddy. Both resolvers must confirm the expected IPv4,
-  with a single A record or an alias chain confined to the managed hostname list.
-  Healthy runs make **zero GoDaddy requests**. NXDOMAIN, changed addresses, newly
-  added names, and resolver disagreement require provider reconciliation; resolver
-  errors fail closed. Private split-horizon DNS does not influence these checks.
-- When reconciliation is needed, uses one paginated zone snapshot instead of two
-  GoDaddy reads per hostname. Write verification adds calls only when addresses
-  change. Every GoDaddy attempt is counted in the job logs without credentials.
-- Uses GoDaddy's type-and-name-specific PUT endpoint to replace each changed A
-  record set atomically. Preserves its TTL; creates missing A records at TTL 600.
-- Leaves CNAMEs intact when their target is another managed hostname, and rejects
-  cycles, external CNAME targets, mixed CNAME/A records, or multiple A records.
-- Makes no writes when the correct address is already present.
-- Does not remove records when a hostname leaves the allowlist. It leaves AAAA,
-  certificate TXT, unrelated DNS records, router settings, and the gateway alone.
-- Retries transient network/server errors with bounded delays and identifies the
-  failing hostname in network errors. Monthly `QUOTA_EXCEEDED` fails immediately
-  with an explicit message. A small persistent volume stores a cooldown across
-  Jobs, allowing at most one automatic provider probe per 24 hours until quota
-  recovers. The cooldown also ends at the next UTC month boundary. DNS/IP checks
-  continue every five minutes, and a DNS mismatch during cooldown remains a failed
-  Job, so stale records are not reported as healthy. The quota state contains no
-  credentials. Invalid/unreadable state fails closed instead of bypassing the guard.
-- Exits unsuccessfully on lookup/API/verification failures and never logs
-  credentials or upstream error bodies. The next scheduled run retries.
+- `ddns_edge.cormierconsulting.io` is the only A record maintained for WAN IPv4.
+- Every hostname in `public-edge-config/public-hosts.json` is a **direct CNAME**
+  to that owner. Existing chained aliases are retargeted and missing aliases created.
+- Both IP services must agree on a valid public IPv4 address.
+- Discover public GoDaddy NS delegation through Google and Cloudflare DNS over
+  HTTPS, then query both authoritative DNS servers directly on port 53. This
+  bypasses private split DNS and recursive cache delay. The nameservers must agree.
+- Verification and dry runs make **zero GoDaddy API calls**. The updater contains
+  no GoDaddy GET requests or domain/zone-list reads. An ordinary WAN address
+  change requires exactly one successful PUT to `A/ddns_edge`; aliases stay intact.
+- API writes occur only for records whose DNS data differs from the desired model.
+  Authoritative DNS verifies each accepted write. Removed names are left untouched.
+- Before changing anything, preflight all names. Refuse unexpected AAAA, TXT, MX,
+  CAA, or delegated NS conflicts rather than deleting unrelated records. The shared
+  owner must not be a CNAME or a multi-address A record set.
+- A-to-CNAME conversion requires deleting that owner's old A record set before
+  putting its CNAME. Save the original authoritative A data and TTL in the state
+  PVC first; attempt restoration if CNAME creation fails. A saved recovery snapshot
+  remains available after successful migration. These two API writes are not an
+  atomic transaction: a short DNS gap can occur during conversion. The shared
+  target is created and verified before any application aliases change.
+- Recheck each name immediately before changing it. Already-correct names are
+  skipped, while unexpected concurrent changes abort the plan for a fresh retry.
+- The exact `ddns_edge` spelling, including its underscore, is preserved.
+- Transient network/server errors use bounded retries. Monthly quota exhaustion
+  persists a cooldown across Jobs with at most one automatic attempt daily (or
+  the next UTC month boundary). DNS/IP checks still run every five minutes.
+  Dry runs still show the plan during cooldown without contacting the API.
+- Failed or deferred DNS updates remain failed Jobs. Credentials and upstream
+  error bodies never enter logs. Public DNS backup/recovery data contains no tokens.
 
 Schedule: `*/5 * * * *`, America/Chicago. Overlapping scheduled Jobs are forbidden;
 each Job has a three-minute deadline, no Job-level retries, and one-day retention. Successful
 and failed history limits are two and three respectively. The pinned Node image
 runs without root, privilege escalation, a writable root filesystem, or inbound
-network access. Egress permits cluster DNS and public HTTPS.
+network access. Egress permits cluster DNS, public authoritative DNS (UDP/TCP 53), and public HTTPS.
 
 ## Installation and validation
 
@@ -90,7 +101,7 @@ node public-edge-ddns/manage.mjs run --force-api-retry
 This does not bypass provider limits; it permits one manual attempt before the
 daily cooldown expires. Successful reconciliation clears the cooldown. Normal
 scheduled Jobs have no override. The 1 GiB `public-edge-ddns-state` Longhorn PVC
-stores only quota cooldown state, and the container remains without API/RBAC
+stores quota cooldown and DNS migration recovery state, and the container remains without API/RBAC
 access. Preserve this PVC on script reinstall so backoff survives pod restarts.
 
 ## Pause and rollback
@@ -108,8 +119,8 @@ public IPv4 again.
 
 To retire this updater after suspending it and checking active Jobs, delete only
 its CronJob, NetworkPolicy, `public-edge-ddns-script` ConfigMap, and
-`public-edge-ddns-godaddy` Secret. The `public-edge-ddns-state` PVC contains only
-cooldown state and can be removed separately when retiring the updater. Do not delete `public-edge-config` or
+`public-edge-ddns-godaddy` Secret. The `public-edge-ddns-state` PVC contains
+quota cooldown and migration recovery state and can be removed separately when retiring the updater. Do not delete `public-edge-config` or
 `public-edge-tls`. Guest 9001 remains independently responsible for
 `vpn.cormiersolutions.com`.
 
@@ -172,3 +183,25 @@ This controls future request consumption; it does not restore the exhausted
 provider quota or claim that stale/missing public DNS has been repaired. No DNS
 write occurred during these previews. Private backups and evidence are under
 `.local/ddns-request-guard/`.
+
+### Shared target rollout
+
+Replaced per-application A reconciliation with one shared A owner plus direct
+CNAMEs for all nine public edge names. All 21 replacement tests pass, including
+single-A WAN changes, zero API reads, migration ordering, rollback, unrelated-record
+conflicts, concurrent edits, and authoritative DNS checks. The script ConfigMap
+now mounts `authoritative-dns.mjs` alongside the updater, and the updater's isolated
+NetworkPolicy permits public DNS on UDP/TCP 53 for direct authoritative queries.
+
+In-cluster dry run `public-edge-ddns-preview-1795669973213` found the shared A owner
+correct and eight direct CNAMEs already present; only Cutaway still pointed to
+Proofing. It made zero API calls. Manual reconciliation
+`public-edge-ddns-run-1795670003994` attempted one CNAME PUT for Cutaway and received
+the still-exhausted monthly quota response; no DNS write succeeded. The existing
+Cutaway -> Proofing -> ddns_edge chain remained intact. The enabled schedule is
+unchanged at five minutes. Once quota is restored, run with `--force-api-retry` to
+complete any remaining direct-CNAME repairs without waiting for cooldown expiry.
+
+Private authoritative DNS snapshots and pre-change resource backups are under
+`.local/ddns-shared-edge/`. The state PVC preserves the previous records before
+future conversions, including original A data and TTL, for recovery.
