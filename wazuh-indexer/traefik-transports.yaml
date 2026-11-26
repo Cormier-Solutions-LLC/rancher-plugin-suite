@@ -1,0 +1,19 @@
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: wazuh-indexer
+  namespace: opensearch
+spec:
+  serverName: wazuh-indexer.opensearch.svc.cluster.local
+  rootCAsSecrets:
+    - wazuh-indexer-node-tls
+---
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: wazuh-indexer-dashboards
+  namespace: opensearch
+spec:
+  serverName: wazuh-indexer-dashboards.opensearch.svc.cluster.local
+  rootCAsSecrets:
+    - wazuh-indexer-dashboards-tls

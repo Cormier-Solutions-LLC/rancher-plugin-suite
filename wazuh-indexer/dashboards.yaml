@@ -1,0 +1,106 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wazuh-indexer-dashboards
+  namespace: opensearch
+data:
+  opensearch_dashboards.yml: |
+    server.host: "0.0.0.0"
+    server.name: wazuh-indexer-dashboards
+    server.ssl.enabled: true
+    server.ssl.certificate: /etc/dashboards-tls/tls.crt
+    server.ssl.key: /etc/dashboards-tls/tls.key
+    opensearch.ssl.verificationMode: full
+    opensearch.ssl.certificateAuthorities: ["/etc/dashboards-tls/ca.crt"]
+    opensearch_security.cookie.secure: true
+    status.allowAnonymous: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wazuh-indexer-dashboards
+  namespace: opensearch
+spec:
+  selector:
+    app.kubernetes.io/name: wazuh-indexer-dashboards
+  ports:
+    - name: https
+      port: 5601
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wazuh-indexer-dashboards
+  namespace: opensearch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: wazuh-indexer-dashboards
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: wazuh-indexer-dashboards
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: dashboards
+          image: docker.io/opensearchproject/opensearch-dashboards:2.19.7@sha256:a8e6342868fe56d9443786793708edcc8bbd6b8a58b62392e148d0051683fa59
+          env:
+            - name: OPENSEARCH_HOSTS
+              value: '["https://wazuh-indexer.opensearch.svc.cluster.local:9200"]'
+            - name: OPENSEARCH_USERNAME
+              value: kibanaserver
+            - name: OPENSEARCH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wazuh-indexer-dashboards-user
+                  key: password
+          ports:
+            - name: https
+              containerPort: 5601
+          resources:
+            requests:
+              cpu: 250m
+              memory: 1Gi
+            limits:
+              memory: 2Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          startupProbe:
+            httpGet:
+              scheme: HTTPS
+              path: /api/status
+              port: https
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              scheme: HTTPS
+              path: /api/status
+              port: https
+          volumeMounts:
+            - name: config
+              mountPath: /usr/share/opensearch-dashboards/config/opensearch_dashboards.yml
+              subPath: opensearch_dashboards.yml
+              readOnly: true
+            - name: tls
+              mountPath: /etc/dashboards-tls
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: wazuh-indexer-dashboards
+        - name: tls
+          secret:
+            secretName: wazuh-indexer-dashboards-tls
+            defaultMode: 0440

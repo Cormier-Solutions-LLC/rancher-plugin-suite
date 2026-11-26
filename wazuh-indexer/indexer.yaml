@@ -1,0 +1,266 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: wazuh-indexer-local-retain
+provisioner: driver.longhorn.io
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  dataEngine: v1
+  dataLocality: strict-local
+  diskSelector: thin
+  fsType: xfs
+  numberOfReplicas: "1"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wazuh-indexer
+  namespace: opensearch
+data:
+  opensearch.yml: |
+    cluster.name: wazuh-indexer
+    network.host: 0.0.0.0
+    path.data: /var/lib/wazuh-indexer
+    path.logs: /var/log/wazuh-indexer
+    discovery.seed_hosts:
+      - wazuh-indexer-0.wazuh-indexer-discovery.opensearch.svc.cluster.local
+      - wazuh-indexer-1.wazuh-indexer-discovery.opensearch.svc.cluster.local
+      - wazuh-indexer-2.wazuh-indexer-discovery.opensearch.svc.cluster.local
+    action.destructive_requires_name: true
+    cluster.routing.allocation.disk.watermark.low: 70%
+    cluster.routing.allocation.disk.watermark.high: 80%
+    cluster.routing.allocation.disk.watermark.flood_stage: 90%
+    compatibility.override_main_response_version: true
+    plugins.security.allow_default_init_securityindex: false
+    plugins.security.ssl.http.enabled: true
+    plugins.security.ssl.certificates_hot_reload.enabled: true
+    plugins.security.ssl.http.clientauth_mode: OPTIONAL
+    plugins.security.ssl.http.pemcert_filepath: certs/tls.crt
+    plugins.security.ssl.http.pemkey_filepath: certs/tls.key
+    plugins.security.ssl.http.pemtrustedcas_filepath: certs/ca.crt
+    plugins.security.ssl.transport.pemcert_filepath: certs/tls.crt
+    plugins.security.ssl.transport.pemkey_filepath: certs/tls.key
+    plugins.security.ssl.transport.pemtrustedcas_filepath: certs/ca.crt
+    plugins.security.ssl.transport.enforce_hostname_verification: false
+    plugins.security.ssl.transport.resolve_hostname: false
+    plugins.security.nodes_dn:
+      - CN=wazuh-indexer-node
+    plugins.security.authcz.admin_dn:
+      - CN=wazuh-indexer-security-admin
+    plugins.security.restapi.roles_enabled:
+      - all_access
+      - security_rest_api_access
+    plugins.security.check_snapshot_restore_write_privileges: true
+    plugins.security.enable_snapshot_restore_privilege: true
+    plugins.security.audit.type: internal_opensearch
+    plugins.security.system_indices.enabled: true
+    plugins.security.system_indices.indices:
+      - .opendistro-alerting-config
+      - .opendistro-alerting-alert*
+      - .opendistro-anomaly-results*
+      - .opendistro-anomaly-detector*
+      - .opendistro-anomaly-checkpoints
+      - .opendistro-anomaly-detection-state
+      - .opendistro-reports-*
+      - .opendistro-notifications-*
+      - .opendistro-notebooks
+      - .opensearch-observability
+      - .opendistro-asynchronous-search-response*
+      - .replication-metadata-store
+  start.sh: |
+    #!/bin/bash
+    set -euo pipefail
+    set -- "-Enode.name=$POD_NAME"
+    # Bootstrap is enabled explicitly once on a new cluster.
+    if [[ "$(cat /etc/wazuh-launch/bootstrap)" == "enabled" ]]; then
+      set -- "$@" "-Ecluster.initial_cluster_manager_nodes=wazuh-indexer-0,wazuh-indexer-1,wazuh-indexer-2"
+    fi
+    exec /usr/share/wazuh-indexer/bin/opensearch "$@"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wazuh-indexer-discovery
+  namespace: opensearch
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  selector:
+    app.kubernetes.io/name: wazuh-indexer
+  ports:
+    - name: transport
+      port: 9300
+    - name: https
+      port: 9200
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wazuh-indexer
+  namespace: opensearch
+spec:
+  selector:
+    app.kubernetes.io/name: wazuh-indexer
+  ports:
+    - name: https
+      port: 9200
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: wazuh-indexer
+  namespace: opensearch
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: wazuh-indexer
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: wazuh-indexer
+  namespace: opensearch
+spec:
+  serviceName: wazuh-indexer-discovery
+  podManagementPolicy: Parallel
+  replicas: 3
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: wazuh-indexer
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: wazuh-indexer
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 90
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values: [kubworker02, kubworker04, kubworker14]
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: topology.kubernetes.io/zone
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: wazuh-indexer
+      initContainers:
+        - name: max-map-count
+          image: docker.io/library/busybox:1.37.0
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              if [ "$(cat /proc/sys/vm/max_map_count)" -lt 262144 ]; then
+                sysctl -w vm.max_map_count=262144
+              fi
+          securityContext:
+            privileged: true
+            runAsNonRoot: false
+            runAsUser: 0
+            runAsGroup: 0
+          resources:
+            requests:
+              cpu: 10m
+              memory: 8Mi
+            limits:
+              memory: 32Mi
+      containers:
+        - name: indexer
+          image: docker.io/wazuh/wazuh-indexer:4.14.11@sha256:6855bea0a883fda201cba1b9969a744d01559bb4ee05aa4703b937edee0c11e5
+          command: [/bin/bash, /etc/wazuh-config/start.sh]
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPENSEARCH_PATH_CONF
+              value: /usr/share/wazuh-indexer/config
+            - name: OPENSEARCH_JAVA_OPTS
+              value: -Xms1536m -Xmx1536m
+          ports:
+            - name: https
+              containerPort: 9200
+            - name: transport
+              containerPort: 9300
+          resources:
+            requests:
+              cpu: "1"
+              memory: 3Gi
+            limits:
+              memory: 3Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          startupProbe:
+            tcpSocket:
+              port: https
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -ec
+                - |
+                  host=wazuh-indexer.opensearch.svc.cluster.local
+                  code=$(curl -sS --max-time 3 --cacert /usr/share/wazuh-indexer/config/certs/ca.crt \
+                    --resolve "$host:9200:127.0.0.1" -o /dev/null -w '%{http_code}' "https://$host:9200/")
+                  test "$code" = 401
+            periodSeconds: 10
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: config
+              mountPath: /etc/wazuh-config
+              readOnly: true
+            - name: config
+              mountPath: /usr/share/wazuh-indexer/config/opensearch.yml
+              subPath: opensearch.yml
+              readOnly: true
+            - name: bootstrap
+              mountPath: /etc/wazuh-launch
+              readOnly: true
+            - name: node-tls
+              mountPath: /usr/share/wazuh-indexer/config/certs
+              readOnly: true
+            - name: data
+              mountPath: /var/lib/wazuh-indexer
+      volumes:
+        - name: config
+          configMap:
+            name: wazuh-indexer
+        - name: bootstrap
+          configMap:
+            name: wazuh-indexer-launch
+        - name: node-tls
+          secret:
+            secretName: wazuh-indexer-node-tls
+            defaultMode: 0440
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: wazuh-indexer-local-retain
+        resources:
+          requests:
+            storage: 16Gi

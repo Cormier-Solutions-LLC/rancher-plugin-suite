@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wazah-private-ingress
+  namespace: opensearch
+spec:
+  dnsNames:
+    - wazah.cormierconsulting.io
+  secretName: wazah-private-ingress-tls
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-prod

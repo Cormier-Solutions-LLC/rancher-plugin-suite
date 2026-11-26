@@ -1,5 +1,10 @@
 # Private distributed OpenSearch
 
+> The upstream cluster was retired on 2026-11-26. The active search
+> backend and rollback sequence are documented in [Private Wazuh search
+> backend](../wazuh-indexer/README.md). This file describes the legacy
+> deployment and its retained recovery resources.
+
 OpenSearch and Dashboards 3.9.0 run under OpenSearch operator 3.0.0. The
 deployment downloads the official operator 3.0.14 Helm chart and verifies its
 SHA-256 digest before installation.

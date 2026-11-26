@@ -1,0 +1,441 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wazuh-manager
+  namespace: opensearch
+spec:
+  secretName: wazuh-manager-tls
+  commonName: wazuh-manager
+  dnsNames:
+    - wazuh-manager.opensearch.svc.cluster.local
+  usages: [server auth, client auth]
+  duration: 2160h
+  renewBefore: 360h
+  privateKey:
+    encoding: PKCS8
+    rotationPolicy: Always
+  issuerRef:
+    name: wazuh-indexer-ca
+    kind: Issuer
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wazuh-dashboard
+  namespace: opensearch
+spec:
+  secretName: wazuh-dashboard-tls
+  commonName: wazuh-dashboard
+  dnsNames:
+    - wazuh-dashboard.opensearch.svc.cluster.local
+  usages: [server auth]
+  duration: 2160h
+  renewBefore: 360h
+  privateKey:
+    encoding: PKCS8
+    rotationPolicy: Always
+  issuerRef:
+    name: wazuh-indexer-ca
+    kind: Issuer
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wazuh-manager
+  namespace: opensearch
+data:
+  ossec.conf: |
+    <ossec_config>
+      <global>
+        <jsonout_output>yes</jsonout_output>
+        <alerts_log>yes</alerts_log>
+        <logall>no</logall>
+        <logall_json>no</logall_json>
+        <email_notification>no</email_notification>
+      </global>
+      <alerts>
+        <log_alert_level>3</log_alert_level>
+      </alerts>
+      <remote>
+        <connection>secure</connection>
+        <port>1514</port>
+        <protocol>tcp</protocol>
+      </remote>
+      <auth>
+        <disabled>no</disabled>
+        <port>1515</port>
+        <use_password>yes</use_password>
+        <use_source_ip>no</use_source_ip>
+      </auth>
+      <ruleset>
+        <decoder_dir>ruleset/decoders</decoder_dir>
+        <rule_dir>ruleset/rules</rule_dir>
+        <decoder_dir>etc/decoders</decoder_dir>
+        <rule_dir>etc/rules</rule_dir>
+        <list>etc/lists/audit-keys</list>
+        <list>etc/lists/amazon/aws-eventnames</list>
+        <list>etc/lists/security-eventchannel</list>
+      </ruleset>
+      <vulnerability-detection>
+        <enabled>yes</enabled>
+        <index-status>yes</index-status>
+        <feed-update-interval>60m</feed-update-interval>
+      </vulnerability-detection>
+      <indexer>
+        <enabled>yes</enabled>
+        <hosts>
+          <host>https://wazuh-indexer.opensearch.svc.cluster.local:9200</host>
+        </hosts>
+        <ssl>
+          <certificate_authorities>
+            <ca>/etc/wazuh-manager-tls/ca.crt</ca>
+          </certificate_authorities>
+          <certificate>/etc/wazuh-manager-tls/tls.crt</certificate>
+          <key>/etc/wazuh-manager-tls/tls.key</key>
+        </ssl>
+      </indexer>
+    </ossec_config>
+  api.yaml: |
+    host: ['0.0.0.0']
+    port: 55000
+    https:
+      enabled: yes
+      key: wazuh-manager.key
+      cert: wazuh-manager.crt
+  api-tls.sh: |
+    #!/bin/sh
+    set -eu
+    dest=/var/ossec/api/configuration/ssl
+    install -d -m 0750 -o root -g wazuh "$dest"
+    install -m 0640 -o root -g wazuh /etc/wazuh-manager-tls/tls.key "$dest/wazuh-manager.key"
+    install -m 0644 -o root -g wazuh /etc/wazuh-manager-tls/tls.crt "$dest/wazuh-manager.crt"
+  api-admin.sh: |
+    #!/bin/sh
+    set -eu
+    /var/ossec/framework/python/bin/python3 - <<'PY'
+    import json
+    import os
+    from pathlib import Path
+    import subprocess
+
+    config = Path("/var/ossec/api/configuration/admin.json")
+    fd = os.open(config, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    try:
+        with os.fdopen(fd, "w") as output:
+            json.dump({"username": "wazuh", "password": os.environ["MANAGER_API_ADMIN_PASSWORD"]}, output)
+        subprocess.run([
+            "/var/ossec/framework/python/bin/python3",
+            "/var/ossec/framework/scripts/create_user.py",
+        ], check=True)
+    finally:
+        config.unlink(missing_ok=True)
+    PY
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wazuh-manager
+  namespace: opensearch
+spec:
+  selector:
+    app.kubernetes.io/name: wazuh-manager
+  ports:
+    - name: api
+      port: 55000
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: wazuh-manager
+  namespace: opensearch
+spec:
+  serviceName: wazuh-manager
+  replicas: 1
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: wazuh-manager
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: wazuh-manager
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: manager
+          image: docker.io/wazuh/wazuh-manager:4.14.11@sha256:3d0e5752ea98cb3b036530074cd9851dce6ab1fa01122e0d939226b766389a6d
+          securityContext:
+            capabilities:
+              add: [SYS_CHROOT]
+          ports:
+            - name: api
+              containerPort: 55000
+          startupProbe:
+            tcpSocket:
+              port: api
+            failureThreshold: 60
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: api
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2Gi
+            limits:
+              cpu: "2"
+              memory: 3Gi
+          env:
+            - name: INDEXER_URL
+              value: https://wazuh-indexer.opensearch.svc.cluster.local:9200
+            - name: INDEXER_USERNAME
+              value: wazuh_manager_ingest
+            - name: INDEXER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wazuh-manager-credentials
+                  key: indexer-password
+            - name: FILEBEAT_SSL_VERIFICATION_MODE
+              value: full
+            - name: SSL_CERTIFICATE_AUTHORITIES
+              value: /etc/wazuh-manager-tls/ca.crt
+            - name: SSL_CERTIFICATE
+              value: /etc/wazuh-manager-tls/tls.crt
+            - name: SSL_KEY
+              value: /etc/wazuh-manager-tls/tls.key
+            - name: API_USERNAME
+              value: wazuh-wui
+            - name: MANAGER_API_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wazuh-manager-credentials
+                  key: api-admin-password
+            - name: API_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wazuh-manager-credentials
+                  key: dashboard-api-password
+          volumeMounts:
+            - name: config
+              mountPath: /wazuh-config-mount/etc/ossec.conf
+              subPath: ossec.conf
+              readOnly: true
+            - name: config
+              mountPath: /etc/cont-init.d/1-wazuh-api-tls
+              subPath: api-tls.sh
+              readOnly: true
+            - name: config
+              mountPath: /etc/cont-init.d/3-wazuh-api-admin
+              subPath: api-admin.sh
+              readOnly: true
+            - name: config
+              mountPath: /wazuh-config-mount/api/configuration/api.yaml
+              subPath: api.yaml
+              readOnly: true
+            - name: credentials
+              mountPath: /wazuh-config-mount/etc/authd.pass
+              subPath: enrollment-password
+              readOnly: true
+            - name: tls
+              mountPath: /etc/wazuh-manager-tls
+              readOnly: true
+            - {name: data, mountPath: /var/ossec/api/configuration, subPath: wazuh/api/configuration}
+            - {name: data, mountPath: /var/ossec/etc, subPath: wazuh/etc}
+            - {name: data, mountPath: /var/ossec/logs, subPath: wazuh/logs}
+            - {name: data, mountPath: /var/ossec/queue, subPath: wazuh/queue}
+            - {name: data, mountPath: /var/ossec/var/multigroups, subPath: wazuh/var/multigroups}
+            - {name: data, mountPath: /var/ossec/integrations, subPath: wazuh/integrations}
+            - {name: data, mountPath: /var/ossec/active-response/bin, subPath: wazuh/active-response/bin}
+            - {name: data, mountPath: /var/ossec/agentless, subPath: wazuh/agentless}
+            - {name: data, mountPath: /var/ossec/wodles, subPath: wazuh/wodles}
+            - {name: data, mountPath: /etc/filebeat, subPath: filebeat/etc}
+            - {name: data, mountPath: /var/lib/filebeat, subPath: filebeat/var/lib}
+      volumes:
+        - name: config
+          configMap:
+            name: wazuh-manager
+            defaultMode: 0555
+        - name: credentials
+          secret:
+            secretName: wazuh-manager-credentials
+            defaultMode: 0400
+            items:
+              - key: enrollment-password
+                path: enrollment-password
+        - name: tls
+          secret:
+            secretName: wazuh-manager-tls
+            defaultMode: 0440
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: wazuh-indexer-local-retain
+        resources:
+          requests:
+            storage: 16Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wazuh-dashboard
+  namespace: opensearch
+data:
+  opensearch_dashboards.yml: |
+    server.host: "0.0.0.0"
+    server.port: 5601
+    server.ssl.enabled: true
+    server.ssl.key: /etc/wazuh-dashboard-tls/tls.key
+    server.ssl.certificate: /etc/wazuh-dashboard-tls/tls.crt
+    opensearch.hosts: ["https://wazuh-indexer.opensearch.svc.cluster.local:9200"]
+    opensearch.ssl.verificationMode: full
+    opensearch.ssl.certificateAuthorities: ["/etc/wazuh-dashboard-tls/ca.crt"]
+    opensearch.requestHeadersAllowlist: ["securitytenant", "Authorization"]
+    opensearch_security.multitenancy.enabled: false
+    opensearch_security.cookie.secure: true
+    status.allowAnonymous: true
+    uiSettings.overrides.defaultRoute: /app/wz-home
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wazuh-dashboard
+  namespace: opensearch
+spec:
+  selector:
+    app.kubernetes.io/name: wazuh-dashboard
+  ports:
+    - name: https
+      port: 5601
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wazuh-dashboard
+  namespace: opensearch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: wazuh-dashboard
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: wazuh-dashboard
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: dashboard
+          image: docker.io/wazuh/wazuh-dashboard:4.14.11@sha256:38ad3289540e4c5d42a4e434c82299f092ae8aeb1e10bc28a472fdc268ffb752
+          ports:
+            - name: https
+              containerPort: 5601
+          env:
+            - name: DASHBOARD_USERNAME
+              value: kibanaserver
+            - name: DASHBOARD_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wazuh-indexer-dashboards-user
+                  key: password
+            - name: WAZUH_API_URL
+              value: https://wazuh-manager.opensearch.svc.cluster.local
+            - name: API_USERNAME
+              value: wazuh-wui
+            - name: API_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wazuh-manager-credentials
+                  key: dashboard-api-password
+            - name: NODE_EXTRA_CA_CERTS
+              value: /etc/wazuh-dashboard-tls/ca.crt
+          startupProbe:
+            httpGet:
+              scheme: HTTPS
+              path: /api/status
+              port: https
+            failureThreshold: 60
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              scheme: HTTPS
+              path: /api/status
+              port: https
+          resources:
+            requests:
+              cpu: 250m
+              memory: 1Gi
+            limits:
+              memory: 2Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: config
+              mountPath: /usr/share/wazuh-dashboard/config/opensearch_dashboards.yml
+              subPath: opensearch_dashboards.yml
+              readOnly: true
+            - name: tls
+              mountPath: /etc/wazuh-dashboard-tls
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: wazuh-dashboard
+        - name: tls
+          secret:
+            secretName: wazuh-dashboard-tls
+            defaultMode: 0440
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: wazuh-manager-api
+  namespace: opensearch
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: wazuh-manager
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: wazuh-dashboard
+      ports:
+        - port: 55000
+          protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: wazuh-dashboard-private
+  namespace: opensearch
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: wazuh-dashboard
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik-system
+      ports:
+        - port: 5601
+          protocol: TCP
