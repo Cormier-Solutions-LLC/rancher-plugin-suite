@@ -91,3 +91,24 @@ reconcile the original OpenSearchCluster. Wait for the old indexer and
 Dashboards to serve authenticated HTTPS. Run
 switch-proof-and-ingress.ps1 -Rollback, then verify a scheduled sync before
 making any further changes. The CDC Data Research workloads remain retired.
+
+## Action1 agent scripts
+
+Save `action1/install-or-update-debian.sh` as a Bash script for Debian endpoints
+and `action1/Install-OrUpdate-Windows.ps1` as a PowerShell script for Windows
+endpoints. The scripts install a missing Wazuh agent and upgrade an older
+agent to 4.14.11. They leave equal or newer installed versions in place.
+Existing agents keep their manager and enrollment settings. New agents
+use `wazah.cormierconsulting.io` by default.
+
+Before running the scripts on a pilot, verify private reachability to
+the manager on TCP 1514 for events and TCP 1515 for automatic enrollment.
+New agents also need the manager's enrollment credential delivered
+separately through an approved secret channel. Keep it out of Action1
+script bodies, arguments, output, and Git. Verify the agent is active in
+Wazuh after installation. An Action1 success result verifies local
+installation and service startup, or reports a pending Windows reboot.
+
+For a package-only preflight, run Debian with `WAZUH_VALIDATE_ONLY=1`
+and Windows with `-ValidateOnly`. When the manager is upgraded, update
+the target versions and SHA-512 digests from the Wazuh package list.
