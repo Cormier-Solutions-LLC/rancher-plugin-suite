@@ -1,36 +1,8 @@
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
-  name: wazuh-indexer-selfsigned
-  namespace: opensearch
-spec:
-  selfSigned: {}
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
   name: wazuh-indexer-ca
-  namespace: opensearch
-spec:
-  secretName: wazuh-indexer-ca
-  isCA: true
-  commonName: wazuh-indexer-ca
-  duration: 87600h
-  renewBefore: 2160h
-  privateKey:
-    algorithm: RSA
-    size: 3072
-    encoding: PKCS8
-    rotationPolicy: Never
-  issuerRef:
-    name: wazuh-indexer-selfsigned
-    kind: Issuer
----
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  name: wazuh-indexer-ca
-  namespace: opensearch
+  namespace: wazah
 spec:
   ca:
     secretName: wazuh-indexer-ca
@@ -39,15 +11,15 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: wazuh-indexer-node
-  namespace: opensearch
+  namespace: wazah
 spec:
   secretName: wazuh-indexer-node-tls
   commonName: wazuh-indexer-node
   dnsNames:
-    - wazuh-indexer.opensearch.svc.cluster.local
-    - wazuh-indexer-0.wazuh-indexer-discovery.opensearch.svc.cluster.local
-    - wazuh-indexer-1.wazuh-indexer-discovery.opensearch.svc.cluster.local
-    - wazuh-indexer-2.wazuh-indexer-discovery.opensearch.svc.cluster.local
+    - wazuh-indexer.wazah.svc.cluster.local
+    - wazuh-indexer-0.wazuh-indexer-discovery.wazah.svc.cluster.local
+    - wazuh-indexer-1.wazuh-indexer-discovery.wazah.svc.cluster.local
+    - wazuh-indexer-2.wazuh-indexer-discovery.wazah.svc.cluster.local
   usages: [server auth, client auth]
   duration: 2160h
   renewBefore: 360h
@@ -64,7 +36,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: wazuh-indexer-bootstrap
-  namespace: opensearch
+  namespace: wazah
 spec:
   secretName: wazuh-indexer-bootstrap-tls
   commonName: wazuh-indexer-security-admin
@@ -84,12 +56,12 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: wazuh-indexer-dashboards
-  namespace: opensearch
+  namespace: wazah
 spec:
   secretName: wazuh-indexer-dashboards-tls
   commonName: wazuh-indexer-dashboards
   dnsNames:
-    - wazuh-indexer-dashboards.opensearch.svc.cluster.local
+    - wazuh-indexer-dashboards.wazah.svc.cluster.local
   usages: [server auth]
   duration: 2160h
   renewBefore: 360h

@@ -2,9 +2,9 @@ apiVersion: traefik.io/v1alpha1
 kind: ServersTransport
 metadata:
   name: wazah-private
-  namespace: opensearch
+  namespace: wazah
 spec:
-  serverName: wazuh-dashboard.opensearch.svc.cluster.local
+  serverName: wazuh-dashboard.wazah.svc.cluster.local
   rootCAsSecrets:
     - wazuh-dashboard-tls
 ---
@@ -12,7 +12,7 @@ apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: wazah-private
-  namespace: opensearch
+  namespace: wazah
 spec:
   entryPoints: [websecure]
   routes:

@@ -17,7 +17,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: wazuh-indexer
-  namespace: opensearch
+  namespace: wazah
 data:
   opensearch.yml: |
     cluster.name: wazuh-indexer
@@ -25,9 +25,9 @@ data:
     path.data: /var/lib/wazuh-indexer
     path.logs: /var/log/wazuh-indexer
     discovery.seed_hosts:
-      - wazuh-indexer-0.wazuh-indexer-discovery.opensearch.svc.cluster.local
-      - wazuh-indexer-1.wazuh-indexer-discovery.opensearch.svc.cluster.local
-      - wazuh-indexer-2.wazuh-indexer-discovery.opensearch.svc.cluster.local
+      - wazuh-indexer-0.wazuh-indexer-discovery.wazah.svc.cluster.local
+      - wazuh-indexer-1.wazuh-indexer-discovery.wazah.svc.cluster.local
+      - wazuh-indexer-2.wazuh-indexer-discovery.wazah.svc.cluster.local
     action.destructive_requires_name: true
     cluster.routing.allocation.disk.watermark.low: 70%
     cluster.routing.allocation.disk.watermark.high: 80%
@@ -83,7 +83,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: wazuh-indexer-discovery
-  namespace: opensearch
+  namespace: wazah
 spec:
   clusterIP: None
   publishNotReadyAddresses: true
@@ -99,7 +99,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: wazuh-indexer
-  namespace: opensearch
+  namespace: wazah
 spec:
   selector:
     app.kubernetes.io/name: wazuh-indexer
@@ -111,7 +111,7 @@ apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: wazuh-indexer
-  namespace: opensearch
+  namespace: wazah
 spec:
   minAvailable: 2
   selector:
@@ -122,7 +122,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: wazuh-indexer
-  namespace: opensearch
+  namespace: wazah
 spec:
   serviceName: wazuh-indexer-discovery
   podManagementPolicy: Parallel
@@ -222,7 +222,7 @@ spec:
                 - /bin/bash
                 - -ec
                 - |
-                  host=wazuh-indexer.opensearch.svc.cluster.local
+                  host=wazuh-indexer.wazah.svc.cluster.local
                   code=$(curl -sS --max-time 3 --cacert /usr/share/wazuh-indexer/config/certs/ca.crt \
                     --resolve "$host:9200:127.0.0.1" -o /dev/null -w '%{http_code}' "https://$host:9200/")
                   test "$code" = 401

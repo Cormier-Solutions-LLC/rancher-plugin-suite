@@ -9,7 +9,7 @@ from urllib.error import HTTPError
 from urllib.parse import urlsplit
 from urllib.request import urlopen
 
-EXPECTED_HOST = "wazuh-indexer.opensearch.svc.cluster.local"
+EXPECTED_HOST = "wazuh-indexer.wazah.svc.cluster.local"
 PROOF_ROLE = "proof_studio_search_pilot_sync"
 CA = "/etc/search-trust/ca.crt"
 

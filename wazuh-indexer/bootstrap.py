@@ -13,7 +13,7 @@ from urllib.request import Request, urlopen
 
 INDEXER_HOME = Path("/usr/share/wazuh-indexer")
 CERTS = Path("/etc/wazuh-bootstrap/tls")
-HOST = "wazuh-indexer-0.wazuh-indexer-discovery.opensearch.svc.cluster.local"
+HOST = "wazuh-indexer-0.wazuh-indexer-discovery.wazah.svc.cluster.local"
 BASE = f"https://{HOST}:9200"
 PROOF_INDEX = "proof-studio-projects-pilot"
 PROOF_ROLE = "proof_studio_search_pilot_sync"

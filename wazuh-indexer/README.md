@@ -1,12 +1,16 @@
 # Private Wazuh search backend
 
-Wazuh 4.14.11 runs in the existing opensearch namespace with three Wazuh
+Wazuh 4.14.11 runs in the wazah namespace with three Wazuh
 Indexer pods using OpenSearch 2.19.7. The indexer pods run on kubworker02,
 kubworker04, and kubworker14 in three physical zones. Each uses a retained
 16 GiB strict-local Longhorn volume. Each Proof Studio shard has one
-replica. One Wazuh manager and one native Wazuh Dashboard use the same
-indexer. The generic OpenSearch Dashboards service uses the matching 2.19.7
-version and the same cluster.
+replica. A Wazuh manager master and one worker use the same indexer and
+are scheduled on different Proxmox hosts. Each manager has a 32 GiB
+volume. The manager cluster port is reachable from the worker inside
+Kubernetes. The native Wazuh Dashboard uses the master API.
+The private TCP 1514 route balances events across both managers. TCP 1515
+goes to the master for enrollment. The generic OpenSearch Dashboards
+service uses version 2.19.7 and the same cluster.
 
 - Wazuh console: https://wazah.cormierconsulting.io
 - Search API: https://opensearch-api.cormierconsulting.io
@@ -20,12 +24,13 @@ address records and the public gateway allowlist. The manager API is
 reachable within Kubernetes from the native Dashboard. The same private
 hostname and VIP also carry Wazuh agent events on TCP 1514 and enrollment
 on TCP 1515. Traefik preserves its private source allowlist and forwards
-both streams to the Wazuh manager. The manager terminates enrollment TLS.
+events to the manager cluster and enrollment to the master. The master
+terminates enrollment TLS.
 
 The initial Wazuh Indexer admin password comes from
-opensearch/opensearch-admin-password, which also holds the legacy OpenSearch
-credential for rollback. After an in-dashboard Wazuh password change, the
-opensearch/copy-admin-password.ps1 helper can still return the initial value.
+`wazah/opensearch-admin-password`. Run
+`./opensearch/copy-admin-password.ps1 -Namespace wazah` to copy the initial
+password. The helper reads the initial value after a dashboard password change.
 On an existing Wazuh installation, the bootstrap job restores the admin
 backend role and preserves the current password. The backend role maps to
 all_access. Keep it assigned when editing the user in the dashboard.
@@ -48,10 +53,10 @@ indexer account.
 
 ## Restore or redeploy Wazuh
 
-Verify the three workers have schedulable thin Longhorn disks in distinct
-zones. The namespace quota reserves seven claims and 112 GiB, including
-the retained legacy OpenSearch claims. Keep the Wazuh CA secret and data
-claims together for disaster recovery. For an existing Wazuh cluster,
+Verify the three indexer workers have schedulable thin Longhorn disks in
+distinct zones. The namespace quota reserves seven claims and 112 GiB.
+The five current claims use the full storage quota. Keep the Wazuh CA
+secret and data claims together for disaster recovery. For an existing Wazuh cluster,
 apply the manifests with the launch ConfigMap's bootstrap value disabled.
 
 For a fresh recovery with no Wazuh cluster metadata, initialize the
@@ -59,17 +64,18 @@ wazuh-indexer-launch ConfigMap with bootstrap=enabled before applying
 indexer.yaml. Set it to disabled after all three nodes have formed one
 cluster. Do not enable bootstrap on attached data from an existing cluster.
 
-1. Apply certificates.yaml, indexer.yaml, dashboards.yaml,
-   traefik-transports.yaml, and wazuh-console.yaml.
-2. Run seed-secrets.ps1 to create missing Kubernetes secrets and stage
-   the bootstrap source. Apply bootstrap-job.yaml only for intentional
-   bootstrap or principal reseeding. Confirm the job completes, then
-   remove the temporary wazuh-indexer-proof-bootstrap Secret.
-3. Apply wazah-certificate.yaml. After cert-manager reports Ready,
-   apply wazah-private-ingress.yaml. Keep the private Windows DNS record
-   listed above. In the existing opensearch-pilot-private NetworkPolicy,
-   preserve the exclusions for wazuh-dashboard and wazuh-manager so that
-   their dedicated ingress policies are effective.
+1. Apply `namespace.yaml`. Restore the existing `wazuh-indexer-ca` Secret
+   in the `wazah` namespace for an existing cluster. For a fresh deployment,
+   apply `root-ca.yaml` and wait for the CA Certificate to become Ready.
+   Apply `certificates.yaml` to issue the leaf certificates.
+2. Run seed-secrets.ps1 to create missing secrets and stage the bootstrap
+   source. Apply indexer.yaml, dashboards.yaml, traefik-transports.yaml, and
+   wazuh-console.yaml. Apply bootstrap-job.yaml only for initial bootstrap
+   or intentional reseeding. Remove the temporary wazuh-indexer-proof-bootstrap
+   Secret after the job completes.
+3. Apply wazuh-workers.yaml. Confirm the worker has synchronized with the
+   master. Apply wazah-certificate.yaml, wazah-private-ingress.yaml, and
+   search-private-ingress.yaml after the endpoint certificates are ready.
 4. Apply wazah-agent-ingress.yaml. For the private `traefik` Helm release
    in `traefik-system`, upgrade using its installed chart version,
    `--reuse-values`, and the wazah-agent-traefik-values.yaml overlay.
@@ -77,9 +83,10 @@ cluster. Do not enable bootstrap on attached data from an existing cluster.
    and verify the dashboard over HTTPS. To withdraw the agent listeners,
    remove those two ports from the Helm release values and the resources
    in wazah-agent-ingress.yaml.
-5. Run proof-canary.ps1 against the deployed job template. Verify the
-   authenticated subject and the source fingerprints before routing the
-   scheduled job or private search hosts with switch-proof-and-ingress.ps1.
+5. Point the Proof Studio sync job at
+   `https://wazuh-indexer.wazah.svc.cluster.local:9200`. Apply
+   `proof-search-egress.yaml`. Run `proof-canary.ps1 -UseScheduledTemplate`
+   to verify the authenticated subject and source fingerprints.
 
 Verify that a manager-generated alert appears in a wazuh-alerts-* index.
 Filebeat's output test validates the connection. Publishing the alert also
@@ -101,18 +108,17 @@ HTTPS, its pod verified the manager API certificate and credentials, and
 Filebeat verified TLS 1.3 to the indexer. The public gateway rejected
 the Wazuh hostname and neither tested public resolver returned an address.
 
-The original 3.9.0 StatefulSet, Dashboards, and operator are scaled to zero.
-Their three retained claims still hold the old cluster for rollback. An
-encrypted workstation export under %LOCALAPPDATA%/Codex/SearchRecovery
-contains the old Proof Studio index, query diagnostics, and security audit
-documents. Its bytes and document counts were checked on readback. Keep
-the old claims while the recovery window is open.
+The upstream OpenSearch workloads are scaled to zero. The three legacy
+Longhorn claims and volumes were permanently deleted after cutover.
+The encrypted workstation export under %LOCALAPPDATA%/Codex/SearchRecovery
+contains the earlier index documents and diagnostics. The CDC Data
+Research workloads are retired.
 
-For rollback, scale the opensearch-operator deployment to one and let it
-reconcile the original OpenSearchCluster. Wait for the old indexer and
-Dashboards to serve authenticated HTTPS. Run
-switch-proof-and-ingress.ps1 -Rollback, then verify a scheduled sync before
-making any further changes. The CDC Data Research workloads remain retired.
+Wazuh moved from opensearch to wazah by rebinding its four retained
+volumes and preserving its CA. The worker has its own volume on another
+Proxmox host. Use `/var/ossec/bin/cluster_control -l` on the master to
+check membership and compare agent node assignments to validate traffic
+distribution. Agent enrollment depends on the single master.
 
 ## Action1 agent scripts
 
@@ -168,7 +174,7 @@ explicit apply. Proxmox forwards the credential through guest stdin and
 the script stages it in a protected `authd.pass` file inside the guest.
 
 ```powershell
-kubectl -n opensearch get secret wazuh-manager-credentials -o 'jsonpath={.data.enrollment-password}' |
+kubectl -n wazah get secret wazuh-manager-credentials -o 'jsonpath={.data.enrollment-password}' |
     python wazuh-indexer/proxmox/deploy-guest.py --entry $ProxmoxEntry --vmid $TargetVm --apply --enrollment-stdin
 ```
 

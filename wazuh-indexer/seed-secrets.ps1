@@ -5,12 +5,12 @@ function Read-KubeJson {
     $raw | ConvertFrom-Json
 }
 function New-ScopedSecret($Name, $Data) {
-    $existing = kubectl -n opensearch get secret $Name --ignore-not-found -o name
+    $existing = kubectl -n wazah get secret $Name --ignore-not-found -o name
     if ($LASTEXITCODE -ne 0) { throw 'Kubernetes secret lookup failed' }
     if ($existing) { return }
     @{
         apiVersion = 'v1'; kind = 'Secret'; type = 'Opaque'
-        metadata = @{name = $Name; namespace = 'opensearch'}
+        metadata = @{name = $Name; namespace = 'wazah'}
         data = $Data
     } | ConvertTo-Json -Depth 8 -Compress | kubectl create -f -
     if ($LASTEXITCODE -ne 0) { throw "Could not create $Name" }
@@ -32,7 +32,15 @@ New-ScopedSecret 'wazuh-manager-credentials' @{
     'api-admin-password' = (New-EncodedPassword)
     'enrollment-password' = (New-EncodedPassword)
 }
+New-ScopedSecret 'opensearch-admin-password' @{
+    username = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('admin'))
+    password = (New-EncodedPassword)
+}
+$clusterKey = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(16)).ToLowerInvariant()
+New-ScopedSecret 'wazuh-manager-cluster-key' @{
+    key = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($clusterKey))
+}
 $script = Join-Path $PSScriptRoot 'bootstrap.py'
-kubectl -n opensearch create configmap wazuh-indexer-bootstrap "--from-file=$script" --dry-run=client -o yaml |
+kubectl -n wazah create configmap wazuh-indexer-bootstrap "--from-file=$script" --dry-run=client -o yaml |
     kubectl apply -f -
 if ($LASTEXITCODE -ne 0) { throw 'Could not stage Wazuh bootstrap source' }

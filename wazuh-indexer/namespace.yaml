@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: wazah
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: wazah-storage
+  namespace: wazah
+spec:
+  hard:
+    persistentvolumeclaims: '7'
+    requests.storage: 112Gi
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: opensearch-pilot-private
+  namespace: wazah
+spec:
+  ingress:
+  - from:
+    - podSelector: {}
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traefik-system
+    ports:
+    - port: 5601
+      protocol: TCP
+    - port: 9200
+      protocol: TCP
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: proofing
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: proof-studio-search-sync
+    ports:
+    - port: 9200
+      protocol: TCP
+  podSelector:
+    matchExpressions:
+    - key: app.kubernetes.io/name
+      operator: NotIn
+      values:
+      - opensearch-operator
+      - wazuh-dashboard
+      - wazuh-manager
+      - wazuh-manager-worker
+  policyTypes:
+  - Ingress
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: private-networks
+  namespace: wazah
+spec:
+  ipAllowList:
+    sourceRange:
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    - 192.168.0.0/16
+    - fc00::/7

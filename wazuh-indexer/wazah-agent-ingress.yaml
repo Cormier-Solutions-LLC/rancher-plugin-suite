@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: wazuh-agent-ingress
-  namespace: opensearch
+  namespace: wazah
 spec:
   selector:
     app.kubernetes.io/name: wazuh-manager
@@ -20,7 +20,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: wazuh-agent-ingress
-  namespace: opensearch
+  namespace: wazah
 spec:
   podSelector:
     matchLabels:
@@ -45,7 +45,7 @@ apiVersion: traefik.io/v1alpha1
 kind: MiddlewareTCP
 metadata:
   name: wazuh-agent-private
-  namespace: opensearch
+  namespace: wazah
 spec:
   ipAllowList:
     sourceRange:
@@ -58,7 +58,7 @@ apiVersion: traefik.io/v1alpha1
 kind: IngressRouteTCP
 metadata:
   name: wazuh-agent-events
-  namespace: opensearch
+  namespace: wazah
 spec:
   entryPoints: [wazuh-events]
   routes:
@@ -66,14 +66,14 @@ spec:
       middlewares:
         - name: wazuh-agent-private
       services:
-        - name: wazuh-agent-ingress
+        - name: wazuh-agent-stream
           port: 1514
 ---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRouteTCP
 metadata:
   name: wazuh-agent-enrollment
-  namespace: opensearch
+  namespace: wazah
 spec:
   entryPoints: [wazuh-enroll]
   routes:

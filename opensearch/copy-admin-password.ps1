@@ -1,5 +1,7 @@
+param([string]$Namespace = 'opensearch')
+
 $ErrorActionPreference = 'Stop'
-$opensearchCredential = kubectl -n opensearch get secret opensearch-admin-password -o json | ConvertFrom-Json
+$opensearchCredential = kubectl -n $Namespace get secret opensearch-admin-password -o json | ConvertFrom-Json
 if ($LASTEXITCODE -ne 0) { throw 'Could not read the OpenSearch credential Secret.' }
 $opensearchPassword = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($opensearchCredential.data.password))
 Set-Clipboard -Value $opensearchPassword

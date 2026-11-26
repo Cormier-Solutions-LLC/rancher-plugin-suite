@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: wazuh-indexer-dashboards
-  namespace: opensearch
+  namespace: wazah
 data:
   opensearch_dashboards.yml: |
     server.host: "0.0.0.0"
@@ -19,7 +19,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: wazuh-indexer-dashboards
-  namespace: opensearch
+  namespace: wazah
 spec:
   selector:
     app.kubernetes.io/name: wazuh-indexer-dashboards
@@ -31,7 +31,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: wazuh-indexer-dashboards
-  namespace: opensearch
+  namespace: wazah
 spec:
   replicas: 1
   selector:
@@ -55,7 +55,7 @@ spec:
           image: docker.io/opensearchproject/opensearch-dashboards:2.19.7@sha256:a8e6342868fe56d9443786793708edcc8bbd6b8a58b62392e148d0051683fa59
           env:
             - name: OPENSEARCH_HOSTS
-              value: '["https://wazuh-indexer.opensearch.svc.cluster.local:9200"]'
+              value: '["https://wazuh-indexer.wazah.svc.cluster.local:9200"]'
             - name: OPENSEARCH_USERNAME
               value: kibanaserver
             - name: OPENSEARCH_PASSWORD

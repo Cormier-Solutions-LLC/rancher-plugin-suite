@@ -1,0 +1,27 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: wazuh-indexer-selfsigned
+  namespace: wazah
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wazuh-indexer-ca
+  namespace: wazah
+spec:
+  secretName: wazuh-indexer-ca
+  isCA: true
+  commonName: wazuh-indexer-ca
+  duration: 87600h
+  renewBefore: 2160h
+  privateKey:
+    algorithm: RSA
+    size: 3072
+    encoding: PKCS8
+    rotationPolicy: Never
+  issuerRef:
+    name: wazuh-indexer-selfsigned
+    kind: Issuer

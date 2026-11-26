@@ -17,10 +17,10 @@ function Apply-KubeJson($Object) {
 }
 $ns = 'proofing'
 $cron = Read-KubeJson -n $ns get cronjob proof-studio-search-sync
-$cert = Read-KubeJson -n opensearch get secret wazuh-indexer-node-tls
+$cert = Read-KubeJson -n wazah get secret wazuh-indexer-node-tls
 $ca = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($cert.data.'ca.crt'))
 if (!$ca.StartsWith('-----BEGIN CERTIFICATE-----')) { throw 'Wazuh indexer CA is missing' }
-$url = 'https://wazuh-indexer.opensearch.svc.cluster.local:9200'
+$url = 'https://wazuh-indexer.wazah.svc.cluster.local:9200'
 $spec = $cron.spec.jobTemplate.spec
 $pod = $spec.template.spec
 $container = @($pod.containers | Where-Object name -eq 'sync')

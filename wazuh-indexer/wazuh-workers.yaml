@@ -1,0 +1,230 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: wazuh-agent-stream
+  namespace: wazah
+spec:
+  clusterIP: None
+  ports:
+  - name: events
+    port: 1514
+    protocol: TCP
+    targetPort: 1514
+  selector:
+    app.kubernetes.io/part-of: wazuh-manager-cluster
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: wazuh-manager-cluster
+  namespace: wazah
+spec:
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: wazuh-manager-worker
+    ports:
+    - port: 1516
+      protocol: TCP
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: wazuh-manager
+  policyTypes:
+  - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: wazuh-worker-ingress
+  namespace: wazah
+spec:
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traefik-system
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/instance: traefik-traefik-system
+          app.kubernetes.io/name: traefik
+    ports:
+    - port: 1514
+      protocol: TCP
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: wazuh-manager-worker
+  policyTypes:
+  - Ingress
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: wazuh-manager-worker
+  namespace: wazah
+spec:
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: wazuh-manager-worker
+  serviceName: wazuh-agent-stream
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: wazuh-manager-worker
+        app.kubernetes.io/part-of: wazuh-manager-cluster
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app.kubernetes.io/part-of: wazuh-manager-cluster
+            topologyKey: topology.kubernetes.io/zone
+      automountServiceAccountToken: false
+      containers:
+      - env:
+        - name: INDEXER_URL
+          value: https://wazuh-indexer.wazah.svc.cluster.local:9200
+        - name: INDEXER_USERNAME
+          value: wazuh_manager_ingest
+        - name: INDEXER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: indexer-password
+              name: wazuh-manager-credentials
+        - name: FILEBEAT_SSL_VERIFICATION_MODE
+          value: full
+        - name: SSL_CERTIFICATE_AUTHORITIES
+          value: /etc/wazuh-manager-tls/ca.crt
+        - name: SSL_CERTIFICATE
+          value: /etc/wazuh-manager-tls/tls.crt
+        - name: SSL_KEY
+          value: /etc/wazuh-manager-tls/tls.key
+        - name: API_USERNAME
+          value: wazuh-wui
+        - name: MANAGER_API_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: api-admin-password
+              name: wazuh-manager-credentials
+        - name: API_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: dashboard-api-password
+              name: wazuh-manager-credentials
+        - name: WAZUH_CLUSTER_KEY
+          valueFrom:
+            secretKeyRef:
+              key: key
+              name: wazuh-manager-cluster-key
+        image: docker.io/wazuh/wazuh-manager:4.14.11@sha256:3d0e5752ea98cb3b036530074cd9851dce6ab1fa01122e0d939226b766389a6d
+        name: manager
+        ports:
+        - containerPort: 1514
+          name: events
+          protocol: TCP
+        readinessProbe:
+          tcpSocket:
+            port: events
+        resources:
+          limits:
+            cpu: '2'
+            memory: 4Gi
+          requests:
+            cpu: '1'
+            memory: 3Gi
+        securityContext:
+          capabilities:
+            add:
+            - SYS_CHROOT
+        startupProbe:
+          failureThreshold: 60
+          tcpSocket:
+            port: events
+        volumeMounts:
+        - mountPath: /wazuh-config-mount/etc/ossec.conf
+          name: config
+          readOnly: true
+          subPath: ossec.conf
+        - mountPath: /etc/cont-init.d/1-wazuh-api-tls
+          name: config
+          readOnly: true
+          subPath: api-tls.sh
+        - mountPath: /etc/cont-init.d/3-wazuh-api-admin
+          name: config
+          readOnly: true
+          subPath: api-admin.sh
+        - mountPath: /wazuh-config-mount/api/configuration/api.yaml
+          name: config
+          readOnly: true
+          subPath: api.yaml
+        - mountPath: /etc/wazuh-manager-tls
+          name: tls
+          readOnly: true
+        - mountPath: /var/ossec/api/configuration
+          name: data
+          subPath: wazuh/api/configuration
+        - mountPath: /var/ossec/etc
+          name: data
+          subPath: wazuh/etc
+        - mountPath: /var/ossec/logs
+          name: data
+          subPath: wazuh/logs
+        - mountPath: /var/ossec/queue
+          name: data
+          subPath: wazuh/queue
+        - mountPath: /var/ossec/var/multigroups
+          name: data
+          subPath: wazuh/var/multigroups
+        - mountPath: /var/ossec/integrations
+          name: data
+          subPath: wazuh/integrations
+        - mountPath: /var/ossec/active-response/bin
+          name: data
+          subPath: wazuh/active-response/bin
+        - mountPath: /var/ossec/agentless
+          name: data
+          subPath: wazuh/agentless
+        - mountPath: /var/ossec/wodles
+          name: data
+          subPath: wazuh/wodles
+        - mountPath: /etc/filebeat
+          name: data
+          subPath: filebeat/etc
+        - mountPath: /var/lib/filebeat
+          name: data
+          subPath: filebeat/var/lib
+        - mountPath: /etc/cont-init.d/1-wazuh-worker-role
+          name: config
+          readOnly: true
+          subPath: worker-role.sh
+      securityContext:
+        fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+      - configMap:
+          defaultMode: 365
+          name: wazuh-manager
+        name: config
+      - name: tls
+        secret:
+          defaultMode: 288
+          secretName: wazuh-manager-tls
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 32Gi
+      storageClassName: wazuh-indexer-local-retain
+      volumeMode: Filesystem

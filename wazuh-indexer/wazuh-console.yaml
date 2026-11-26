@@ -2,12 +2,12 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: wazuh-manager
-  namespace: opensearch
+  namespace: wazah
 spec:
   secretName: wazuh-manager-tls
   commonName: wazuh-manager
   dnsNames:
-    - wazuh-manager.opensearch.svc.cluster.local
+    - wazuh-manager.wazah.svc.cluster.local
   usages: [server auth, client auth]
   duration: 2160h
   renewBefore: 360h
@@ -22,12 +22,12 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: wazuh-dashboard
-  namespace: opensearch
+  namespace: wazah
 spec:
   secretName: wazuh-dashboard-tls
   commonName: wazuh-dashboard
   dnsNames:
-    - wazuh-dashboard.opensearch.svc.cluster.local
+    - wazuh-dashboard.wazah.svc.cluster.local
   usages: [server auth]
   duration: 2160h
   renewBefore: 360h
@@ -42,7 +42,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: wazuh-manager
-  namespace: opensearch
+  namespace: wazah
 data:
   ossec.conf: |
     <ossec_config>
@@ -84,7 +84,7 @@ data:
       <indexer>
         <enabled>yes</enabled>
         <hosts>
-          <host>https://wazuh-indexer.opensearch.svc.cluster.local:9200</host>
+          <host>https://wazuh-indexer.wazah.svc.cluster.local:9200</host>
         </hosts>
         <ssl>
           <certificate_authorities>
@@ -94,7 +94,30 @@ data:
           <key>/etc/wazuh-manager-tls/tls.key</key>
         </ssl>
       </indexer>
+      <cluster>
+        <name>wazuh</name>
+        <node_name>to_be_replaced_by_hostname</node_name>
+        <key>to_be_replaced_by_cluster_key</key>
+        <node_type>master</node_type>
+        <port>1516</port>
+        <bind_addr>0.0.0.0</bind_addr>
+        <nodes><node>wazuh-manager.wazah.svc.cluster.local</node></nodes>
+        <hidden>no</hidden>
+        <disabled>no</disabled>
+      </cluster>
     </ossec_config>
+  worker-role.sh: |
+    #!/bin/sh
+    set -eu
+    /var/ossec/framework/python/bin/python3 - <<'PY'
+    from pathlib import Path
+    from xml.etree import ElementTree
+    path = Path("/var/ossec/etc/ossec.conf")
+    config = ElementTree.parse(path)
+    config.find("cluster/node_type").text = "worker"
+    config.find("auth/disabled").text = "yes"
+    config.write(path, encoding="unicode")
+    PY
   api.yaml: |
     host: ['0.0.0.0']
     port: 55000
@@ -135,19 +158,21 @@ apiVersion: v1
 kind: Service
 metadata:
   name: wazuh-manager
-  namespace: opensearch
+  namespace: wazah
 spec:
   selector:
     app.kubernetes.io/name: wazuh-manager
   ports:
     - name: api
       port: 55000
+    - name: cluster
+      port: 1516
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: wazuh-manager
-  namespace: opensearch
+  namespace: wazah
 spec:
   serviceName: wazuh-manager
   replicas: 1
@@ -161,6 +186,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: wazuh-manager
+        app.kubernetes.io/part-of: wazuh-manager-cluster
     spec:
       automountServiceAccountToken: false
       securityContext:
@@ -193,7 +219,7 @@ spec:
               memory: 3Gi
           env:
             - name: INDEXER_URL
-              value: https://wazuh-indexer.opensearch.svc.cluster.local:9200
+              value: https://wazuh-indexer.wazah.svc.cluster.local:9200
             - name: INDEXER_USERNAME
               value: wazuh_manager_ingest
             - name: INDEXER_PASSWORD
@@ -201,6 +227,11 @@ spec:
                 secretKeyRef:
                   name: wazuh-manager-credentials
                   key: indexer-password
+            - name: WAZUH_CLUSTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: wazuh-manager-cluster-key
+                  key: key
             - name: FILEBEAT_SSL_VERIFICATION_MODE
               value: full
             - name: SSL_CERTIFICATE_AUTHORITIES
@@ -280,13 +311,13 @@ spec:
         storageClassName: wazuh-indexer-local-retain
         resources:
           requests:
-            storage: 16Gi
+            storage: 32Gi
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: wazuh-dashboard
-  namespace: opensearch
+  namespace: wazah
 data:
   opensearch_dashboards.yml: |
     server.host: "0.0.0.0"
@@ -294,7 +325,7 @@ data:
     server.ssl.enabled: true
     server.ssl.key: /etc/wazuh-dashboard-tls/tls.key
     server.ssl.certificate: /etc/wazuh-dashboard-tls/tls.crt
-    opensearch.hosts: ["https://wazuh-indexer.opensearch.svc.cluster.local:9200"]
+    opensearch.hosts: ["https://wazuh-indexer.wazah.svc.cluster.local:9200"]
     opensearch.ssl.verificationMode: full
     opensearch.ssl.certificateAuthorities: ["/etc/wazuh-dashboard-tls/ca.crt"]
     opensearch.requestHeadersAllowlist: ["securitytenant", "Authorization"]
@@ -307,7 +338,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: wazuh-dashboard
-  namespace: opensearch
+  namespace: wazah
 spec:
   selector:
     app.kubernetes.io/name: wazuh-dashboard
@@ -319,7 +350,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: wazuh-dashboard
-  namespace: opensearch
+  namespace: wazah
 spec:
   replicas: 1
   selector:
@@ -353,7 +384,7 @@ spec:
                   name: wazuh-indexer-dashboards-user
                   key: password
             - name: WAZUH_API_URL
-              value: https://wazuh-manager.opensearch.svc.cluster.local
+              value: https://wazuh-manager.wazah.svc.cluster.local
             - name: API_USERNAME
               value: wazuh-wui
             - name: API_PASSWORD
@@ -406,7 +437,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: wazuh-manager-api
-  namespace: opensearch
+  namespace: wazah
 spec:
   podSelector:
     matchLabels:
@@ -425,7 +456,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: wazuh-dashboard-private
-  namespace: opensearch
+  namespace: wazah
 spec:
   podSelector:
     matchLabels:

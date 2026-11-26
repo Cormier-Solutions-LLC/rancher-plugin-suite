@@ -1,0 +1,38 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: proof-studio-search-sync-egress
+  namespace: proofing
+spec:
+  egress:
+  - ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+    to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+  - ports:
+    - port: 5433
+      protocol: TCP
+    to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: yugabyte
+      podSelector:
+        matchLabels:
+          database.cormiersolutions.com/role: tserver
+  - ports:
+    - port: 9200
+      protocol: TCP
+    to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: wazah
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: proof-studio-search-sync
+  policyTypes:
+  - Egress
