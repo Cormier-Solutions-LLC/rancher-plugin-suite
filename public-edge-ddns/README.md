@@ -15,11 +15,15 @@ rotated, refresh the copied Secret using the installation command below.
 - Requires agreement between ipify and AWS Check IP on a public IPv4 address.
 - Manages only exact subdomains of the configured `cormierconsulting.io` zone.
 - Reads and validates all selected records before making writes.
-- Uses one paginated zone snapshot instead of two GoDaddy reads per hostname.
-  For fewer than 500 zone records, an unchanged run costs one API request:
-  at most 8,928 scheduled reads in a 31-day month. Write verification adds calls
-  only when addresses change. GoDaddy's account quota is shared with other users
-  of the API; keep headroom for cert-manager and other applications.
+- Checks every configured hostname through Cloudflare and Google public DNS over
+  HTTPS before accessing GoDaddy. Both resolvers must confirm the expected IPv4,
+  with a single A record or an alias chain confined to the managed hostname list.
+  Healthy runs make **zero GoDaddy requests**. NXDOMAIN, changed addresses, newly
+  added names, and resolver disagreement require provider reconciliation; resolver
+  errors fail closed. Private split-horizon DNS does not influence these checks.
+- When reconciliation is needed, uses one paginated zone snapshot instead of two
+  GoDaddy reads per hostname. Write verification adds calls only when addresses
+  change. Every GoDaddy attempt is counted in the job logs without credentials.
 - Uses GoDaddy's type-and-name-specific PUT endpoint to replace each changed A
   record set atomically. Preserves its TTL; creates missing A records at TTL 600.
 - Leaves CNAMEs intact when their target is another managed hostname, and rejects
@@ -29,7 +33,12 @@ rotated, refresh the copied Secret using the installation command below.
   certificate TXT, unrelated DNS records, router settings, and the gateway alone.
 - Retries transient network/server errors with bounded delays and identifies the
   failing hostname in network errors. Monthly `QUOTA_EXCEEDED` fails immediately
-  with an explicit message; it requires account quota restoration, not rapid retries.
+  with an explicit message. A small persistent volume stores a cooldown across
+  Jobs, allowing at most one automatic provider probe per 24 hours until quota
+  recovers. The cooldown also ends at the next UTC month boundary. DNS/IP checks
+  continue every five minutes, and a DNS mismatch during cooldown remains a failed
+  Job, so stale records are not reported as healthy. The quota state contains no
+  credentials. Invalid/unreadable state fails closed instead of bypassing the guard.
 - Exits unsuccessfully on lookup/API/verification failures and never logs
   credentials or upstream error bodies. The next scheduled run retries.
 
@@ -63,13 +72,26 @@ kubectl logs -n public-edge job/JOB_NAME
 
 Job logs include the previous and desired address for each changed A record, and
 confirm read-back from GoDaddy after each write. A Complete Job must also have
-the expected `Completed reconciliation` log entry. Public resolvers can retain
+the expected `Completed reconciliation` or `Completed public DNS verification`
+log entry. Public resolvers can retain
 the previous address until its TTL expires.
 
 Deployment credentials move directly between API responses and request stdin;
 the installation helper never writes them to disk or logs. To update the script,
 run `install`, preview, run, and enable again. Existing mounted host lists do not
 require reinstalling the updater when changed in Rancher.
+
+After GoDaddy restores quota, bypass the persisted cooldown for one explicit run:
+
+```powershell
+node public-edge-ddns/manage.mjs run --force-api-retry
+```
+
+This does not bypass provider limits; it permits one manual attempt before the
+daily cooldown expires. Successful reconciliation clears the cooldown. Normal
+scheduled Jobs have no override. The 1 GiB `public-edge-ddns-state` Longhorn PVC
+stores only quota cooldown state, and the container remains without API/RBAC
+access. Preserve this PVC on script reinstall so backoff survives pod restarts.
 
 ## Pause and rollback
 
@@ -86,7 +108,8 @@ public IPv4 again.
 
 To retire this updater after suspending it and checking active Jobs, delete only
 its CronJob, NetworkPolicy, `public-edge-ddns-script` ConfigMap, and
-`public-edge-ddns-godaddy` Secret. Do not delete `public-edge-config` or
+`public-edge-ddns-godaddy` Secret. The `public-edge-ddns-state` PVC contains only
+cooldown state and can be removed separately when retiring the updater. Do not delete `public-edge-config` or
 `public-edge-tls`. Guest 9001 remains independently responsible for
 `vpn.cormiersolutions.com`.
 
@@ -129,3 +152,23 @@ expanded TLS Certificate is Ready. The job reads that live list automatically.
 Reapply only the script ConfigMap and patch `backoffLimit: 0` for this repair;
 the credential and network policy are unchanged. Private diagnostics and Helm
 rollback values are under `.local/ddns-network-recovery/`.
+
+### Follow-up request controls
+
+The subsequent public-DNS preflight replaces the fixed monthly polling estimate
+above: correct DNS now uses zero GoDaddy calls, and exhausted-quota retries are
+limited by persisted cooldown state. The interval remains five minutes.
+
+Verified: all 24 automated tests pass, including zero-call healthy runs, record
+drift/new names, managed aliases, resolver failures, pagination, retries, persistent
+state reopening, and quota cooldown behavior. In-cluster preview
+`public-edge-ddns-preview-1795669277326` made one GoDaddy GET, received the monthly
+quota error, and wrote the cooldown to the new bound state PVC. Separate preview
+`public-edge-ddns-preview-1795669337855` then reported the persisted cooldown and
+**zero GoDaddy requests**. Both correctly remained Failed because public DNS still
+needs updating. The enabled CronJob reads the same script and state volume.
+
+This controls future request consumption; it does not restore the exhausted
+provider quota or claim that stale/missing public DNS has been repaired. No DNS
+write occurred during these previews. Private backups and evidence are under
+`.local/ddns-request-guard/`.

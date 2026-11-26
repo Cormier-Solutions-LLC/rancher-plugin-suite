@@ -37,6 +37,9 @@ try {
     const name = `public-edge-ddns-${operation}-${Date.now()}`;
     const spec = structuredClone(cron.spec.jobTemplate.spec);
     spec.template.spec.containers[0].env.find(e => e.name === 'DRY_RUN').value = operation === 'preview' ? 'true' : 'false';
+    if (process.argv.includes('--force-api-retry')) {
+      spec.template.spec.containers[0].env.push({ name: 'FORCE_API_RETRY', value: 'true' });
+    }
     // A failed preview should not be retried while diagnosing it.
     spec.backoffLimit = 0;
     console.log(apply({ apiVersion: 'batch/v1', kind: 'Job',

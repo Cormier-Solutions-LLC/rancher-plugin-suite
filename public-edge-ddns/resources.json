@@ -47,7 +47,8 @@
                   "volumeMounts": [
                     {"name": "script", "mountPath": "/app", "readOnly": true},
                     {"name": "hosts", "mountPath": "/hosts", "readOnly": true},
-                    {"name": "credentials", "mountPath": "/credentials", "readOnly": true}
+                    {"name": "credentials", "mountPath": "/credentials", "readOnly": true},
+                    {"name": "state", "mountPath": "/state"}
                   ]
                 }],
                 "volumes": [
@@ -56,6 +57,7 @@
                     "name": "public-edge-config",
                     "items": [{"key": "public-hosts.json", "path": "public-hosts.json"}]
                   }},
+                  {"name": "state", "persistentVolumeClaim": {"claimName": "public-edge-ddns-state"}},
                   {"name": "credentials", "secret": {
                     "secretName": "public-edge-ddns-godaddy", "defaultMode": 288,
                     "items": [{"key": "token", "path": "token"}]
@@ -65,6 +67,15 @@
             }
           }
         }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "PersistentVolumeClaim",
+      "metadata": {"name": "public-edge-ddns-state", "namespace": "public-edge"},
+      "spec": {
+        "accessModes": ["ReadWriteOnce"], "storageClassName": "longhorn",
+        "resources": {"requests": {"storage": "1Gi"}}
       }
     },
     {

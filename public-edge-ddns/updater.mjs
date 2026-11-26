@@ -1,9 +1,47 @@
-import { readFile, realpath } from 'node:fs/promises';
+import { readFile, realpath, writeFile, rename } from 'node:fs/promises';
 import { isIP } from 'node:net';
 import { pathToFileURL } from 'node:url';
 
 const apiBase = 'https://api.godaddy.com/v1/domains';
 const ipServices = ['https://api.ipify.org', 'https://checkip.amazonaws.com'];
+const dnsServices = ['https://cloudflare-dns.com/dns-query', 'https://dns.google/resolve'];
+
+export function dnsMatches(response, host, names, ip) {
+  if (response.Status !== 0 || response.TC === true) return false;
+  const answers = response.Answer ?? [];
+  const normalize = value => typeof value === 'string' ? value.toLowerCase().replace(/\.$/, '') : '';
+  const seen = new Set();
+  let current = host;
+  while (!seen.has(current)) {
+    seen.add(current);
+    const records = answers.filter(r => normalize(r.name) === current);
+    const addresses = records.filter(r => r.type === 1);
+    const aliases = records.filter(r => r.type === 5);
+    if (!aliases.length) return addresses.length === 1 && addresses[0].data === ip;
+    if (addresses.length || aliases.length !== 1) return false;
+    current = normalize(aliases[0].data);
+    if (!names.includes(current)) return false;
+  }
+  return false;
+}
+
+export function fileState(path) {
+  return {
+    async read() {
+      try {
+        const value = JSON.parse(await readFile(path, 'utf8'));
+        if (!value || typeof value !== 'object' || Array.isArray(value) ||
+          (value.blockedUntil !== undefined && !Number.isFinite(value.blockedUntil))) throw new Error('Invalid DDNS quota state');
+        return value;
+      } catch (error) { if (error.code === 'ENOENT') return {}; throw error; }
+    },
+    async write(value) {
+      const temporary = `${path}.${process.pid}.tmp`;
+      await writeFile(temporary, JSON.stringify(value), { mode: 0o600 });
+      await rename(temporary, path);
+    },
+  };
+}
 
 export function publicIPv4(value) {
   if (isIP(value) !== 4) return false;
@@ -30,15 +68,21 @@ export function hostnames(value, zone) {
 }
 
 export async function reconcile({ hosts, zone, token, dryRun = true, fetcher = fetch, log = console.log,
-  pause = ms => new Promise(resolve => setTimeout(resolve, ms)) }) {
+  pause = ms => new Promise(resolve => setTimeout(resolve, ms)), stateStore,
+  now = Date.now, forceApiRetry = false }) {
   const names = hostnames(hosts, zone);
   if (!names.length) { log('No public hostnames configured; no DNS changes'); return []; }
   if (!token || /[\r\n]/.test(token)) throw new Error('Invalid GoDaddy credential');
   const authorization = token.startsWith('gd_pat_') ? `Bearer ${token}` : `sso-key ${token}`;
+  let apiRequests = 0;
   async function request(url, options = {}) {
     for (let attempt = 0; attempt < 3; attempt++) {
       let response;
       try {
+        if (new URL(url).hostname === 'api.godaddy.com') {
+          apiRequests++;
+          log(`GoDaddy request ${apiRequests}: ${options.method ?? 'GET'} ${new URL(url).pathname}`);
+        }
         response = await fetcher(url, { ...options, redirect: 'error', signal: AbortSignal.timeout(15000) });
       } catch (error) {
         if (attempt < 2) { await pause(1000 * (attempt + 1)); continue; }
@@ -49,6 +93,10 @@ export async function reconcile({ hosts, zone, token, dryRun = true, fetcher = f
       if (response.status === 429) {
         const body = await response.clone().json().catch(() => ({}));
         if (body.code === 'QUOTA_EXCEEDED' && /month/i.test(body.message ?? '')) {
+          const nextMonth = new Date(now());
+          const blockedUntil = Math.min(now() + 86400000,
+            Date.UTC(nextMonth.getUTCFullYear(), nextMonth.getUTCMonth() + 1, 1));
+          if (stateStore) await stateStore.write({ blockedUntil });
           throw new Error('GoDaddy monthly API quota exhausted (QUOTA_EXCEEDED); restore account quota');
         }
       }
@@ -69,6 +117,29 @@ export async function reconcile({ hosts, zone, token, dryRun = true, fetcher = f
   }));
   if (addresses[0] !== addresses[1]) throw new Error('Public IPv4 services disagree; refusing DNS changes');
   const ip = addresses[0];
+  // Query public resolvers through HTTPS, bypassing private split-horizon DNS.
+  // Check every name, so added names and record drift are not hidden by an IP cache.
+  const dnsChecks = await Promise.all(names.map(async host => {
+    const matches = await Promise.all(dnsServices.map(async base => {
+      const url = `${base}?name=${encodeURIComponent(host)}&type=A`;
+      const response = await request(url, { headers: { Accept: 'application/dns-json' } });
+      if (!response.ok) throw new Error(`Public DNS lookup returned HTTP ${response.status}`);
+      let body;
+      try { body = await response.json(); } catch { throw new Error('Invalid public DNS response'); }
+      if (![0, 3].includes(body.Status) || body.TC === true ||
+        (body.Answer !== undefined && !Array.isArray(body.Answer))) throw new Error('Public DNS lookup failed; refusing API changes');
+      return dnsMatches(body, host, names, ip);
+    }));
+    return matches.every(Boolean);
+  }));
+  if (dnsChecks.every(Boolean)) {
+    log(`Completed public DNS verification: ${names.length} hostnames, public IPv4 ${ip}; zero GoDaddy requests`);
+    return [];
+  }
+  const state = stateStore ? await stateStore.read() : {};
+  if (!forceApiRetry && state.blockedUntil > now()) {
+    throw new Error(`Public DNS needs updating; GoDaddy quota cooldown until ${new Date(state.blockedUntil).toISOString()}; zero GoDaddy requests`);
+  }
   const headers = { Authorization: authorization, Accept: 'application/json' };
   async function records(type, name) {
     const url = `${apiBase}/${encodeURIComponent(zone)}/records/${type}/${encodeURIComponent(name)}`;
@@ -141,7 +212,8 @@ export async function reconcile({ hosts, zone, token, dryRun = true, fetcher = f
     }
     log(`UPDATED ${item.host}: ${item.previous ?? '(missing)'} -> ${ip}; ttl=${item.ttl}; verified`);
   }
-  log(`Completed ${dryRun ? 'dry run' : 'reconciliation'}: ${plan.length} hostnames, public IPv4 ${ip}`);
+  if (stateStore) await stateStore.write({});
+  log(`Completed ${dryRun ? 'dry run' : 'reconciliation'}: ${plan.length} hostnames, public IPv4 ${ip}; ${apiRequests} GoDaddy requests`);
   return plan;
 }
 
@@ -151,7 +223,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(await realpath(process.
     const hosts = JSON.parse(await readFile(process.env.HOSTS_FILE ?? '/hosts/public-hosts.json', 'utf8'));
     const token = (await readFile(process.env.TOKEN_FILE ?? '/credentials/token', 'utf8')).trim();
     await reconcile({ hosts, zone: process.env.DNS_ZONE ?? 'cormierconsulting.io', token,
-      dryRun: process.env.DRY_RUN !== 'false' });
+      dryRun: process.env.DRY_RUN !== 'false',
+      stateStore: fileState(process.env.STATE_FILE ?? '/state/quota.json'),
+      forceApiRetry: process.env.FORCE_API_RETRY === 'true' });
   } catch (error) {
     // Credential values and upstream response bodies must never enter logs.
     const message = error instanceof SyntaxError ? 'Invalid hostname-list JSON' :

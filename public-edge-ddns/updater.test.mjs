@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { hostnames, publicIPv4, reconcile } from './updater.mjs';
+import { hostnames, publicIPv4, reconcile, dnsMatches, fileState } from './updater.mjs';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const zone = 'example.com', hosts = ['app.example.com', 'other.example.com'];
 function fixture({ ip = '24.162.105.215', secondIp = ip, initial, alias = false } = {}) {
@@ -14,6 +17,11 @@ function fixture({ ip = '24.162.105.215', secondIp = ip, initial, alias = false 
     const url = new URL(input);
     if (url.hostname === 'api.ipify.org') return new Response(ip);
     if (url.hostname === 'checkip.amazonaws.com') return new Response(secondIp);
+    if (url.hostname === 'cloudflare-dns.com' || url.hostname === 'dns.google') return Response.json({
+      Status: 0, Answer: Object.values(db).flat().map(r => ({
+        name: `${r.name}.${zone}.`, type: r.type === 'A' ? 1 : r.type === 'CNAME' ? 5 : 16, data: r.data,
+      })),
+    });
     if (url.pathname.endsWith('/records')) return Response.json([
       ...Object.values(db).flat(), ...(alias ? [{ name: 'other', type: 'CNAME', data: 'target.example.net' }] : []),
     ]);
@@ -89,11 +97,82 @@ test('HTTP failures and transport errors never expose credential or response bod
   f.options.fetcher = () => { throw new Error('synthetic:credential'); };
   await assert.rejects(reconcile(f.options), error => error.message.includes('DNS updater network request failed for') && !error.message.includes('credential'));
 });
-test('an unchanged zone costs one GoDaddy request regardless of hostname count', async () => {
+test('correct public DNS costs zero GoDaddy requests', async () => {
   const f = fixture(); f.db.app[0].data = '24.162.105.215';
   await reconcile({ ...f.options, dryRun: false });
-  assert.equal(f.calls.filter(c => c.input.includes('godaddy')).length, 1);
+  assert.equal(f.calls.filter(c => c.input.includes('godaddy')).length, 0);
   assert.equal(f.writes.length, 0);
+});
+test('monthly quota cooldown persists across runs and avoids all API calls', async () => {
+  let saved = {}; const store = { read: async () => saved, write: async value => { saved = value; } };
+  const current = Date.UTC(2026, 10, 25, 12);
+  const f = fixture(), original = f.options.fetcher; let apiCalls = 0;
+  f.options.fetcher = (url, options) => {
+    if (!url.includes('godaddy')) return original(url, options);
+    apiCalls++;
+    return Response.json({ code: 'QUOTA_EXCEEDED', message: 'monthly quota exceeded' }, { status: 429 });
+  };
+  const options = { ...f.options, stateStore: store, now: () => current };
+  await assert.rejects(reconcile(options), /monthly API quota/);
+  assert.equal(saved.blockedUntil, current + 86400000);
+  await assert.rejects(reconcile(options), /cooldown.*zero GoDaddy requests/);
+  assert.equal(apiCalls, 1);
+  await assert.rejects(reconcile({ ...options, now: () => current + 86400000 }), /monthly API quota/);
+  assert.equal(apiCalls, 2);
+});
+test('cooldown ends at next month boundary and can be explicitly overridden', async () => {
+  let saved = {}; const current = Date.UTC(2026, 10, 30, 23);
+  const f = fixture(), original = f.options.fetcher; let calls = 0;
+  f.options.fetcher = (url, options) => {
+    if (!url.includes('godaddy')) return original(url, options);
+    calls++;
+    return Response.json({ code: 'QUOTA_EXCEEDED', message: 'monthly quota exceeded' }, { status: 429 });
+  };
+  const options = { ...f.options, stateStore: { read: async () => saved, write: async value => { saved = value; } }, now: () => current };
+  await assert.rejects(reconcile(options), /monthly API quota/);
+  assert.equal(saved.blockedUntil, Date.UTC(2026, 11, 1));
+  await assert.rejects(reconcile({ ...options, forceApiRetry: true }), /monthly API quota/);
+  assert.equal(calls, 2);
+});
+test('DNS drift and newly added hostnames trigger one zone read', async () => {
+  const f = fixture(); f.db.app[0].data = '24.162.105.215';
+  f.options.hosts = [...hosts, 'new.example.com'];
+  await reconcile(f.options);
+  assert.equal(f.calls.filter(c => c.input.includes('godaddy')).length, 1);
+});
+test('DNS SERVFAIL fails closed without contacting GoDaddy', async () => {
+  const f = fixture(), original = f.options.fetcher;
+  f.options.fetcher = (url, options) => url.includes('dns.google') ? Response.json({ Status: 2 }) : original(url, options);
+  await assert.rejects(reconcile(f.options), /Public DNS lookup failed/);
+  assert.equal(f.calls.filter(c => c.input.includes('godaddy')).length, 0);
+});
+test('all names must match both public resolvers before skipping provider API', async () => {
+  const f = fixture(), original = f.options.fetcher; f.db.app[0].data = '24.162.105.215';
+  f.options.fetcher = (url, options) => url.includes('dns.google') ? Response.json({ Status: 3 }) : original(url, options);
+  await reconcile(f.options);
+  assert.equal(f.calls.filter(c => c.input.includes('godaddy')).length, 1);
+});
+test('managed aliases can skip the API but external aliases and cycles cannot', () => {
+  const answer = { Status: 0, Answer: [
+    { name: hosts[1], type: 5, data: hosts[0] + '.' },
+    { name: hosts[0], type: 1, data: '24.162.105.215' },
+  ] };
+  assert.equal(dnsMatches(answer, hosts[1], hosts, '24.162.105.215'), true);
+  answer.Answer[0].data = 'external.example.net';
+  assert.equal(dnsMatches(answer, hosts[1], hosts, '24.162.105.215'), false);
+  answer.Answer[0].data = hosts[1];
+  assert.equal(dnsMatches(answer, hosts[1], hosts, '24.162.105.215'), false);
+});
+test('quota state survives reopening the file and rejects malformed state', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'ddns-quota-'));
+  try {
+    const path = join(directory, 'quota.json'); const first = fileState(path);
+    assert.deepEqual(await first.read(), {});
+    await first.write({ blockedUntil: 12345 });
+    assert.deepEqual(await fileState(path).read(), { blockedUntil: 12345 });
+    await first.write({ blockedUntil: 'invalid' });
+    await assert.rejects(first.read(), /Invalid DDNS quota state/);
+  } finally { await rm(directory, { recursive: true, force: true }); }
 });
 test('monthly quota exhaustion is explicit and is not retried', async () => {
   const f = fixture(), original = f.options.fetcher; let attempts = 0;
