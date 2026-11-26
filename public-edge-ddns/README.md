@@ -15,6 +15,11 @@ rotated, refresh the copied Secret using the installation command below.
 - Requires agreement between ipify and AWS Check IP on a public IPv4 address.
 - Manages only exact subdomains of the configured `cormierconsulting.io` zone.
 - Reads and validates all selected records before making writes.
+- Uses one paginated zone snapshot instead of two GoDaddy reads per hostname.
+  For fewer than 500 zone records, an unchanged run costs one API request:
+  at most 8,928 scheduled reads in a 31-day month. Write verification adds calls
+  only when addresses change. GoDaddy's account quota is shared with other users
+  of the API; keep headroom for cert-manager and other applications.
 - Uses GoDaddy's type-and-name-specific PUT endpoint to replace each changed A
   record set atomically. Preserves its TTL; creates missing A records at TTL 600.
 - Leaves CNAMEs intact when their target is another managed hostname, and rejects
@@ -22,11 +27,14 @@ rotated, refresh the copied Secret using the installation command below.
 - Makes no writes when the correct address is already present.
 - Does not remove records when a hostname leaves the allowlist. It leaves AAAA,
   certificate TXT, unrelated DNS records, router settings, and the gateway alone.
+- Retries transient network/server errors with bounded delays and identifies the
+  failing hostname in network errors. Monthly `QUOTA_EXCEEDED` fails immediately
+  with an explicit message; it requires account quota restoration, not rapid retries.
 - Exits unsuccessfully on lookup/API/verification failures and never logs
   credentials or upstream error bodies. The next scheduled run retries.
 
 Schedule: `*/5 * * * *`, America/Chicago. Overlapping scheduled Jobs are forbidden;
-each Job has a three-minute deadline, one retry, and one-day retention. Successful
+each Job has a three-minute deadline, no Job-level retries, and one-day retention. Successful
 and failed history limits are two and three respectively. The pinned Node image
 runs without root, privilege escalation, a writable root filesystem, or inbound
 network access. Egress permits cluster DNS and public HTTPS.
@@ -99,3 +107,25 @@ Scheduling reference: [Kubernetes CronJobs](https://kubernetes.io/docs/concepts/
 - Verified: scheduled Job `public-edge-ddns-29913070` completed at 5:10:55 p.m.
   Central, reported all addresses current, and made no changes. The CronJob is
   enabled with schedule `*/5 * * * *`.
+
+## November 25 network-change investigation
+
+The last successful run before investigation was November 22 at 08:35:19 UTC.
+Initial pods logged generic network failures. A credential-free probe on the same
+worker subsequently verified DNS resolution and HTTPS access to both IP services
+and GoDaddy. Both IP services reported `24.162.104.154`; public Proofing DNS still
+pointed to `24.242.120.130`.
+
+The live GoDaddy API returned HTTP 429 with `QUOTA_EXCEEDED` and explicitly stated
+that the **monthly** request quota was exceeded. With eight hostnames, the old
+implementation could perform 16 reads every five minutes (142,848 per 31-day
+month). The zone-snapshot implementation reduces unchanged runs to one read.
+Restore or increase the account's API quota to permit the pending DNS updates;
+the code change does not clear a provider-side exhausted quota.
+
+Added `ui.cormierconsulting.io` through a Helm upgrade preserving all eight existing
+hostnames and other values. The gateway now has nine allowed names, and its
+expanded TLS Certificate is Ready. The job reads that live list automatically.
+Reapply only the script ConfigMap and patch `backoffLimit: 0` for this repair;
+the credential and network policy are unchanged. Private diagnostics and Helm
+rollback values are under `.local/ddns-network-recovery/`.

@@ -8,11 +8,15 @@ function fixture({ ip = '24.162.105.215', secondIp = ip, initial, alias = false 
     app: [{ name: 'app', type: 'A', data: '68.203.6.96', ttl: 1200 }],
     other: [{ name: 'other', type: 'A', data: ip, ttl: 600 }],
   };
-  const writes = [];
+  const writes = [], calls = [];
   const fetcher = async (input, options = {}) => {
+    calls.push({ input, method: options.method ?? 'GET' });
     const url = new URL(input);
     if (url.hostname === 'api.ipify.org') return new Response(ip);
     if (url.hostname === 'checkip.amazonaws.com') return new Response(secondIp);
+    if (url.pathname.endsWith('/records')) return Response.json([
+      ...Object.values(db).flat(), ...(alias ? [{ name: 'other', type: 'CNAME', data: 'target.example.net' }] : []),
+    ]);
     const parts = url.pathname.split('/'), name = decodeURIComponent(parts.at(-1)), type = parts.at(-2);
     if (options.method === 'PUT') {
       const body = JSON.parse(options.body); writes.push({ name, type, body });
@@ -21,7 +25,7 @@ function fixture({ ip = '24.162.105.215', secondIp = ip, initial, alias = false 
     }
     return Response.json(type === 'CNAME' ? (alias ? [{ name, type, data: 'target.example.net' }] : []) : (db[name] ?? []));
   };
-  return { db, writes, options: { hosts, zone, token: 'synthetic:credential', fetcher, log: () => {} } };
+  return { db, writes, calls, options: { hosts, zone, token: 'synthetic:credential', fetcher, log: () => {}, pause: async () => {} } };
 }
 
 test('validates exact subdomains, rejects other zones, wildcard and path inputs', () => {
@@ -62,19 +66,17 @@ test('missing records are created with TTL 600 and verified', async () => {
   assert.equal(f.writes.length, 2); assert.equal(f.db.app[0].ttl, 600);
 });
 test('preserves aliases to managed A records and updates their target', async () => {
-  const f = fixture(); const original = f.options.fetcher;
-  f.options.fetcher = (url, options) => url.endsWith('/CNAME/other') ?
-    Response.json([{ name: 'other', type: 'CNAME', data: 'app.example.com.' }]) : original(url, options);
-  delete f.db.other;
+  const f = fixture();
+  f.db.other = [{ name: 'other', type: 'CNAME', data: 'app.example.com.' }];
   const plan = await reconcile({ ...f.options, dryRun: false });
   assert.equal(plan.find(x => x.name === 'other').aliasTarget, 'app.example.com');
   assert.equal(f.writes.length, 1); assert.equal(f.writes[0].name, 'app');
 });
 test('CNAME cycles fail before writes', async () => {
-  const f = fixture({ initial: {} }); const original = f.options.fetcher;
-  f.options.fetcher = (url, options) => url.includes('/CNAME/') ? Response.json([{
-    name: url.split('/').at(-1), type: 'CNAME', data: url.endsWith('/app') ? hosts[1] : hosts[0],
-  }]) : original(url, options);
+  const f = fixture({ initial: {
+    app: [{ name: 'app', type: 'CNAME', data: hosts[1] }],
+    other: [{ name: 'other', type: 'CNAME', data: hosts[0] }],
+  } });
   await assert.rejects(reconcile({ ...f.options, dryRun: false }), /CNAME loop/); assert.equal(f.writes.length, 0);
 });
 test('empty allowlist makes no network calls', async () => {
@@ -85,7 +87,56 @@ test('HTTP failures and transport errors never expose credential or response bod
   f.options.fetcher = (url, options) => url.includes('godaddy') ? new Response('synthetic:credential', { status: 403 }) : original(url, options);
   await assert.rejects(reconcile({ ...f.options, dryRun: false }), error => /HTTP 403/.test(error.message) && !error.message.includes('credential'));
   f.options.fetcher = () => { throw new Error('synthetic:credential'); };
-  await assert.rejects(reconcile(f.options), error => error.message === 'DNS updater network request failed');
+  await assert.rejects(reconcile(f.options), error => error.message.includes('DNS updater network request failed for') && !error.message.includes('credential'));
+});
+test('an unchanged zone costs one GoDaddy request regardless of hostname count', async () => {
+  const f = fixture(); f.db.app[0].data = '24.162.105.215';
+  await reconcile({ ...f.options, dryRun: false });
+  assert.equal(f.calls.filter(c => c.input.includes('godaddy')).length, 1);
+  assert.equal(f.writes.length, 0);
+});
+test('monthly quota exhaustion is explicit and is not retried', async () => {
+  const f = fixture(), original = f.options.fetcher; let attempts = 0;
+  f.options.fetcher = (url, options) => {
+    if (!url.includes('godaddy')) return original(url, options);
+    attempts++;
+    return Response.json({ code: 'QUOTA_EXCEEDED', message: 'The monthly quota for requests has been exceeded.' }, { status: 429 });
+  };
+  await assert.rejects(reconcile(f.options), /monthly API quota exhausted/);
+  assert.equal(attempts, 1); assert.equal(f.writes.length, 0);
+});
+test('transient network failures recover with bounded retries', async () => {
+  const f = fixture(), original = f.options.fetcher; let attempts = 0;
+  f.options.fetcher = (url, options) => {
+    if (url.includes('godaddy') && ++attempts < 3) throw new Error('synthetic:credential');
+    return original(url, options);
+  };
+  await reconcile(f.options); assert.equal(attempts, 3);
+});
+test('zone snapshots include later pages before validating selected names', async () => {
+  const f = fixture(), original = f.options.fetcher; const offsets = [];
+  f.options.fetcher = (url, options) => {
+    const u = new URL(url);
+    if (!u.pathname.endsWith('/records')) return original(url, options);
+    offsets.push(u.searchParams.get('offset'));
+    if (u.searchParams.get('offset') === '0') return Response.json(Array.from({ length: 500 }, (_, i) =>
+      ({ type: 'TXT', name: `unrelated-${i}`, data: 'preserved', ttl: 600 })));
+    return original(url, options);
+  };
+  const plan = await reconcile(f.options);
+  assert.deepEqual(offsets, ['0', '500']); assert.equal(plan[0].previous, '68.203.6.96');
+});
+test('temporary rate limiting honors a bounded Retry-After delay', async () => {
+  const f = fixture(), original = f.options.fetcher; let limited = true; const delays = [];
+  f.options.pause = async ms => { delays.push(ms); };
+  f.options.fetcher = (url, options) => {
+    if (url.includes('godaddy') && limited) {
+      limited = false;
+      return Response.json({ code: 'TOO_MANY_REQUESTS' }, { status: 429, headers: { 'Retry-After': '999' } });
+    }
+    return original(url, options);
+  };
+  await reconcile(f.options); assert.deepEqual(delays, [10000]);
 });
 test('failed read-back fails the run rather than reporting success', async () => {
   const f = fixture(); const original = f.options.fetcher;

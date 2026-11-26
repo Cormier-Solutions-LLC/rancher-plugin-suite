@@ -29,15 +29,36 @@ export function hostnames(value, zone) {
   return [...new Set(value)].sort();
 }
 
-export async function reconcile({ hosts, zone, token, dryRun = true, fetcher = fetch, log = console.log }) {
+export async function reconcile({ hosts, zone, token, dryRun = true, fetcher = fetch, log = console.log,
+  pause = ms => new Promise(resolve => setTimeout(resolve, ms)) }) {
   const names = hostnames(hosts, zone);
   if (!names.length) { log('No public hostnames configured; no DNS changes'); return []; }
   if (!token || /[\r\n]/.test(token)) throw new Error('Invalid GoDaddy credential');
   const authorization = token.startsWith('gd_pat_') ? `Bearer ${token}` : `sso-key ${token}`;
   async function request(url, options = {}) {
-    try {
-      return await fetcher(url, { ...options, redirect: 'error', signal: AbortSignal.timeout(15000) });
-    } catch { throw new Error('DNS updater network request failed'); }
+    for (let attempt = 0; attempt < 3; attempt++) {
+      let response;
+      try {
+        response = await fetcher(url, { ...options, redirect: 'error', signal: AbortSignal.timeout(15000) });
+      } catch (error) {
+        if (attempt < 2) { await pause(1000 * (attempt + 1)); continue; }
+        const code = error?.cause?.code;
+        const safeCode = typeof code === 'string' && /^[A-Z_0-9]{1,50}$/.test(code) ? ` (${code})` : '';
+        throw new Error(`DNS updater network request failed for ${new URL(url).hostname}${safeCode}`);
+      }
+      if (response.status === 429) {
+        const body = await response.clone().json().catch(() => ({}));
+        if (body.code === 'QUOTA_EXCEEDED' && /month/i.test(body.message ?? '')) {
+          throw new Error('GoDaddy monthly API quota exhausted (QUOTA_EXCEEDED); restore account quota');
+        }
+      }
+      if ((response.status === 429 || response.status >= 500) && attempt < 2) {
+        const delay = Number(response.headers.get('retry-after'));
+        await pause(Number.isFinite(delay) && delay > 0 ? Math.min(delay, 10) * 1000 : (attempt + 1) * 2000);
+        continue;
+      }
+      return response;
+    }
   }
   const addresses = await Promise.all(ipServices.map(async url => {
     const response = await request(url);
@@ -60,12 +81,27 @@ export async function reconcile({ hosts, zone, token, dryRun = true, fetcher = f
     }
     return data;
   }
+  // One paginated zone snapshot replaces two API reads per hostname on every run.
+  // An unchanged zone with fewer than 500 records costs only one GoDaddy request.
+  const snapshot = [];
+  for (let offset = 0; ; offset += 500) {
+    const response = await request(`${apiBase}/${encodeURIComponent(zone)}/records?limit=500&offset=${offset}`, { headers });
+    if (!response.ok) throw new Error(`GoDaddy zone read returned HTTP ${response.status}`);
+    let page;
+    try { page = await response.json(); } catch { throw new Error('Invalid GoDaddy DNS response'); }
+    if (!Array.isArray(page) || page.some(r => typeof r.name !== 'string' || typeof r.type !== 'string' || typeof r.data !== 'string')) {
+      throw new Error('Unexpected GoDaddy zone snapshot');
+    }
+    snapshot.push(...page);
+    if (page.length < 500) break;
+    if (offset >= 9500) throw new Error('GoDaddy zone exceeds snapshot safety limit');
+  }
   // Validate every selected name before making any writes.
   const plan = [];
   for (const host of names) {
     const name = host.slice(0, -(zone.length + 1));
-    const existing = await records('A', name);
-    const aliases = await records('CNAME', name);
+    const existing = snapshot.filter(r => r.type === 'A' && r.name === name);
+    const aliases = snapshot.filter(r => r.type === 'CNAME' && r.name === name);
     if (aliases.length) {
       const aliasTarget = aliases[0].data.toLowerCase().replace(/\.$/, '');
       if (aliases.length !== 1 || existing.length || !names.includes(aliasTarget)) {
