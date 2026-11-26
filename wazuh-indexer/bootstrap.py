@@ -85,6 +85,28 @@ def create_user(name, password, roles):
         "opendistro_security_roles": roles,
     })
 
+def ensure_admin():
+    path = f"{SECURITY}/internalusers/admin"
+    try:
+        user = request("GET", path)["admin"]
+    except HTTPError as error:
+        if error.code != 404:
+            raise
+        password = os.environ["ADMIN_PASSWORD"]
+        request("PUT", path, {"password": password, "backend_roles": ["admin"]})
+        identity = request("GET", "/_plugins/_security/authinfo", basic=("admin", password))
+        if identity["user_name"] != "admin" or "all_access" not in identity["roles"]:
+            raise RuntimeError("The new Wazuh administrator could not authenticate with all_access")
+        return
+
+    backend_roles = user["backend_roles"]
+    if "admin" not in backend_roles:
+        request("PATCH", path, [{
+            "op": "replace",
+            "path": "/backend_roles",
+            "value": [role for role in backend_roles if role] + ["admin"],
+        }])
+
 def main():
     if os.environ["PROOF_USERNAME"] != PROOF_ROLE or os.environ["ADMIN_USERNAME"] != "admin":
         raise RuntimeError("Unexpected bootstrap principal names")
@@ -106,7 +128,7 @@ def main():
             else mapping[key] for key in ("users", "hosts", "backend_roles", "and_backend_roles")
             if key in mapping
         })
-    create_user("admin", os.environ["ADMIN_PASSWORD"], ["all_access", "security_rest_api_access"])
+    ensure_admin()
     create_user("kibanaserver", os.environ["DASHBOARDS_PASSWORD"], ["kibana_server"])
     request("PUT", f"{SECURITY}/roles/{PROOF_ROLE}", {
         "cluster_permissions": ["indices:data/write/bulk"],
@@ -144,8 +166,6 @@ def main():
         "tenant_permissions": [],
     })
     create_user(manager_name, os.environ["MANAGER_PASSWORD"], [manager_name])
-    admin = ("admin", os.environ["ADMIN_PASSWORD"])
-    assert request("GET", "/", basic=admin)["cluster_name"] == "wazuh-indexer"
     proof = (PROOF_ROLE, os.environ["PROOF_PASSWORD"])
     identity = request("GET", "/_plugins/_security/authinfo", basic=proof)
     assert identity["user_name"] == PROOF_ROLE and set(identity["roles"]) == {PROOF_ROLE}

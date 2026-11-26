@@ -20,9 +20,13 @@ address records and the public gateway allowlist. The manager API is
 reachable within Kubernetes from the native Dashboard. Agent enrollment
 and event ports have no external exposure in these manifests.
 
-The original randomized admin credential remains in
-opensearch/opensearch-admin-password. The existing
-opensearch/copy-admin-password.ps1 helper retrieves it without printing it.
+The initial Wazuh Indexer admin password comes from
+opensearch/opensearch-admin-password, which also holds the legacy OpenSearch
+credential for rollback. After an in-dashboard Wazuh password change, the
+opensearch/copy-admin-password.ps1 helper can still return the initial value.
+On an existing Wazuh installation, the bootstrap job restores the admin
+backend role and preserves the current password. The backend role maps to
+all_access. Keep it assigned when editing the user in the dashboard.
 Native and generic Dashboards use a separate kibanaserver credential.
 Wazuh Manager uses a separate ingest credential scoped to wazuh index
 patterns, and its API uses separate admin and dashboard credentials.
@@ -30,6 +34,15 @@ Proof Studio uses its existing scoped credential and the Wazuh CA. The
 Security plugin verifies HTTP hostnames and uses a private CA and a
 dedicated node DN for inter-node mTLS. The bootstrap client certificate
 is for administration only.
+
+A named Wazuh administrator needs the indexer admin backend role and a
+manager dashboard role mapping from the exact OpenSearch `user_name` to
+the manager's administrator role. The native dashboard sends this identity
+to the manager using `run_as`. On the current deployment, the built-in
+`wui_opensearch_admin` mapping covers `admin`, and
+`wui_opensearch_acormier` covers `acormier`. If restoring without the
+manager's retained data, recreate the named mapping after restoring the
+indexer account.
 
 ## Restore or redeploy Wazuh
 
