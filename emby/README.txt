@@ -10,7 +10,7 @@ Current workload image: official Emby 4.10.1.0, pinned to SHA-256 digest
 997e8c1ea1fde7d303eb455143e7be77dc4f20cb06acb11ffdcbcfaa87186ec2.
 No GPU, Live TV, DLNA, or host networking requested.
 
-Applied: namespace.yaml, storage.yaml, migration-pod.yaml, workload.yaml,
+Applied: namespace.yaml, storage.yaml, migration-pod.yaml, workload-v4.10.1.0.yaml,
 ingress.yaml (including hostname-scoped HTTPS redirect middleware).
 StatefulSet is active at one replica; pod emby-0 healthy on kubworker02.
 Server display name explicitly set to Emby in persistent system.xml so it stays
@@ -68,7 +68,7 @@ Migration record and remaining source retirement:
 3. DONE: paths preserved, restored ownership 100999:100990, network settings set
    to reverse proxy mode, advertised HTTPS hostname and public HTTPS port 443.
    Previous system.xml retained privately at /config/.migration/.
-4. DONE: temporary migration pod deleted; desired workload.yaml replicas=1 applied.
+4. DONE: temporary migration pod deleted; desired workload-v4.10.1.0.yaml replicas=1 applied.
 5. DONE: matching server ID/version, successful startup, readiness, non-root NAS
    read and transcoding scratch write. A 3-second CPU/libx264 transcode from a NAS
    media file passed; output 116151 bytes and test file removed afterward.
@@ -96,7 +96,7 @@ Recovery artifacts from the prior root-disk restore test:
   Full backup succeeded and archive integrity / isolated restore were verified.
 
 Do not bulk-apply the whole directory; ingress and restore/start sequencing matter.
-workload.yaml declares the final desired one-replica state.
+workload-v4.10.1.0.yaml declares the final desired one-replica state.
 
 Upgrade recovery point, 2026-10-18 (America/Chicago):
 The official stable release and Docker latest tag both resolved to 4.10.1.0.
@@ -119,7 +119,7 @@ watch data was unchanged and the owned encoder was stopped (zero left running).
 Evidence: .local/emby/upgrade-tests/emby-route-media-tests.json and
 .local/emby/upgrade-tests/emby-hls-tests.json. Authenticated interactive client
 playback was not tested. Migration checks above describe the original 4.9.3.0
-deployment; workload.yaml is the current desired version.
+deployment; workload-v4.10.1.0.yaml is the current desired version.
 
 To recover after an unsuccessful upgrade, stop the StatefulSet and wait until
 emby-0 is gone. Preserve the current PVC and restore the snapshot into a NEW
