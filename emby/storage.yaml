@@ -82,8 +82,8 @@ spec:
     requests:
       storage: 43Ti
 ---
-# Existing 10 TiB XFS recovery volume on proxmox06, synchronized from source.
-# Mounted separately from the 8 TiB guest-image filesystem at this export path.
+# The active media export is backed by ZFS/pve-nfs/emby-media on proxmox06.
+# Capacity is descriptive, and the dataset shares its parent's quota.
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -101,7 +101,7 @@ spec:
     namespace: emby
     name: emby-media-proxmox06
   mountOptions:
-    - nfsvers=3
+    - nfsvers=4.1
     - proto=tcp
     - hard
     - timeo=600

@@ -4,8 +4,8 @@ Confirmed source: Emby 4.9.3.0; program data /var/lib/emby ~989 MiB.
 Original guest root filesystem ~3.7 GiB used of 50 GiB allocated.
 Kubernetes config: 20 GiB RWOP Longhorn, 3 replicas, Retain reclaim policy.
 Active NFS: 10.99.2.106:/mnt/longhorn-remote/private/other.
-The 2026-10-25 migration uses emby-media-proxmox06 / emby-media-proxmox06-nfs.
-Its 10 TiB XFS volume is separate from the 8 TiB guest-image filesystem.
+Emby uses the emby-media-proxmox06 claim and the emby-media-proxmox06-nfs PV.
+Proxmox06 exports its ZFS/pve-nfs/emby-media dataset read-only over NFSv4.1.
 The original proxmox09 export and emby-media claim are retained for rollback.
 Keep NAS library path /mnt/remote-other; media mount read-only.
 LXC guest identity 999:990 -> host/NFS identity 100999:100990.
