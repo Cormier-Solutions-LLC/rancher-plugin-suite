@@ -1,0 +1,13 @@
+ports:
+  wazuh-events:
+    port: 1514
+    exposedPort: 1514
+    protocol: TCP
+    expose:
+      default: true
+  wazuh-enroll:
+    port: 1515
+    exposedPort: 1515
+    protocol: TCP
+    expose:
+      default: true

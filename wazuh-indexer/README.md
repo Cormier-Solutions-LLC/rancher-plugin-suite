@@ -17,8 +17,10 @@ The Wazuh console's Windows DNS A record points to the private Traefik VIP
 uses a certificate obtained with DNS-01, and verifies the dashboard backend
 certificate and hostname. Keep the Wazuh hostname out of the public DNS
 address records and the public gateway allowlist. The manager API is
-reachable within Kubernetes from the native Dashboard. Agent enrollment
-and event ports have no external exposure in these manifests.
+reachable within Kubernetes from the native Dashboard. The same private
+hostname and VIP also carry Wazuh agent events on TCP 1514 and enrollment
+on TCP 1515. Traefik preserves its private source allowlist and forwards
+both streams to the Wazuh manager. The manager terminates enrollment TLS.
 
 The initial Wazuh Indexer admin password comes from
 opensearch/opensearch-admin-password, which also holds the legacy OpenSearch
@@ -68,7 +70,14 @@ cluster. Do not enable bootstrap on attached data from an existing cluster.
    listed above. In the existing opensearch-pilot-private NetworkPolicy,
    preserve the exclusions for wazuh-dashboard and wazuh-manager so that
    their dedicated ingress policies are effective.
-4. Run proof-canary.ps1 against the deployed job template. Verify the
+4. Apply wazah-agent-ingress.yaml. For the private `traefik` Helm release
+   in `traefik-system`, upgrade using its installed chart version,
+   `--reuse-values`, and the wazah-agent-traefik-values.yaml overlay.
+   Wait for all Traefik replicas, then check TCP 1514 and 1515 from the LAN
+   and verify the dashboard over HTTPS. To withdraw the agent listeners,
+   remove those two ports from the Helm release values and the resources
+   in wazah-agent-ingress.yaml.
+5. Run proof-canary.ps1 against the deployed job template. Verify the
    authenticated subject and the source fingerprints before routing the
    scheduled job or private search hosts with switch-proof-and-ingress.ps1.
 
