@@ -59,6 +59,10 @@ cluster. Do not enable bootstrap on attached data from an existing cluster.
    authenticated subject and the source fingerprints before routing the
    scheduled job or private search hosts with switch-proof-and-ingress.ps1.
 
+Verify that a manager-generated alert appears in a wazuh-alerts-* index.
+Filebeat's output test validates the connection. Publishing the alert also
+exercises the on-connect pipeline setup and the bulk write permissions.
+
 The indexer has certificate hot reload enabled. Renewed manager API and
 dashboard certificates require a rollout of the corresponding workload to
 load the new leaf certificates. The in-cluster CA remains stable through

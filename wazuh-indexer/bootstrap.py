@@ -133,6 +133,7 @@ def main():
     request("PUT", f"{SECURITY}/roles/{manager_name}", {
         "cluster_permissions": [
             "cluster_monitor", "indices:data/write/bulk",
+            "cluster:admin/ingest/pipeline/put",
             "indices:admin/template/get", "indices:admin/template/put",
             "indices:admin/index_template/get", "indices:admin/index_template/put",
         ],
