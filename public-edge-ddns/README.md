@@ -15,10 +15,12 @@ IPv4 address every five minutes. It reads `public-hosts.json` directly from the
 existing `public-edge-config` ConfigMap at the start of each Job. Continue managing
 the public hostname list through the Public Web Access Helm app in Rancher.
 
-The updater uses the existing cert-manager GoDaddy credential, copied into a
-separate Secret in `public-edge`. Credentials are mounted as a read-only file;
-the Job has no Kubernetes API token or RBAC permissions. When that credential is
-rotated, refresh the copied Secret using the installation command below.
+GoDaddy Domains v3 uses a dedicated production Personal Access Token with
+`domains.domain:read` and `domains.dns:update`. Store it under `token` in the
+`public-edge/public-edge-ddns-godaddy-v3` Kubernetes Secret. The Job mounts the
+token as a read-only file and has no Kubernetes API token or RBAC permissions.
+Rotate the token by updating this Secret before it expires. The cert-manager
+DNS webhook uses its own credential.
 
 ## Shared edge model
 
@@ -29,24 +31,25 @@ rotated, refresh the copied Secret using the installation command below.
 - Discover public GoDaddy NS delegation through Google and Cloudflare DNS over
   HTTPS, then query both authoritative DNS servers directly on port 53. This
   bypasses private split DNS and recursive cache delay. The nameservers must agree.
-- Verification and dry runs make **zero GoDaddy API calls**. The updater contains
-  no GoDaddy GET requests or domain/zone-list reads. An ordinary WAN address
-  change requires exactly one successful PUT to `A/ddns_edge`; aliases stay intact.
+- Verification and dry runs make **zero GoDaddy API calls**. For DNS drift,
+  the updater reads only the affected owners through the v3 `name` filter.
+  An ordinary WAN address change takes one filtered GET and one PUT by record ID.
 - API writes occur only for records whose DNS data differs from the desired model.
   Authoritative DNS verifies each accepted write. Removed names are left untouched.
-- Before changing anything, preflight all names. Refuse unexpected AAAA, TXT, MX,
-  CAA, or delegated NS conflicts rather than deleting unrelated records. The shared
-  owner must not be a CNAME or a multi-address A record set.
-- A-to-CNAME conversion requires deleting that owner's old A record set before
-  putting its CNAME. Save the original authoritative A data and TTL in the state
-  PVC first; attempt restoration if CNAME creation fails. A saved recovery snapshot
-  remains available after successful migration. These two API writes are not an
-  atomic transaction: a short DNS gap can occur during conversion. The shared
-  target is created and verified before any application aliases change.
+- Check every changed owner through authoritative DNS and GoDaddy before writing.
+  Conflicting record types, inconsistent answers, or multiple A records on the
+  shared owner stop the run.
+- Replace an existing application A or CNAME by ID using a v3 PUT. For multiple
+  application A records, save the full record set and TTLs, remove the extra A
+  records, then replace the last one with the CNAME. The shared A is verified
+  before application aliases are updated. The state PVC retains the original
+  records if a conversion is interrupted.
 - Recheck each name immediately before changing it. Already-correct names are
   skipped, while unexpected concurrent changes abort the plan for a fresh retry.
 - The exact `ddns_edge` spelling, including its underscore, is preserved.
-- Transient network/server errors use bounded retries. Monthly quota exhaustion
+- GET and PUT use bounded retries for transient network and server errors.
+  After an ambiguous POST or DELETE, the next run checks authoritative DNS again.
+  Monthly quota exhaustion
   persists a cooldown across Jobs with at most one automatic attempt daily (or
   the next UTC month boundary). DNS/IP checks still run every five minutes.
   Dry runs still show the plan during cooldown without contacting the API.
@@ -61,48 +64,69 @@ network access. Egress permits cluster DNS, public authoritative DNS (UDP/TCP 53
 
 ## Installation and validation
 
-Run from the repository root against the intended cluster:
+Run from the repository root against the intended cluster.
 
 ```powershell
 node --test public-edge-ddns/updater.test.mjs
-kubectl apply --dry-run=server -f public-edge-ddns/resources.json
-node public-edge-ddns/manage.mjs install
+node public-edge-ddns/manage.mjs stage
 node public-edge-ddns/manage.mjs preview
 ```
 
-Installation always suspends the schedule. Inspect the preview Job's logs and
-wait for its Complete condition. Preserve the GoDaddy records before applying
-changes. To apply once, inspect that Job's logs/read-back, then enable scheduling:
+The preview uses the v3 script and can run before the token is provisioned.
+Inspect the preview Job's logs and wait for its Complete condition.
+
+Generate the production token in the [GoDaddy Developer Portal](https://developer.godaddy.com/en/docs/api-users/auth/how-to).
+To add it directly to Kubernetes from PowerShell, use the masked prompt below.
 
 ```powershell
-node public-edge-ddns/manage.mjs run
-node public-edge-ddns/manage.mjs enable
-kubectl get cronjob,jobs -n public-edge
-kubectl logs -n public-edge job/JOB_NAME
+$pat = Read-Host 'GoDaddy production PAT' -AsSecureString
+$ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($pat)
+try {
+    @{
+        apiVersion = 'v1'
+        kind = 'Secret'
+        metadata = @{ name = 'public-edge-ddns-godaddy-v3'; namespace = 'public-edge' }
+        type = 'Opaque'
+        data = @{ token = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(
+            [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr))) }
+    } | ConvertTo-Json -Depth 5 -Compress | kubectl apply --server-side --field-manager=public-edge-ddns-credential -f -
+} finally {
+    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr)
+    $pat.Dispose()
+}
 ```
 
-Job logs include the previous and desired address for each changed A record, and
-confirm read-back from GoDaddy after each write. A Complete Job must also have
-the expected `Completed reconciliation` or `Completed public DNS verification`
-log entry. Public resolvers can retain
-the previous address until its TTL expires.
+Installation verifies that the PAT Secret is present and suspends the schedule.
+Run once and inspect the logs and Complete condition before re-enabling it.
 
-Deployment credentials move directly between API responses and request stdin;
-the installation helper never writes them to disk or logs. To update the script,
-run `install`, preview, run, and enable again. Existing mounted host lists do not
-require reinstalling the updater when changed in Rancher.
+```powershell
+node public-edge-ddns/manage.mjs install
+node public-edge-ddns/manage.mjs run
+kubectl logs -n public-edge job/JOB_NAME
+kubectl wait -n public-edge --for=condition=complete job/JOB_NAME --timeout=200s
+node public-edge-ddns/manage.mjs enable
+kubectl get cronjob,jobs -n public-edge
+```
+
+Job logs show the desired records and confirm authoritative DNS read-back after
+each write. Look for `Completed reconciliation` or `Completed public DNS verification`
+in a successful Job's logs. Recursive resolvers can cache the previous DNS answers
+until their TTL expires.
+
+For future script updates, stage and preview first, then install, verify a manual
+run, and enable. The mounted hostname list updates when changed in Rancher.
 
 After GoDaddy restores quota, bypass the persisted cooldown for one explicit run:
 
 ```powershell
+node public-edge-ddns/manage.mjs suspend
 node public-edge-ddns/manage.mjs run --force-api-retry
 ```
 
-This does not bypass provider limits; it permits one manual attempt before the
-daily cooldown expires. Successful reconciliation clears the cooldown. Normal
-scheduled Jobs have no override. The 1 GiB `public-edge-ddns-state` Longhorn PVC
-stores quota cooldown and DNS migration recovery state, and the container remains without API/RBAC
-access. Preserve this PVC on script reinstall so backoff survives pod restarts.
+This permits one manual attempt before the daily cooldown expires. Successful
+reconciliation clears the cooldown. Enable the schedule after the Job completes.
+The 1 GiB `public-edge-ddns-state` Longhorn PVC stores v3 cooldown and DNS recovery
+in `godaddy-v3-quota.json`. The legacy `quota.json` still holds earlier recovery data.
 
 ## Pause and rollback
 
@@ -112,20 +136,20 @@ node public-edge-ddns/manage.mjs suspend
 
 Suspending prevents future scheduled runs; inspect and wait for any active Job
 before restoring DNS. Restore only the changed type/name record sets from the
-saved pre-change records through GoDaddy. If a record did not previously exist,
-remove only the newly created A record after suspending the job. Preserve any
-CNAME, TXT, or other unrelated record. Unsuspending will reconcile to the current
-public IPv4 again.
+saved pre-change records through GoDaddy. Delete only records created by the run
+when the recovery record set for that owner is empty. Enabling scheduling resumes
+reconciliation to the current WAN IPv4 and direct application CNAMEs.
 
 To retire this updater after suspending it and checking active Jobs, delete only
-its CronJob, NetworkPolicy, `public-edge-ddns-script` ConfigMap, and
-`public-edge-ddns-godaddy` Secret. The `public-edge-ddns-state` PVC contains
+its CronJob, NetworkPolicy, `public-edge-ddns-v3-script` ConfigMap, and
+`public-edge-ddns-godaddy-v3` Secret. The `public-edge-ddns-state` PVC contains
 quota cooldown and migration recovery state and can be removed separately when retiring the updater. Do not delete `public-edge-config` or
 `public-edge-tls`. Guest 9001 remains independently responsible for
 `vpn.cormiersolutions.com`.
 
-API reference: [replace DNS records by type and name](https://developer.godaddy.com/en/docs/references/rest/domains/v1/record-replace-type-name).
-Scheduling reference: [Kubernetes CronJobs](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/).
+[GoDaddy v3 DNS record documentation](https://developer.godaddy.com/en/docs/api-users/domains/manage/dns)
+
+[Kubernetes CronJobs](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/)
 
 ## Deployment verification — November 15, 2026
 

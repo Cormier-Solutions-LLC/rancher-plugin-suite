@@ -52,14 +52,14 @@
                   ]
                 }],
                 "volumes": [
-                  {"name": "script", "configMap": {"name": "public-edge-ddns-script"}},
+                  {"name": "script", "configMap": {"name": "public-edge-ddns-v3-script"}},
                   {"name": "hosts", "configMap": {
                     "name": "public-edge-config",
                     "items": [{"key": "public-hosts.json", "path": "public-hosts.json"}]
                   }},
                   {"name": "state", "persistentVolumeClaim": {"claimName": "public-edge-ddns-state"}},
                   {"name": "credentials", "secret": {
-                    "secretName": "public-edge-ddns-godaddy", "defaultMode": 288,
+                    "secretName": "public-edge-ddns-godaddy-v3", "defaultMode": 288,
                     "items": [{"key": "token", "path": "token"}]
                   }}
                 ]
